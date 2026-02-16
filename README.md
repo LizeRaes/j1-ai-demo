@@ -1,6 +1,6 @@
-# MediFlow - AI-Powered Medical Support System
+# MedicalAppointment - AI-Powered Medical Support System
 
-MediFlow is a demonstration platform consisting of multiple microservices that together form an AI-powered medical appointment and helpdesk system. Patients manage appointments and submit support requests through a web app; those requests flow into a centralized helpdesk that uses AI triage, semantic similarity search, and company-policy document retrieval to classify, prioritise, and route tickets.
+MedicalAppointment is a demonstration platform consisting of multiple microservices that together form an AI-powered medical appointment and helpdesk system. Patients manage appointments and submit support requests through a web app; those requests flow into a centralized helpdesk that uses AI triage, semantic similarity search, and company-policy document retrieval to classify, prioritise, and route tickets.
 
 ## System Architecture
 
@@ -29,11 +29,11 @@ MediFlow is a demonstration platform consisting of multiple microservices that t
 
 | Service | Port | Description |
 |---------|------|-------------|
-| [mediflow-user-facing](services/mediflow-user-facing/) | 8083 | Patient-facing web app for appointments, billing, support requests |
-| [mediflow-helpdesk](services/mediflow-helpdesk/) | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle |
-| [mediflow-ai-triage](services/mediflow-ai-triage/) | 8081 | LLM-powered classification, urgency scoring, enrichment |
-| [mediflow-similar-tickets](services/mediflow-similar-tickets/) | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings) |
-| [mediflow-company-rag](services/mediflow-company-rag/) | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
+| [medicalappointment-user-facing](services/medicalappointment-user-facing/) | 8083 | Patient-facing web app for appointments, billing, support requests |
+| [medicalappointment-helpdesk](services/medicalappointment-helpdesk/) | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle |
+| [medicalappointment-ai-triage](services/medicalappointment-ai-triage/) | 8081 | LLM-powered classification, urgency scoring, enrichment |
+| [medicalappointment-similar-tickets](services/medicalappointment-similar-tickets/) | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings) |
+| [medicalappointment-company-rag](services/medicalappointment-company-rag/) | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
 
 Each service is independently deployable with its own `pom.xml`, `README.md`, and `CONTRACTS.md`.
 
@@ -45,19 +45,19 @@ Start services in this order:
 
 ```bash
 # 1. User-facing app
-cd services/mediflow-user-facing && mvn quarkus:dev
+cd services/medicalappointment-user-facing && mvn quarkus:dev
 
 # 2. Helpdesk (needs MySQL via Docker)
-cd services/mediflow-helpdesk && docker-compose up -d && mvn quarkus:dev -DDemoData=true
+cd services/medicalappointment-helpdesk && docker-compose up -d && mvn quarkus:dev -DDemoData=true
 
 # 3. AI triage
-cd services/mediflow-ai-triage && mvn quarkus:dev
+cd services/medicalappointment-ai-triage && mvn quarkus:dev
 
 # 4. Similar-tickets (needs Oracle AI via Docker)
-cd services/mediflow-similar-tickets && docker-compose up -d && mvn clean verify && java -jar target/similar-tickets.jar
+cd services/medicalappointment-similar-tickets && docker-compose up -d && mvn clean verify && java -jar target/similar-tickets.jar
 
 # 5. Company-documents RAG (needs Qdrant via Docker)
-cd services/mediflow-company-rag && docker-compose up -d && mvn quarkus:dev -DDemoData=true
+cd services/medicalappointment-company-rag && docker-compose up -d && mvn quarkus:dev -DDemoData=true
 ```
 
 See each service's README for full setup details.
@@ -67,11 +67,11 @@ See each service's README for full setup details.
 ```
 j1-ai-demo/
 ├── services/
-│   ├── mediflow-user-facing/      # :8083  Patient web app
-│   ├── mediflow-helpdesk/         # :8080  Ticketing system
-│   ├── mediflow-ai-triage/        # :8081  AI classification
-│   ├── mediflow-similar-tickets/  # :8082  Ticket similarity
-│   └── mediflow-company-rag/      # :8084  Document RAG
+│   ├── medicalappointment-user-facing/      # :8083  Patient web app
+│   ├── medicalappointment-helpdesk/         # :8080  Ticketing system
+│   ├── medicalappointment-ai-triage/        # :8081  AI classification
+│   ├── medicalappointment-similar-tickets/  # :8082  Ticket similarity
+│   └── medicalappointment-company-rag/      # :8084  Document RAG
 ├── docs/
 │   ├── ARCHITECTURE.md            # Full architecture & quick-start guide
 │   ├── SYSTEM_DIAGRAM.md          # Mermaid + PlantUML diagrams
@@ -86,11 +86,11 @@ j1-ai-demo/
 
 | Service | Framework | AI / DB |
 |---------|-----------|---------|
-| mediflow-user-facing | Quarkus + Qute | — / in-memory |
-| mediflow-helpdesk | Quarkus + Hibernate/Panache | — / MySQL |
-| mediflow-ai-triage | Quarkus + LangChain4j | GPT-4o-mini / — |
-| mediflow-similar-tickets | Helidon + LangChain4j | OpenAI embeddings / Oracle AI |
-| mediflow-company-rag | Quarkus + LangChain4j | OpenAI embeddings / Qdrant |
+| medicalappointment-user-facing | Quarkus + Qute | — / in-memory |
+| medicalappointment-helpdesk | Quarkus + Hibernate/Panache | — / MySQL |
+| medicalappointment-ai-triage | Quarkus + LangChain4j | GPT-4o-mini / — |
+| medicalappointment-similar-tickets | Helidon + LangChain4j | OpenAI embeddings / Oracle AI |
+| medicalappointment-company-rag | Quarkus + LangChain4j | OpenAI embeddings / Qdrant |
 
 ## Demo Notice
 

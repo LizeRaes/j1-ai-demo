@@ -1,9 +1,0 @@
-MediFlow processes user data strictly for the purpose of providing appointment scheduling, billing, and account support services.
-
-Stored data includes user identifiers, appointment details, payment status indicators, and basic account information. MediFlow does not store medical records or sensitive clinical data.
-
-Payment credentials are not stored by MediFlow. Any payment-related interactions are handled through approved payment system flows.
-
-User data access is restricted based on role and operational necessity. Support agents may only access information required to resolve a reported issue.
-
-Any concern related to unauthorized data access, exposure, or misuse must be escalated according to the Security Escalation Policy.

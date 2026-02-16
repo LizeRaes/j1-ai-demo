@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedicalAppointment Support Ticketing</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Pane: Event Logs -->
+        <aside class="logs-pane" id="logs-pane">
+            <button class="logs-toggle-btn" id="logs-toggle-btn" title="Hide Event Log">
+                <span class="toggle-arrow">◀</span>
+            </button>
+            <div class="logs-pane-content">
+                <div class="logs-header">
+                    <h2>Event Log</h2>
+                    <div class="logs-controls">
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" id="logs-zoom-out" title="Zoom Out">−</button>
+                            <span class="zoom-level" id="logs-zoom-level">100%</span>
+                            <button class="zoom-btn" id="logs-zoom-in" title="Zoom In">+</button>
+                        </div>
+                        <div class="log-filters">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="info">Info</button>
+                            <button class="filter-btn" data-filter="warning">Warning</button>
+                            <button class="filter-btn" data-filter="error">Error</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="logs-content" id="logs-content">
+                    <!-- Events will be loaded here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Pane -->
+        <main class="main-pane" id="main-pane">
+            <!-- Actor Context (top-right) -->
+            <div class="actor-context-bar" id="actor-context">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Zoom Controls for Main Content -->
+            <div class="main-zoom-controls">
+                <button class="zoom-btn" id="main-zoom-out" title="Zoom Out">−</button>
+                <span class="zoom-level" id="main-zoom-level">100%</span>
+                <button class="zoom-btn" id="main-zoom-in" title="Zoom In">+</button>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="dispatcher">Dispatcher Inbox</button>
+                <div class="tab-with-nav">
+                    <button class="tab-btn" data-tab="inbox">All Tickets</button>
+                    <div class="ticket-nav-controls">
+                        <button class="nav-btn" id="ticket-nav-back" title="Go to previous ticket" disabled>
+                            <span>◀</span>
+                        </button>
+                        <button class="nav-btn" id="ticket-nav-forward" title="Go to next ticket" disabled>
+                            <span>▶</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="tab-btn" data-tab="team">My Team</button>
+                <button class="tab-btn" data-tab="mine">My Tickets</button>
+                <button class="tab-btn" data-tab="create">Create Ticket</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Left: List View -->
+                <div class="list-pane" id="list-pane">
+                    <div class="list-header">
+                        <h3 id="list-title">Dispatcher Inbox</h3>
+                    </div>
+                    <div class="list-content" id="list-content">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Right: Detail View -->
+                <div class="detail-pane" id="detail-pane">
+                    <div class="detail-placeholder">
+                        <p>Select an item to view details</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

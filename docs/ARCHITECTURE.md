@@ -1,6 +1,6 @@
-# MediFlow: AI-Assisted Helpdesk Demo Architecture
+# MedicalAppointment: AI-Assisted Helpdesk Demo Architecture
 
-This repository documents the architecture of the **MediFlow AI-assisted helpdesk demo**.  
+This repository documents the architecture of the **MedicalAppointment AI-assisted helpdesk demo**.  
 The system demonstrates how user support requests flow from a user-facing app through AI triage, similarity search, and internal knowledge retrieval into a centralized helpdesk.
 
 ---
@@ -8,8 +8,8 @@ The system demonstrates how user support requests flow from a user-facing app th
 ## Table of Contents
 - [System Overview](#system-overview)
 - [Quick Start (Demo)](#quick-start-demo)
-- [Repo: MediFlow User-Facing App](#repo-mediflow-user-facing-app)
-- [Repo: MediFlow Helpdesk](#repo-mediflow-helpdesk)
+- [Repo: MedicalAppointment User-Facing App](#repo-medicalappointment-user-facing-app)
+- [Repo: MedicalAppointment Helpdesk](#repo-medicalappointment-helpdesk)
 - [Repo: AI Triage Service](#repo-ai-triage-service)
 - [Repo: Ticket Similarity Service](#repo-ticket-similarity-service)
 - [Repo: Company Documents RAG Service](#repo-company-documents-rag-service)
@@ -32,12 +32,12 @@ All AI-powered services require an OpenAI API key.
 
 ### Start Order
 
-1. [mediflow-user-facing](../services/mediflow-user-facing/)  
+1. [medicalappointment-user-facing](../services/medicalappointment-user-facing/)  
    ```bash
    mvn quarkus:dev
    ```
 
-2. [mediflow-helpdesk](../services/mediflow-helpdesk/)  
+2. [medicalappointment-helpdesk](../services/medicalappointment-helpdesk/)  
    ```bash
    docker-compose up -d
    mvn quarkus:dev -DDemoData=true
@@ -45,30 +45,30 @@ All AI-powered services require an OpenAI API key.
    # mvn quarkus:dev -DKeepData=true
    ```
 
-3. [mediflow-ai-triage](../services/mediflow-ai-triage/)  
+3. [medicalappointment-ai-triage](../services/medicalappointment-ai-triage/)  
    ```bash
    mvn quarkus:dev
    ```
 
-4. [mediflow-similar-tickets](../services/mediflow-similar-tickets/)  
+4. [medicalappointment-similar-tickets](../services/medicalappointment-similar-tickets/)  
    ```bash
    docker-compose up -d
    mvn clean verify && java -jar target/similar-tickets.jar
    ```
 
-5. [mediflow-company-rag](../services/mediflow-company-rag/)  
+5. [medicalappointment-company-rag](../services/medicalappointment-company-rag/)  
    ```bash
    docker-compose up -d
    mvn quarkus:dev -DDemoData=true
    ```
 ---
 
-<a id="repo-mediflow-user-facing-app"></a>
-## Repo: MediFlow User-Facing App
+<a id="repo-medicalappointment-user-facing-app"></a>
+## Repo: MedicalAppointment User-Facing App
 Purpose  
 Simulated medical scheduling application where users book appointments and submit help requests.
 
-Path: [services/mediflow-user-facing](../services/mediflow-user-facing/)
+Path: [services/medicalappointment-user-facing](../services/medicalappointment-user-facing/)
 
 UI : http://localhost:8083
 
@@ -77,13 +77,13 @@ Startup
 
 ---
 
-<a id="repo-mediflow-helpdesk"></a>
-## Repo: MediFlow Helpdesk
+<a id="repo-medicalappointment-helpdesk"></a>
+## Repo: MedicalAppointment Helpdesk
 
 Purpose  
 System of record for all tickets. Handles dispatching, lifecycle management, AI-created tickets, and RBAC-controlled document visibility.
 
-Path: [services/mediflow-helpdesk](../services/mediflow-helpdesk/)
+Path: [services/medicalappointment-helpdesk](../services/medicalappointment-helpdesk/)
 
 UI : http://localhost:8080
 
@@ -99,7 +99,7 @@ Startup
 Purpose  
 Classifies incoming requests using an LLM, assigns urgency, finds related tickets, and retrieves policy citations.
 
-Path: [services/mediflow-ai-triage](../services/mediflow-ai-triage/)
+Path: [services/medicalappointment-ai-triage](../services/medicalappointment-ai-triage/)
 
 UI : http://localhost:8081
 
@@ -114,7 +114,7 @@ Startup
 Purpose  
 Stores ticket embeddings and returns similar historical tickets using vector search.
 
-Path: [services/mediflow-similar-tickets](../services/mediflow-similar-tickets/)
+Path: [services/medicalappointment-similar-tickets](../services/medicalappointment-similar-tickets/)
 
 UI: http://localhost:8082
 
@@ -132,7 +132,7 @@ mvn clean verify && java -jar target/similar-tickets.jar
 Purpose  
 Stores internal company documents and returns relevant policy citations with RBAC controls.
 
-Path: [services/mediflow-company-rag](../services/mediflow-company-rag/)
+Path: [services/medicalappointment-company-rag](../services/medicalappointment-company-rag/)
 
 UI: http://localhost:8084
 

@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart TD
-    MediFlow["MediFlow User App"]
+    MedicalAppointment["MedicalAppointment User App"]
     Helpdesk["Helpdesk System"]
 
     AITriage["AI Triage Agent"]
@@ -10,7 +10,7 @@ flowchart TD
     RAG["Company RAG Service"]
     CodeAI["AI Code Assistant"]
 
-    MediFlow -->|HTTP| Helpdesk
+    MedicalAppointment -->|HTTP| Helpdesk
 
     Helpdesk -->|HTTP async| AITriage
     AITriage -->|Triage result| Helpdesk
@@ -31,14 +31,14 @@ flowchart TD
 hide footbox
 autonumber
 
-participant "MediFlow User App\n(8083)" as MediFlow
+participant "MedicalAppointment User App\n(8083)" as MedicalAppointment
 participant "Helpdesk System\n(8080)" as Helpdesk
 participant "AI Triage Agent\n(8081)" as AITriage
 participant "Similar Tickets Service\n(8082)" as Similarity
 participant "Company RAG Service\n(8084)" as RAG
 participant "AI Code Assistant (MCP)\n(8085)" as CodeAI
 
-MediFlow -> Helpdesk : POST /api/incoming-requests
+MedicalAppointment -> Helpdesk : POST /api/incoming-requests
 
 Helpdesk -> Similarity : POST /api/similarity/tickets/upsert
 Similarity --> Helpdesk : OK
