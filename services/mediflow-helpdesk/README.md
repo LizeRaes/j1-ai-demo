@@ -79,19 +79,19 @@ This ticketing system receives complaints, questions, and bug reports from MediF
 
    **Load Demo Data** (clears database and loads tickets from `demo-tickets.json`):
    ```bash
-   ./mvnw quarkus:dev -DDemoData=true
+   mvn quarkus:dev -DDemoData=true
    ```
 
    **Start with Empty Database**:
    ```bash
-   ./mvnw quarkus:dev -DEmpty=true
+   mvn quarkus:dev -DEmpty=true
    ```
 
    **Keep Existing Data** (default):
    ```bash
-   ./mvnw quarkus:dev
+   mvn quarkus:dev
    # or explicitly:
-   ./mvnw quarkus:dev -DKeepData=true
+   mvn quarkus:dev -DKeepData=true
    ```
 
 3. **Access the Application**:

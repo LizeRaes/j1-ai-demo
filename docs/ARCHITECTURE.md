@@ -40,9 +40,9 @@ All AI-powered services require an OpenAI API key.
 2. [mediflow-helpdesk](../services/mediflow-helpdesk/)  
    ```bash
    docker-compose up -d
-   ./mvnw quarkus:dev -DDemoData=true
+   mvn quarkus:dev -DDemoData=true
    # or:
-   # ./mvnw quarkus:dev -DKeepData=true
+   # mvn quarkus:dev -DKeepData=true
    ```
 
 3. [mediflow-ai-triage](../services/mediflow-ai-triage/)  
@@ -89,7 +89,7 @@ UI : http://localhost:8080
 
 Startup  
 `docker-compose up -d`  
-`./mvnw quarkus:dev -DDemoData=true` (or `./mvnw quarkus:dev -DKeepData=true`)
+`mvn quarkus:dev -DDemoData=true` (or `mvn quarkus:dev -DKeepData=true`)
 
 ---
 

@@ -422,7 +422,7 @@ src/main/resources/
 **Start System**:
 ```bash
 docker-compose up -d          # Start MySQL
-./mvnw quarkus:dev            # Start Quarkus
+mvn quarkus:dev               # Start Quarkus
 ```
 
 **Access**:

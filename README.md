@@ -48,7 +48,7 @@ Start services in this order:
 cd services/mediflow-user-facing && mvn quarkus:dev
 
 # 2. Helpdesk (needs MySQL via Docker)
-cd services/mediflow-helpdesk && docker-compose up -d && ./mvnw quarkus:dev -DDemoData=true
+cd services/mediflow-helpdesk && docker-compose up -d && mvn quarkus:dev -DDemoData=true
 
 # 3. AI triage
 cd services/mediflow-ai-triage && mvn quarkus:dev
