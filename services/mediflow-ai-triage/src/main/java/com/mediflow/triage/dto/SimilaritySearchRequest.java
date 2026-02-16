@@ -3,7 +3,7 @@ package com.mediflow.triage.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SimilaritySearchRequest {
-    @JsonProperty("ticketType")
+    @JsonProperty("type")
     private String ticketType;
 
     @JsonProperty("text")
@@ -12,7 +12,7 @@ public class SimilaritySearchRequest {
     @JsonProperty("maxResults")
     private Integer maxResults;
 
-    @JsonProperty("ticketId")
+    @JsonProperty("id")
     private Integer ticketId;
 
     public SimilaritySearchRequest() {

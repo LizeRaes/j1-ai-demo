@@ -29,12 +29,10 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- Quarkiverse LangChain4J BOM for version management -->
-      <!-- This BOM manages both quarkiverse extensions and langchain4j core dependencies -->
       <dependency>
         <groupId>io.quarkiverse.langchain4j</groupId>
         <artifactId>quarkus-langchain4j-bom</artifactId>
-        <version>${quarkus.platform.version}</version>
+        <version>1.5.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -52,15 +50,11 @@
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
 
-    <!-- Quarkus LangChain4J extensions for automatic configuration -->
-    <!-- Versions managed by Quarkus BOM -->
     <dependency>
       <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-openai</artifactId>
     </dependency>
 
-    <!-- Still need langchain4j-qdrant for QdrantEmbeddingStore (no Quarkus extension yet) -->
-    <!-- Version should be compatible with the Quarkus extension via transitive dependencies -->
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-qdrant</artifactId>
