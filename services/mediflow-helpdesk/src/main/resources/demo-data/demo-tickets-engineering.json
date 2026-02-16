@@ -1,0 +1,282 @@
+[
+  {
+    "userId": "u-jonas",
+    "originalRequest": "The reschedule button is disabled on my appointment even though it\u2019s next week.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 5.4,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Matches known issue BUG-001. Tracking under ENG-2417."
+      }
+    ],
+    "id": 150
+  },
+  {
+    "userId": "u-sophie",
+    "originalRequest": "Cancel button does nothing when I click it. No error, no confirmation.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 6.1,
+    "comments": [],
+    "id": 151
+  },
+  {
+    "userId": "u-mark",
+    "originalRequest": "This app is broken. Buttons just don\u2019t work.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 3.9,
+    "comments": [],
+    "id": 152
+  },
+  {
+    "userId": "u-elena",
+    "originalRequest": "After I cancel an appointment it still shows up until I refresh.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 4.7,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Likely related to state refresh issue ENG-2399."
+      }
+    ],
+    "id": 153
+  },
+  {
+    "userId": "u-tariq",
+    "originalRequest": "The booking calendar jumps back to today when I scroll.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 4.5,
+    "comments": [],
+    "id": 154
+  },
+  {
+    "userId": "u-olga",
+    "originalRequest": "Payment success page shows but appointment still says unpaid.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": true,
+    "urgencyScore": 7.0,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Matches payment status sync bug ENG-2403."
+      }
+    ],
+    "id": 155
+  },
+  {
+    "userId": "u-ben",
+    "originalRequest": "UI looks fine but clicking submit on help form sends it twice.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 5.2,
+    "comments": [],
+    "id": 156
+  },
+  {
+    "userId": "u-rina",
+    "originalRequest": "On Safari, half the buttons are greyed out.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 6.3,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Safari-specific UI regression suspected."
+      }
+    ],
+    "id": 157
+  },
+  {
+    "userId": "u-james",
+    "originalRequest": "After a page reload my appointment list is empty.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 4.9,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Known limitation related to in-memory state."
+      }
+    ],
+    "id": 158
+  },
+  {
+    "userId": "u-mei",
+    "originalRequest": "Everything worked yesterday. Today the UI feels completely unstable.",
+    "ticketType": "BUG_APP",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-app",
+    "urgencyFlag": false,
+    "urgencyScore": 4.0,
+    "comments": [],
+    "id": 159
+  },
+  {
+    "userId": "u-paul",
+    "originalRequest": "My help request was submitted but I don\u2019t see anything on the backend.",
+    "ticketType": "BUG_BACKEND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": false,
+    "urgencyScore": 6.0,
+    "comments": [
+      {
+        "authorId": "u-eng-backend",
+        "body": "Investigating HelpdeskClient delivery logs."
+      }
+    ],
+    "id": 160
+  },
+  {
+    "userId": "u-irene",
+    "originalRequest": "Support said they never received my help request.",
+    "ticketType": "BUG_BACKEND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": true,
+    "urgencyScore": 7.4,
+    "comments": [],
+    "id": 161
+  },
+  {
+    "userId": "u-carlos",
+    "originalRequest": "Appointments disappear after the app restarts.",
+    "ticketType": "BUG_BACKEND",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": false,
+    "urgencyScore": 5.0,
+    "comments": [
+      {
+        "authorId": "u-eng-backend",
+        "body": "Expected behavior due to in-memory storage."
+      }
+    ],
+    "id": 162
+  },
+  {
+    "userId": "u-natalie",
+    "originalRequest": "Payment status flips back to unpaid after refresh.",
+    "ticketType": "BUG_BACKEND",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": true,
+    "urgencyScore": 7.1,
+    "comments": [],
+    "id": 163
+  },
+  {
+    "userId": "u-diego",
+    "originalRequest": "Backend feels slow and sometimes requests just hang.",
+    "ticketType": "BUG_BACKEND",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": false,
+    "urgencyScore": 4.6,
+    "comments": [],
+    "id": 164
+  },
+  {
+    "userId": "u-anna",
+    "originalRequest": "I submitted a help request but got no confirmation.",
+    "ticketType": "BUG_BACKEND",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": false,
+    "urgencyScore": 5.3,
+    "comments": [],
+    "id": 165
+  },
+  {
+    "userId": "u-louis",
+    "originalRequest": "Helpdesk integration seems flaky. Sometimes tickets go through, sometimes not.",
+    "ticketType": "BUG_BACKEND",
+    "status": "TRIAGED",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": true,
+    "urgencyScore": 7.8,
+    "comments": [
+      {
+        "authorId": "u-eng-backend",
+        "body": "Testing failure scenarios against intake endpoint."
+      }
+    ],
+    "id": 166
+  },
+  {
+    "userId": "u-zoe",
+    "originalRequest": "Backend error occurred when trying to reschedule.",
+    "ticketType": "BUG_BACKEND",
+    "status": "TRIAGED",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": false,
+    "urgencyScore": 5.7,
+    "comments": [],
+    "id": 167
+  },
+  {
+    "userId": "u-vincent",
+    "originalRequest": "The app works but support tickets don\u2019t always get logged.",
+    "ticketType": "BUG_BACKEND",
+    "status": "FROM_DISPATCH",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": true,
+    "urgencyScore": 7.0,
+    "comments": [],
+    "id": 168
+  },
+  {
+    "userId": "u-clara",
+    "originalRequest": "Something is wrong with the backend. Too many weird issues at once.",
+    "ticketType": "BUG_BACKEND",
+    "status": "WAITING_ON_USER",
+    "source": "AI",
+    "assignedTo": "u-eng-backend",
+    "urgencyFlag": false,
+    "urgencyScore": 4.3,
+    "comments": [],
+    "id": 169
+  }
+]

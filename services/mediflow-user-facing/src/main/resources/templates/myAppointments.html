@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Appointments - MediFlow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #555;
+        }
+        .status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status.CONFIRMED {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.CANCELLED {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.PENDING {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        button, .reschedule-form {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background: #c82333;
+        }
+        .btn-reschedule {
+            background: #667eea;
+            color: white;
+        }
+        .btn-reschedule:hover {
+            background: #5568d3;
+        }
+        .reschedule-form {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .reschedule-form.active {
+            display: block;
+        }
+        .reschedule-form select {
+            padding: 8px;
+            margin-right: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        .reschedule-form button {
+            background: #28a745;
+            color: white;
+        }
+        .reschedule-form button:hover {
+            background: #218838;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        a:hover {
+            background: #5568d3;
+        }
+    </style>
+    <script>
+        function toggleReschedule(appointmentId) {
+            const form = document.getElementById('reschedule-' + appointmentId);
+            form.classList.toggle('active');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 My Appointments</h1>
+        
+        {#if appointments.size() > 0}
+        <table>
+            <thead>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#for appointment in appointments}
+                <tr>
+                    <td>{appointment.doctor}</td>
+                    <td>{appointment.date}</td>
+                    <td>{appointment.time}</td>
+                    <td>
+                        <span class="status {appointment.status}">{appointment.status}</span>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <form method="POST" action="/appointments/{appointment.id}/cancel" style="display: inline;">
+                                <button type="submit" class="btn-cancel">Cancel</button>
+                            </form>
+                            <button type="button" class="btn-reschedule" onclick="toggleReschedule('{appointment.id}')">Reschedule</button>
+                        </div>
+                        <div id="reschedule-{appointment.id}" class="reschedule-form">
+                            <form method="POST" action="/appointments/{appointment.id}/reschedule">
+                                <select name="date" required>
+                                    <option value="today">Today</option>
+                                    <option value="tomorrow">Tomorrow</option>
+                                    <option value="next week">Next week</option>
+                                </select>
+                                <select name="time" required>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="14:00">14:00</option>
+                                </select>
+                                <button type="submit">Save</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {/for}
+            </tbody>
+        </table>
+        {#else}
+        <div class="empty-state">
+            <p>No appointments scheduled.</p>
+        </div>
+        {/if}
+        
+        <a href="/appointments/book">Book New Appointment</a>
+        <a href="/" style="background: #6c757d; margin-left: 10px;">Back to Home</a>
+    </div>
+</body>
+</html>
