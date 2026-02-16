@@ -1,0 +1,18 @@
+# Document Splitting Configuration
+# Defines chunking strategies for specific documents
+# If a document is not listed here, the default strategy (recursive, 300 chars) is used
+
+default:
+  strategy: recursive
+  chunk-size: 300
+
+documents:
+  Approved_Response_Templates.txt:
+    strategy: approved-response-splitter
+    # Splits on "Template: " markers, keeping entire templates as chunks
+  
+  # Add more document-specific strategies here as needed
+  # Example:
+  # Another_Document.txt:
+  #   strategy: recursive
+  #   chunk-size: 500

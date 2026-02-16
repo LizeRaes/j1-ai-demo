@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  oracle:
+    image: gvenzl/oracle-free:latest
+    container_name: oracle-free
+    restart: unless-stopped
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=free
+      - APP_USER_PASSWORD=vector
+      - APP_USER=vector

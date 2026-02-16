@@ -1,0 +1,133 @@
+Purpose
+This document lists confirmed application defects that are actively tracked or under investigation. Support agents should use this document to quickly identify known issues, avoid duplicate escalation, and provide accurate guidance to users.
+
+BUG-001
+Title: Reschedule Button Disabled on Existing Appointments
+
+Symptoms:
+Users report that the “Reschedule” button is disabled on the appointment details page, even though the appointment is more than 24 hours in the future.
+
+Affected Conditions:
+
+Appointments created before the current application session
+
+More frequently observed in Safari and older Firefox versions
+
+Workaround:
+Advise the user to refresh the page or try accessing the application using a Chromium-based browser. In some cases, cancelling and rebooking resolves the issue.
+
+Status:
+In progress
+
+Tracking Reference:
+ENG-2417
+
+Expected Resolution:
+Targeted for next application release (estimated within 7 days)
+
+BUG-002
+Title: Cancel Action Appears Successful but Appointment Remains Visible
+
+Symptoms:
+User cancels an appointment and receives a confirmation message, but the appointment still appears in the appointment list.
+
+Affected Conditions:
+
+Occurs intermittently after application restart
+
+More likely when multiple appointments exist
+
+Workaround:
+Advise the user to refresh the page. If the appointment still appears, inform them it will be resolved automatically and no further action is required.
+
+Status:
+Queued for investigation
+
+Tracking Reference:
+ENG-2399
+
+Expected Resolution:
+Pending investigation, no ETA assigned
+
+BUG-003
+Title: Payment Confirmation Page Displayed Without Payment Status Update
+
+Symptoms:
+User completes the payment flow and sees the success page, but the appointment still shows as unpaid.
+
+Affected Conditions:
+
+High frequency after navigating back in the browser during payment
+
+Observed across all browsers
+
+Workaround:
+Advise the user not to retry payment immediately. Support can confirm internally that no duplicate charge occurred.
+
+Status:
+In fixing
+
+Tracking Reference:
+ENG-2403
+
+Expected Resolution:
+Fix in progress, expected within 3 days
+
+BUG-004
+Title: Help Request Submitted Multiple Times
+
+Symptoms:
+User reports receiving multiple confirmations after submitting a single help request.
+
+Affected Conditions:
+
+Rapid repeated clicks on the submit button
+
+Slower network conditions
+
+Workaround:
+Reassure the user that duplicate submissions are filtered internally and no additional action is required.
+
+Status:
+Planned
+
+Tracking Reference:
+ENG-2381
+
+Expected Resolution:
+Scheduled for next minor UI update
+
+BUG-005
+Title: Appointment List Empty After Application Restart
+
+Symptoms:
+User reports that previously booked appointments are no longer visible.
+
+Affected Conditions:
+
+Application restart or redeploy
+
+Workaround:
+Inform the user that the issue is known and under investigation. Advise them to rebook if necessary.
+
+Status:
+Known limitation
+
+Tracking Reference:
+ENG-2300
+
+Expected Resolution:
+No fix planned (design limitation)
+
+Agent Guidance
+If a reported issue matches one of the above entries:
+
+Do not escalate to engineering unless new symptoms are observed
+
+Reference the internal tracking ID in the ticket
+
+Use approved response templates
+
+Provide the documented workaround when available
+
+If symptoms differ materially, treat the issue as a new bug and escalate accordingly.

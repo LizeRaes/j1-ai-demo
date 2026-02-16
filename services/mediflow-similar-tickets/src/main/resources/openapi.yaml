@@ -1,0 +1,183 @@
+openapi: 3.0.3
+info:
+  title: Similar Tickets API
+  version: 1.0.0
+  description: REST API for managing and searching similar support tickets.
+servers:
+  - url: http://localhost:8082
+paths:
+  /api/similarity/tickets/upsert:
+    post:
+      summary: Upsert a ticket embedding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertRequest'
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/similarity/tickets/delete:
+    post:
+      summary: Delete a ticket from the store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRequest'
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/similarity/tickets/search:
+    post:
+      summary: Search for similar tickets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+  /api/similarity/tickets/all:
+    get:
+      summary: Get all tickets
+      responses:
+        '200':
+          description: Tickets list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketsResponse'
+  /api/similarity/tickets/logs:
+    get:
+      summary: Get recent logs
+      responses:
+        '200':
+          description: Logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogsResponse'
+  /api/similarity/tickets/config:
+    get:
+      summary: Get UI configuration
+      responses:
+        '200':
+          description: UI config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  defaultZoom:
+                    type: integer
+                    format: int32
+components:
+  schemas:
+    UpsertRequest:
+      type: object
+      required: [ticketId, ticketType, text]
+      properties:
+        ticketId:
+          type: integer
+          format: int64
+        ticketType:
+          type: string
+        text:
+          type: string
+    DeleteRequest:
+      type: object
+      required: [ticketId]
+      properties:
+        ticketId:
+          type: integer
+          format: int64
+    SearchRequest:
+      type: object
+      required: [text, ticketId]
+      properties:
+        ticketType:
+          type: string
+          nullable: true
+        text:
+          type: string
+        maxResults:
+          type: integer
+          format: int32
+          default: 5
+        minScore:
+          type: number
+          format: double
+          default: 0.0
+        ticketId:
+          type: integer
+          format: int64
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: OK
+    SearchResponse:
+      type: object
+      properties:
+        relatedTicketIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    TicketsResponse:
+      type: object
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketInfo'
+    TicketInfo:
+      type: object
+      properties:
+        ticketId:
+          type: integer
+          format: int64
+        ticketType:
+          type: string
+        text:
+          type: string
+        vector:
+          type: array
+          items:
+            type: number
+            format: float
+    LogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogInfo'
+    LogInfo:
+      type: object
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+        timestamp:
+          type: integer
+          format: int64

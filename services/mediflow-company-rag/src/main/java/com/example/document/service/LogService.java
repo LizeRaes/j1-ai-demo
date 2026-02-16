@@ -1,0 +1,36 @@
+package com.example.document.service;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+@ApplicationScoped
+public class LogService {
+
+    private final Queue<LogEntry> logs = new ConcurrentLinkedQueue<>();
+    private static final int MAX_LOGS = 1000;
+
+    public void addLog(String message, String type) {
+        logs.offer(new LogEntry(message, type, System.currentTimeMillis()));
+        // Keep only last MAX_LOGS entries
+        while (logs.size() > MAX_LOGS) {
+            logs.poll();
+        }
+    }
+
+    public List<LogEntry> getLogs() {
+        return new ArrayList<>(logs);
+    }
+
+    public static class LogEntry {
+        public final String message;
+        public final String type;
+        public final long timestamp;
+
+        public LogEntry(String message, String type, long timestamp) {
+            this.message = message;
+            this.type = type;
+            this.timestamp = timestamp;
+        }
+    }
+}

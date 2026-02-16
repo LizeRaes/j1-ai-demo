@@ -7,18 +7,17 @@ Thumbs.db
 *.iml
 *.iws
 *.ipr
+out/
 .vscode/
+*.code-workspace
+
 .classpath
 .project
 .settings/
+bin/
+
 *.swp
 *.swo
 *~
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Logs
 *.log

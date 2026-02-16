@@ -1,0 +1,6 @@
+sources:
+  - type: "environment-variables"
+  - type: "system-properties"
+  - type: "file"
+    properties:
+      path: "config/config-prod.yaml"

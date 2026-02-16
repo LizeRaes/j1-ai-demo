@@ -50,13 +50,13 @@ All AI-powered services require an OpenAI API key.
    mvn quarkus:dev
    ```
 
-4. [Repo: Ticket Similarity Service](https://github.com/LizeRaes/mediflow-similar-tickets)  
+4. [mediflow-similar-tickets](../services/mediflow-similar-tickets/)  
    ```bash
    docker-compose up -d
-   mvn quarkus:dev
+   mvn clean verify && java -jar target/similar-tickets.jar
    ```
 
-5. [Repo: Company Documents RAG Service](https://github.com/LizeRaes/mediflow-company-rag)  
+5. [mediflow-company-rag](../services/mediflow-company-rag/)  
    ```bash
    docker-compose up -d
    mvn quarkus:dev -DDemoData=true
@@ -114,14 +114,14 @@ Startup
 Purpose  
 Stores ticket embeddings and returns similar historical tickets using vector search.
 
-Repo: [Ticket Similarity Service](https://github.com/LizeRaes/mediflow-similar-tickets)
+Path: [services/mediflow-similar-tickets](../services/mediflow-similar-tickets/)
 
 UI: http://localhost:8082
 
 Startup  
 ```bash
 docker-compose up -d
-mvn quarkus:dev
+mvn clean verify && java -jar target/similar-tickets.jar
 ```
 
 ---
@@ -132,7 +132,7 @@ mvn quarkus:dev
 Purpose  
 Stores internal company documents and returns relevant policy citations with RBAC controls.
 
-Repo: [Company Documents RAG Service](https://github.com/LizeRaes/mediflow-company-rag)
+Path: [services/mediflow-company-rag](../services/mediflow-company-rag/)
 
 UI: http://localhost:8084
 

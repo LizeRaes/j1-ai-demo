@@ -1,0 +1,277 @@
+[
+  {
+    "userId": "u-maria",
+    "originalRequest": "I was charged for an appointment that never happened because the app wouldn\u2019t let me cancel it. I tried the night before.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 6.0,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Checking cancellation window and system logs to confirm eligibility under refund policy."
+      }
+    ],
+    "id": 130
+  },
+  {
+    "userId": "u-daniel",
+    "originalRequest": "You charged me twice for the same appointment. I only booked once.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": true,
+    "urgencyScore": 8.5,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Duplicate charge confirmed. Initiating refund review."
+      }
+    ],
+    "id": 131
+  },
+  {
+    "userId": "u-lena",
+    "originalRequest": "My appointment was canceled by the clinic but I still see a charge. Can you refund this?",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 6.5,
+    "comments": [],
+    "id": 132
+  },
+  {
+    "userId": "u-robert",
+    "originalRequest": "I missed my appointment and now I see I was charged. This doesn\u2019t seem fair.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 4.0,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Reviewing against non-refundable missed appointment policy."
+      }
+    ],
+    "id": 133
+  },
+  {
+    "userId": "u-amelia",
+    "originalRequest": "The app showed a payment error, but my bank says I was charged. Please refund.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": true,
+    "urgencyScore": 7.8,
+    "comments": [],
+    "id": 134
+  },
+  {
+    "userId": "u-tom",
+    "originalRequest": "I canceled more than a day before, but I still got billed.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 6.2,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Verifying cancellation timestamp and appointment time."
+      }
+    ],
+    "id": 135
+  },
+  {
+    "userId": "u-nina",
+    "originalRequest": "Please refund the appointment from last Friday. The doctor never showed up.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": true,
+    "urgencyScore": 7.0,
+    "comments": [],
+    "id": 136
+  },
+  {
+    "userId": "u-victor",
+    "originalRequest": "I think I was billed even though I never completed the booking.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 5.5,
+    "comments": [],
+    "id": 137
+  },
+  {
+    "userId": "u-olivia",
+    "originalRequest": "This is the second time I\u2019ve had to ask for a refund because of app issues.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": true,
+    "urgencyScore": 8.0,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Reviewing historical tickets for repeat incidents."
+      }
+    ],
+    "id": 138
+  },
+  {
+    "userId": "u-jake",
+    "originalRequest": "I was charged for an appointment that disappeared after the app refreshed.",
+    "ticketType": "BILLING_REFUND",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 6.0,
+    "comments": [],
+    "id": 139
+  },
+  {
+    "userId": "u-sophia",
+    "originalRequest": "Can you explain why my card was charged immediately when booking?",
+    "ticketType": "BILLING_OTHER",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 3.5,
+    "comments": [],
+    "id": 140
+  },
+  {
+    "userId": "u-max",
+    "originalRequest": "What payment methods do you support? I didn\u2019t see an option for invoice.",
+    "ticketType": "BILLING_OTHER",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 2.5,
+    "comments": [],
+    "id": 141
+  },
+  {
+    "userId": "u-irene",
+    "originalRequest": "Is it normal that my payment says successful but the appointment still shows unpaid?",
+    "ticketType": "BILLING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 5.0,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Possibly related to known payment status sync issue."
+      }
+    ],
+    "id": 142
+  },
+  {
+    "userId": "u-paul",
+    "originalRequest": "This billing page feels broken. I\u2019m not sure if I actually paid.",
+    "ticketType": "BILLING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 4.2,
+    "comments": [],
+    "id": 143
+  },
+  {
+    "userId": "u-chiara",
+    "originalRequest": "Why does the app say payment completed if no receipt was sent?",
+    "ticketType": "BILLING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 3.8,
+    "comments": [],
+    "id": 144
+  },
+  {
+    "userId": "u-andrew",
+    "originalRequest": "Is my card information stored in your system?",
+    "ticketType": "BILLING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 4.5,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Respond using payment systems and data privacy documentation."
+      }
+    ],
+    "id": 145
+  },
+  {
+    "userId": "u-zoe",
+    "originalRequest": "I see a payment pending but no appointment confirmation.",
+    "ticketType": "BILLING_OTHER",
+    "status": "TRIAGED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": true,
+    "urgencyScore": 6.8,
+    "comments": [],
+    "id": 146
+  },
+  {
+    "userId": "u-mike",
+    "originalRequest": "Billing just feels off. Something isn\u2019t right but I can\u2019t tell what.",
+    "ticketType": "BILLING_OTHER",
+    "status": "TRIAGED",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 3.0,
+    "comments": [],
+    "id": 147
+  },
+  {
+    "userId": "u-rachel",
+    "originalRequest": "Do you support refunds to the original payment method?",
+    "ticketType": "BILLING_OTHER",
+    "status": "FROM_DISPATCH",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 2.8,
+    "comments": [],
+    "id": 148
+  },
+  {
+    "userId": "u-henry",
+    "originalRequest": "I\u2019m confused about when exactly my card gets charged.",
+    "ticketType": "BILLING_OTHER",
+    "status": "WAITING_ON_USER",
+    "source": "AI",
+    "assignedTo": "u-support-billing",
+    "urgencyFlag": false,
+    "urgencyScore": 3.2,
+    "comments": [],
+    "id": 149
+  }
+]

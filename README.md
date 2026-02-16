@@ -32,8 +32,8 @@ MediFlow is a demonstration platform consisting of multiple microservices that t
 | [mediflow-user-facing](services/mediflow-user-facing/) | 8083 | Patient-facing web app for appointments, billing, support requests |
 | [mediflow-helpdesk](services/mediflow-helpdesk/) | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle |
 | [mediflow-ai-triage](services/mediflow-ai-triage/) | 8081 | LLM-powered classification, urgency scoring, enrichment |
-| mediflow-similar-tickets | 8082 | Vector-similarity search over historical tickets *(coming soon)* |
-| mediflow-company-rag | 8084 | Company-document RAG with RBAC-controlled citations *(coming soon)* |
+| [mediflow-similar-tickets](services/mediflow-similar-tickets/) | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings) |
+| [mediflow-company-rag](services/mediflow-company-rag/) | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
 
 Each service is independently deployable with its own `pom.xml`, `README.md`, and `CONTRACTS.md`.
 
@@ -53,8 +53,11 @@ cd services/mediflow-helpdesk && docker-compose up -d && ./mvnw quarkus:dev -DDe
 # 3. AI triage
 cd services/mediflow-ai-triage && mvn quarkus:dev
 
-# 4. Similar-tickets (once added)
-# 5. Company-documents RAG (once added)
+# 4. Similar-tickets (needs Oracle AI via Docker)
+cd services/mediflow-similar-tickets && docker-compose up -d && mvn clean verify && java -jar target/similar-tickets.jar
+
+# 5. Company-documents RAG (needs Qdrant via Docker)
+cd services/mediflow-company-rag && docker-compose up -d && mvn quarkus:dev -DDemoData=true
 ```
 
 See each service's README for full setup details.
@@ -66,7 +69,9 @@ j1-ai-demo/
 ├── services/
 │   ├── mediflow-user-facing/      # :8083  Patient web app
 │   ├── mediflow-helpdesk/         # :8080  Ticketing system
-│   └── mediflow-ai-triage/        # :8081  AI classification
+│   ├── mediflow-ai-triage/        # :8081  AI classification
+│   ├── mediflow-similar-tickets/  # :8082  Ticket similarity
+│   └── mediflow-company-rag/      # :8084  Document RAG
 ├── docs/
 │   ├── ARCHITECTURE.md            # Full architecture & quick-start guide
 │   ├── SYSTEM_DIAGRAM.md          # Mermaid + PlantUML diagrams
@@ -76,6 +81,16 @@ j1-ai-demo/
 ```
 
 
+
+## Tech Stack
+
+| Service | Framework | AI / DB |
+|---------|-----------|---------|
+| mediflow-user-facing | Quarkus + Qute | — / in-memory |
+| mediflow-helpdesk | Quarkus + Hibernate/Panache | — / MySQL |
+| mediflow-ai-triage | Quarkus + LangChain4j | GPT-4o-mini / — |
+| mediflow-similar-tickets | Helidon + LangChain4j | OpenAI embeddings / Oracle AI |
+| mediflow-company-rag | Quarkus + LangChain4j | OpenAI embeddings / Qdrant |
 
 ## Demo Notice
 

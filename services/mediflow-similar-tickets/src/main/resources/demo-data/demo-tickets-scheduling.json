@@ -1,0 +1,262 @@
+[
+  {
+    "userId": "u-alex",
+    "originalRequest": "I tried to cancel my appointment but it says it\u2019s too late, even though it\u2019s still more than a day away.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 5.5,
+    "comments": [
+      {
+        "authorId": "u-support-operations",
+        "body": "Verifying cancellation window and appointment time."
+      }
+    ],
+    "id": 170
+  },
+  {
+    "userId": "u-jessica",
+    "originalRequest": "The cancel button is completely missing on my appointment page.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 6.0,
+    "comments": [
+      {
+        "authorId": "u-support-operations",
+        "body": "Possibly related to known UI issue. Checking browser details."
+      }
+    ],
+    "id": 171
+  },
+  {
+    "userId": "u-matt",
+    "originalRequest": "I canceled yesterday but the appointment still shows up as active.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 4.8,
+    "comments": [],
+    "id": 172
+  },
+  {
+    "userId": "u-hannah",
+    "originalRequest": "I need to cancel my appointment for tomorrow morning due to an emergency.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": true,
+    "urgencyScore": 7.2,
+    "comments": [
+      {
+        "authorId": "u-support-operations",
+        "body": "User request received outside standard cancellation window. Reviewing policy."
+      }
+    ],
+    "id": 173
+  },
+  {
+    "userId": "u-ivan",
+    "originalRequest": "Cancel doesn\u2019t work on mobile, but it works on my laptop.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 5.0,
+    "comments": [],
+    "id": 174
+  },
+  {
+    "userId": "u-laura",
+    "originalRequest": "I canceled within the allowed time but still got a warning that I might be charged.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 6.3,
+    "comments": [],
+    "id": 175
+  },
+  {
+    "userId": "u-kevin",
+    "originalRequest": "This app won\u2019t let me cancel anything at all.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 4.0,
+    "comments": [],
+    "id": 176
+  },
+  {
+    "userId": "u-nora",
+    "originalRequest": "Can you cancel my appointment for me? The site keeps timing out.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": true,
+    "urgencyScore": 6.9,
+    "comments": [],
+    "id": 177
+  },
+  {
+    "userId": "u-peter",
+    "originalRequest": "I canceled my appointment but I never got a confirmation.",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 4.5,
+    "comments": [],
+    "id": 178
+  },
+  {
+    "userId": "u-yara",
+    "originalRequest": "Canceling feels confusing. Did it actually go through?",
+    "ticketType": "SCHEDULING_CANCELLATION",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 3.8,
+    "comments": [],
+    "id": 179
+  },
+  {
+    "userId": "u-bruno",
+    "originalRequest": "I want to reschedule but there are no other times available.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 3.5,
+    "comments": [],
+    "id": 180
+  },
+  {
+    "userId": "u-emma",
+    "originalRequest": "Why does the app only show a few doctors? Are there more available?",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "COMPLETED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 2.8,
+    "comments": [],
+    "id": 181
+  },
+  {
+    "userId": "u-liam",
+    "originalRequest": "I can\u2019t tell which timezone the appointment times are in.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 4.2,
+    "comments": [
+      {
+        "authorId": "u-support-operations",
+        "body": "Likely related to known timezone display limitations."
+      }
+    ],
+    "id": 182
+  },
+  {
+    "userId": "u-sara",
+    "originalRequest": "The reschedule option is greyed out even though the appointment is next week.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 5.6,
+    "comments": [],
+    "id": 183
+  },
+  {
+    "userId": "u-noah",
+    "originalRequest": "Why can\u2019t I book recurring appointments?",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 2.0,
+    "comments": [],
+    "id": 184
+  },
+  {
+    "userId": "u-fatima",
+    "originalRequest": "I accidentally booked the wrong doctor. Can I change just the doctor?",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "IN_PROGRESS",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 3.9,
+    "comments": [],
+    "id": 185
+  },
+  {
+    "userId": "u-owen",
+    "originalRequest": "It\u2019s unclear how far in advance I\u2019m allowed to reschedule.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "TRIAGED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 2.7,
+    "comments": [],
+    "id": 186
+  },
+  {
+    "userId": "u-ana",
+    "originalRequest": "The booking calendar jumps back to today every time I try to scroll.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "TRIAGED",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 4.9,
+    "comments": [],
+    "id": 187
+  },
+  {
+    "userId": "u-lucas",
+    "originalRequest": "I\u2019m not sure if my appointment was actually booked.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "FROM_DISPATCH",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 3.6,
+    "comments": [],
+    "id": 188
+  },
+  {
+    "userId": "u-maya",
+    "originalRequest": "Scheduling in general feels broken and confusing.",
+    "ticketType": "SCHEDULING_OTHER",
+    "status": "WAITING_ON_USER",
+    "source": "AI",
+    "assignedTo": "u-support-operations",
+    "urgencyFlag": false,
+    "urgencyScore": 3.0,
+    "comments": [],
+    "id": 189
+  }
+]

@@ -1,0 +1,21 @@
+A security incident includes, but is not limited to:
+
+A user reporting access to another user’s appointments or data
+
+Reports of compromised credentials or suspected account takeover
+
+Billing activity the user does not recognize
+
+Any indication of data exposure or misuse
+
+Support agents must not attempt to investigate or resolve security incidents independently.
+
+When a potential security incident is identified:
+
+Acknowledge the report using approved language
+
+Do not confirm root cause or impact
+
+Escalate immediately to internal security review
+
+No technical details or remediation steps may be shared with users unless explicitly authorized. All security-related tickets are treated as high priority and handled confidentially.
