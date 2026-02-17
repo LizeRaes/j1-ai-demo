@@ -9,8 +9,11 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
+import java.io.InputStream;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+
+import static java.util.stream.Collectors.toList;
 
 @Path("/api/documents")
 @Produces(MediaType.APPLICATION_JSON)
@@ -32,34 +35,34 @@ public class DocumentResource {
     @POST
     @Path("/search")
     public DocumentSearchResponse search(DocumentSearchRequest request) {
-        if (request.getOriginalText() == null) {
+        if (request.originalText() == null) {
             throw new IllegalArgumentException("originalText is required");
         }
 
-        int maxResults = request.getMaxResults() != null ? request.getMaxResults() : 5;
-        double minScore = request.getMinScore() != null ? request.getMinScore() : 0.0;
+        int maxResults = request.maxResults() != null ? request.maxResults() : 5;
+        double minScore = request.minScore() != null ? request.minScore() : 0.0;
 
         logService.addLog("Document search request: \"" +
-                (request.getOriginalText().length() > 50 ?
-                 request.getOriginalText().substring(0, 50) + "..." :
-                 request.getOriginalText()) +
+                (request.originalText().length() > 50 ?
+                        request.originalText().substring(0, 50) + "..." :
+                        request.originalText()) +
                 "\", minScore: " + minScore, "search");
 
         var searchResults = searchService.searchDocuments(
-                request.getOriginalText(),
+                request.originalText(),
                 maxResults,
                 minScore
         );
 
         List<DocumentSearchResponse.DocumentResult> results = searchResults.stream()
                 .map(r -> new DocumentSearchResponse.DocumentResult(
-                        r.documentName,
-                        r.documentLink,
-                        r.citation,
-                        r.score,
-                        r.rbacTeams
+                        r.documentName(),
+                        r.documentLink(),
+                        r.citation(),
+                        r.score(),
+                        r.rbacTeams()
                 ))
-                .collect(Collectors.toList());
+                .collect(toList());
 
         logService.addLog("Returned " + results.size() + " document results", "search");
 
@@ -69,28 +72,28 @@ public class DocumentResource {
     @POST
     @Path("/upsert")
     public StatusResponse upsert(DocumentUpsertRequest request) {
-        if (request.getDocumentName() == null || request.getContent() == null) {
+        if (request.documentName() == null || request.content() == null) {
             throw new IllegalArgumentException("documentName and content are required");
         }
 
-        logService.addLog("Upsert document: " + request.getDocumentName(), "upsert");
+        logService.addLog("Upsert document: " + request.documentName(), "upsert");
 
         try {
             // If RBAC teams not specified, use document-wide (empty list)
-            List<String> rbacTeams = request.getRbacTeams() != null ?
-                    request.getRbacTeams() :
+            List<String> rbacTeams = request.rbacTeams() != null ?
+                    request.rbacTeams() :
                     List.of(); // Empty list means document-wide
 
             documentService.upsertDocument(
-                    request.getDocumentName(),
-                    request.getContent(),
+                    request.documentName(),
+                    request.content(),
                     rbacTeams
             );
 
-            logService.addLog("Successfully upserted document: " + request.getDocumentName(), "upsert");
+            logService.addLog("Successfully upserted document: " + request.documentName(), "upsert");
             return new StatusResponse("OK");
         } catch (Exception e) {
-            logService.addLog("Error upserting document " + request.getDocumentName() + ": " + e.getMessage(), "error");
+            logService.addLog("Error upserting document " + request.documentName() + ": " + e.getMessage(), "error");
             throw new RuntimeException("Failed to upsert document: " + e.getMessage(), e);
         }
     }
@@ -98,35 +101,35 @@ public class DocumentResource {
     @POST
     @Path("/delete")
     public StatusResponse delete(DocumentDeleteRequest request) {
-        if (request.getDocumentName() == null) {
+        if (request.documentName() == null) {
             throw new IllegalArgumentException("documentName is required");
         }
 
-        logService.addLog("Delete document: " + request.getDocumentName(), "delete");
+        logService.addLog("Delete document: " + request.documentName(), "delete");
 
-        documentService.deleteDocumentEmbeddings(request.getDocumentName());
-        accessPolicyService.removeDocument(request.getDocumentName());
+        documentService.deleteDocumentEmbeddings(request.documentName());
+        accessPolicyService.removeDocument(request.documentName());
 
-        logService.addLog("Successfully deleted document: " + request.getDocumentName(), "delete");
+        logService.addLog("Successfully deleted document: " + request.documentName(), "delete");
         return new StatusResponse("OK");
     }
 
     @POST
     @Path("/rbac/update")
     public StatusResponse updateRbac(DocumentRbacUpdateRequest request) {
-        if (request.getDocumentName() == null) {
+        if (request.documentName() == null) {
             throw new IllegalArgumentException("documentName is required");
         }
 
-        logService.addLog("Update RBAC for document: " + request.getDocumentName(), "rbac");
+        logService.addLog("Update RBAC for document: " + request.documentName(), "rbac");
 
-        List<String> rbacTeams = request.getRbacTeams() != null ?
-                request.getRbacTeams() :
+        List<String> rbacTeams = request.rbacTeams() != null ?
+                request.rbacTeams() :
                 List.of(); // Empty list means document-wide
 
-        accessPolicyService.updateDocumentAccess(request.getDocumentName(), rbacTeams);
+        accessPolicyService.updateDocumentAccess(request.documentName(), rbacTeams);
 
-        logService.addLog("Successfully updated RBAC for document: " + request.getDocumentName(), "rbac");
+        logService.addLog("Successfully updated RBAC for document: " + request.documentName(), "rbac");
         return new StatusResponse("OK");
     }
 
@@ -141,24 +144,24 @@ public class DocumentResource {
                     String link = "/documents/" + name;
                     return new DocumentsResponse.DocumentInfo(name, link, teams);
                 })
-                .collect(Collectors.toList());
+                .collect(toList());
 
         return new DocumentsResponse(documents);
     }
 
     @GET
     @Path("/logs")
-    public com.example.document.dto.LogsResponse getLogs() {
+    public LogsResponse getLogs() {
         var logs = logService.getLogs().stream()
-                .map(l -> new com.example.document.dto.LogsResponse.LogInfo(l.message, l.type, l.timestamp))
-                .collect(Collectors.toList());
+                .map(l -> new LogsResponse.LogInfo(l.message(), l.type(), l.timestamp()))
+                .collect(toList());
 
-        return new com.example.document.dto.LogsResponse(logs);
+        return new LogsResponse(logs);
     }
 
     @GET
     @Path("/config")
-    public java.util.Map<String, Object> getConfig() {
+    public Map<String, Object> getConfig() {
         return java.util.Map.of("defaultZoom", 100);
     }
 
@@ -167,9 +170,8 @@ public class DocumentResource {
     @Produces(MediaType.APPLICATION_JSON)
     public java.util.Map<String, String> getDocumentContent(@PathParam("documentName") String documentName) {
         try {
-            // Read document from static
-            java.io.InputStream docStream = getClass().getClassLoader()
-                .getResourceAsStream("documents/" + documentName);
+            InputStream docStream = getClass().getClassLoader()
+                    .getResourceAsStream("documents/" + documentName);
 
             if (docStream == null) {
                 throw new jakarta.ws.rs.NotFoundException("Document not found: " + documentName);
@@ -180,7 +182,7 @@ public class DocumentResource {
 
             return java.util.Map.of("content", content);
         } catch (Exception e) {
-            throw new jakarta.ws.rs.InternalServerErrorException("Error reading document: " + e.getMessage());
+            throw new InternalServerErrorException("Error reading document: " + e.getMessage());
         }
     }
 
@@ -191,12 +193,12 @@ public class DocumentResource {
 
         List<ChunksResponse.ChunkInfo> chunkInfos = chunks.stream()
                 .map(c -> new ChunksResponse.ChunkInfo(
-                        c.documentName,
-                        c.chunkIndex,
-                        c.text,
-                        c.vector
+                        c.documentName(),
+                        c.chunkIndex(),
+                        c.text(),
+                        c.vector()
                 ))
-                .collect(Collectors.toList());
+                .collect(toList());
 
         return new ChunksResponse(chunkInfos);
     }

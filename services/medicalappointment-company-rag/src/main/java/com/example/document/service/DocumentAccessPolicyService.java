@@ -1,50 +1,48 @@
 package com.example.document.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class DocumentAccessPolicyService {
 
-    private Map<String, List<String>> accessPolicy = new HashMap<>();
+    private static final Logger LOGGER = Logger.getLogger(DocumentAccessPolicyService.class.getName());
 
-    public DocumentAccessPolicyService() {
-        loadPolicy();
-    }
+    private final Map<String, List<String>> accessPolicy = new HashMap<>();
 
-    /**
-     * Loads the document access policy from YAML file.
-     */
-    private void loadPolicy() {
+    @ConfigProperty(name = "oracleai.embedding.metadata.column", defaultValue = "metadata")
+    String metadataColumn;
+
+    @PostConstruct
+    void init() {
         try {
             InputStream inputStream = getClass().getClassLoader()
                 .getResourceAsStream("config/document_access_policy.yaml");
 
             if (inputStream == null) {
-                System.err.println("Warning: document_access_policy.yaml not found, using empty policy");
+                LOGGER.severe("Warning: document_access_policy.yaml not found, using empty policy");
                 return;
             }
 
             Yaml yaml = new Yaml();
-            Map<String, Object> data = yaml.load(inputStream);
+            Map<String, Map<String, List<String>>> data = yaml.load(inputStream);
 
             if (data != null) {
-                for (Map.Entry<String, Object> entry : data.entrySet()) {
+                for (Map.Entry<String, Map<String, List<String>>> entry : data.entrySet()) {
                     String docName = entry.getKey();
-                    Object value = entry.getValue();
+                    Map<String, List<String>> value = entry.getValue();
 
-                    if (value instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> docConfig = (Map<String, Object>) value;
-                        Object readObj = docConfig.get("read");
+                    if (value != null) {
+                        List<String> readObj = value.get("read");
 
-                        if (readObj instanceof List) {
-                            @SuppressWarnings("unchecked")
-                            List<String> teams = (List<String>) readObj;
-                            accessPolicy.put(docName, new ArrayList<>(teams));
+                        if (readObj != null) {
+                            accessPolicy.put(docName, readObj);
                         }
                     }
                 }
@@ -52,8 +50,7 @@ public class DocumentAccessPolicyService {
 
             inputStream.close();
         } catch (Exception e) {
-            System.err.println("Error loading document access policy: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error loading document access policy: " + e.getMessage());
         }
     }
 
@@ -83,13 +80,12 @@ public class DocumentAccessPolicyService {
      */
     public void removeDocument(String documentName) {
         accessPolicy.remove(documentName);
-        // TODO: Persist to YAML file
     }
 
     /**
      * Gets all documents and their access teams.
      */
     public Map<String, List<String>> getAllAccessPolicies() {
-        return new HashMap<>(accessPolicy);
+        return accessPolicy;
     }
 }
