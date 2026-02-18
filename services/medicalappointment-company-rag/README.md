@@ -74,7 +74,7 @@ Documents are chunked using intelligent strategies:
 
 - **Default Strategy**: Recursive splitting (300 characters by default, configurable)
 - **Approved Response Templates**: Split by "Template: " markers, keeping entire templates as complete chunks
-- **Custom Strategies**: Defined in `src/main/resources/config/document-splitting-config.yaml`
+- **Custom Strategies**: Defined in `src/main/resources/config/document_splitting_rule.yaml`. At runtime, you may override the location of this document by providing the absolute path to it in `demo.config.split.location` variable.
 
 ### Configuration
 
@@ -91,6 +91,7 @@ Document access is managed via RBAC (Role-Based Access Control) defined in `src/
 - Each document can have a list of teams with read access
 - If no teams are specified (empty list), the document is company-wide accessible
 - The access policy is automatically loaded on startup and updated when documents are added/modified
+- At runtime, you may override the location of this document by providing the absolute path to it in `demo.access.split.location` variable.
 
 ## API Endpoints
 

@@ -9,5 +9,5 @@ services:
       - "1521:1521"
     environment:
       - ORACLE_PASSWORD=free
-      - APP_USER_PASSWORD=vector
-      - APP_USER=vector
+      - APP_USER_PASSWORD=vectordoc
+      - APP_USER=vectordoc
