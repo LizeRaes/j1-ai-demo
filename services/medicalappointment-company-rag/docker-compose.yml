@@ -6,8 +6,8 @@ services:
     container_name: oracle-free
     restart: unless-stopped
     ports:
-      - "1521:1521"
+      - "1522:1521"
     environment:
       - ORACLE_PASSWORD=free
-      - APP_USER_PASSWORD=vectordoc
-      - APP_USER=vectordoc
+      - APP_USER_PASSWORD=vector
+      - APP_USER=vector

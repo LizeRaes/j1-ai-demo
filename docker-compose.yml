@@ -1,0 +1,35 @@
+services:
+  company:
+    extends:
+      file: services/medicalappointment-company-rag/docker-compose.yml
+      service: oracle
+    container_name: company
+    ports:
+      - "1522:1521"
+  ticket:
+    extends:
+      file: services/medicalappointment-similar-tickets/docker-compose.yml
+      service: oracle
+    container_name: ticket
+    ports:
+      - "1521:1521"
+  mysql:
+    image: mysql:8
+    container_name: ticketing-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ticketing
+      MYSQL_USER: ticketing
+      MYSQL_PASSWORD: ticketing
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  mysql_data:
