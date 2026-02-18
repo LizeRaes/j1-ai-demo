@@ -7,7 +7,7 @@ This document provides essential information for AI agents and developers workin
 **Purpose**: Support ticketing system for MedicalAppointment (a digital healthcare logistics application). This system is used by customer service and engineering teams to handle user complaints, questions, and bug reports.
 
 **Architecture**: 
-- Backend: Quarkus 3.30.8 (Java 17) with Hibernate ORM + Panache
+- Backend: Quarkus 3.30.8 (Java 25) with Hibernate ORM + Panache
 - Database: MySQL 8 (Oracle-migratable design)
 - Frontend: Vanilla HTML/CSS/JavaScript (no framework)
 - API: RESTEasy Reactive (JAX-RS)

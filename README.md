@@ -39,25 +39,28 @@ Each service is independently deployable with its own `pom.xml`, `README.md`, an
 
 ## Quick Start
 
-**Prerequisites:** Java 17+, Maven 3.8+, Docker, `OPENAI_API_KEY` env var.
+**Prerequisites:** Java 25+, Maven 3.8+, Docker, `OPENAI_API_KEY` env var.
 
 Start services in this order:
 
 ```bash
+#0 start the DB services
+docker compose up
+
 # 1. User-facing app
 cd services/medicalappointment-user-facing && mvn quarkus:dev
 
 # 2. Helpdesk (needs MySQL via Docker)
-cd services/medicalappointment-helpdesk && docker-compose up -d && mvn quarkus:dev -DDemoData=true
+cd services/medicalappointment-helpdesk && mvn quarkus:dev -DDemoData=true
 
 # 3. AI triage
 cd services/medicalappointment-ai-triage && mvn quarkus:dev
 
 # 4. Similar-tickets (needs Oracle AI via Docker)
-cd services/medicalappointment-similar-tickets && docker-compose up -d && mvn clean verify && java -jar target/similar-tickets.jar
+cd services/medicalappointment-similar-tickets && mvn clean verify && java -jar target/similar-tickets.jar
 
-# 5. Company-documents RAG (needs Qdrant via Docker)
-cd services/medicalappointment-company-rag && docker-compose up -d && mvn quarkus:dev -DDemoData=true
+# 5. Company-documents RAG
+cd services/medicalappointment-company-rag && mvn quarkus:dev -Ddemo.load.data=true
 ```
 
 See each service's README for full setup details.
@@ -90,7 +93,7 @@ j1-ai-demo/
 | medicalappointment-helpdesk | Quarkus + Hibernate/Panache | — / MySQL |
 | medicalappointment-ai-triage | Quarkus + LangChain4j | GPT-4o-mini / — |
 | medicalappointment-similar-tickets | Helidon + LangChain4j | OpenAI embeddings / Oracle AI |
-| medicalappointment-company-rag | Quarkus + LangChain4j | OpenAI embeddings / Qdrant |
+| medicalappointment-company-rag | Quarkus + LangChain4j | OpenAI embeddings / Oracle AI |
 
 ## Demo Notice
 

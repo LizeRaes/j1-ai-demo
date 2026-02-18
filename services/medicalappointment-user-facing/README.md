@@ -16,7 +16,7 @@ All user support requests and feedback are automatically routed to the centraliz
 
 ## Tech Stack
 
-- **Java 17**
+- **Java 25**
 - **Quarkus 3.8.0** (Reactive framework)
 - **Maven** (Build tool)
 - **Qute** (Server-side templating)
@@ -64,7 +64,7 @@ Outbound help requests are forwarded to the external helpdesk system. See [CONTR
 
 ### Prerequisites
 
-- Java 17 or higher
+- Java 25 or higher
 - Maven 3.8 or higher
 
 ### Running the Application

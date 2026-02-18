@@ -64,7 +64,7 @@ This ticketing system receives complaints, questions, and bug reports from Medic
 
 ### Prerequisites
 
-- Java 17+
+- Java 25+
 - Maven
 - Docker (for MySQL)
 

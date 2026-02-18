@@ -6,7 +6,7 @@ The application runs as a single Quarkus-based JVM process.
 
 Primary runtime:
 
-Java 17
+Java 25
 
 Quarkus 3.8.0 (reactive stack)
 
