@@ -51,12 +51,9 @@ trap 'exit 0' INT TERM
 echo "=== Cleaning up old containers ==="
 stop_containers
 
-# --- Start infrastructure ---
+# --- Start databases ---
 echo "=== Starting Docker containers ==="
-(cd "$ROOT/services/medicalappointment-helpdesk" && docker compose up -d) || { echo "FATAL: helpdesk DB failed"; exit 1; }
-(cd "$ROOT/services/medicalappointment-similar-tickets" && docker compose up -d) || { echo "FATAL: similar-tickets DB failed"; exit 1; }
-(cd "$ROOT/services/medicalappointment-company-rag" && docker compose up -d) || { echo "FATAL: company-rag DB failed"; exit 1; }
-
+  docker compose up -d
 echo "=== Waiting for databases to be ready ==="
 sleep 10
 
@@ -75,11 +72,11 @@ sleep 10
 PIDS+=($!)
 sleep 5
 
-(cd "$ROOT/services/medicalappointment-company-rag" && exec mvn quarkus:dev -DDemoData=true) &
+(cd "$ROOT/services/medicalappointment-company-rag" && exec mvn quarkus:dev -Ddemo.data.load=true) &
 PIDS+=($!)
 sleep 5
 
-(cd "$ROOT/services/medicalappointment-similar-tickets" && mvn clean verify && exec java -jar target/similar-tickets.jar) &
+(cd "$ROOT/services/medicalappointment-similar-tickets" && mvn clean verify && exec java -Dconfig.profile=prod -jar target/similar-tickets.jar) &
 PIDS+=($!)
 
 echo ""

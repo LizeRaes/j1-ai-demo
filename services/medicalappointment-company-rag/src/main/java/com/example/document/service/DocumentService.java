@@ -1,36 +1,50 @@
 package com.example.document.service;
 
+import com.example.document.config.VectorDatabaseConfig;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import io.qdrant.client.grpc.JsonWithInt;
-import io.qdrant.client.grpc.Points;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import javax.sql.DataSource;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
 @ApplicationScoped
 public class DocumentService {
 
+    private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
+
     @Inject
-    EmbeddingService embeddingService;
+    DataSource dataSource;
+
+    @Inject
+    VectorDatabaseConfig vectorDatabaseConfig;
 
     @Inject
     EmbeddingModel embeddingModel;
-
-    @Inject
-    EmbeddingStore<TextSegment> embeddingStore;
 
     @Inject
     DocumentChunkingService chunkingService;
@@ -39,363 +53,172 @@ public class DocumentService {
     DocumentAccessPolicyService accessPolicyService;
 
     @Inject
-    com.example.document.config.QdrantConfig qdrantConfig;
+    @ConfigProperty(name = "demo.dir.location")
+    String documentsDir;
 
     @Inject
-    io.qdrant.client.QdrantClient qdrantClient;
+    @ConfigProperty(name = "demo.config.split.location")
+    String splitConfigLocation;
 
-    @ConfigProperty(name = "document.chunking.default.strategy", defaultValue = "recursive")
+    @ConfigProperty(name = "document.chunking.default.strategy")
     String defaultStrategy;
 
-    @ConfigProperty(name = "embedding.dimension", defaultValue = "3072")
-    int embeddingDimension;
+    private EmbeddingStore<TextSegment> embeddingStore;
 
-    private static final String DOCUMENTS_DIR = "documents";
-    private static final String CONFIG_DIR = "config";
-    private volatile boolean collectionChecked = false;
+    private String embeddingTable;
 
-    /**
-     * Loads and embeds all documents from the static/documents directory on startup.
-     */
-    public void loadAndEmbedAllDocuments() {
+    private String metadataColumn;
+
+    private  Map<String, Object> splitConfig;
+
+
+    @PostConstruct
+    void init() {
+        embeddingStore = vectorDatabaseConfig.getEmbeddingStore();
+        embeddingTable = vectorDatabaseConfig.getEmbeddingTable();
+        metadataColumn = vectorDatabaseConfig.getMetadataColumn();
+
         try {
-            // Known document names - in a real system, you might read this from a config file
-            // or scan the directory. For now, we'll try to load common document names.
-            String[] knownDocuments = {
-                "Approved_Response_Templates.txt",
-                "Billing_Refund_Policy.txt",
-                "Data_Privacy_User_Data_Handling.txt",
-                "Known_Bugs_Limitations.txt",
-                "MedicalAppointment_Architecture.txt",
-                "Payment_System_Payment_Flow.txt",
-                "Security_Escalation_Policy.txt"
-            };
-
-            // Try to load each known document
-            for (String fileName : knownDocuments) {
-                try {
-                    InputStream docStream = getClass().getClassLoader()
-                        .getResourceAsStream(DOCUMENTS_DIR + "/" + fileName);
-                    if (docStream != null) {
-                        docStream.close();
-                        loadAndEmbedDocument(fileName);
-                        System.out.println("Loaded and embedded document: " + fileName);
-                    }
-                } catch (Exception e) {
-                    // Document doesn't exist or error loading - skip it
-                    System.out.println("Skipping document " + fileName + " (not found or error: " + e.getMessage() + ")");
-                }
-            }
-
-            // Also try to list files if in file system mode (development)
-            try {
-                java.net.URL documentsUrl = getClass().getClassLoader().getResource(DOCUMENTS_DIR);
-                if (documentsUrl != null && "file".equals(documentsUrl.getProtocol())) {
-                    Path documentsPath = Paths.get(documentsUrl.toURI());
-                    if (Files.isDirectory(documentsPath)) {
-                        Files.list(documentsPath)
-                            .filter(path -> path.toString().endsWith(".txt"))
-                            .forEach(path -> {
-                                String fileName = path.getFileName().toString();
-                                // Only load if not already loaded
-                                boolean alreadyLoaded = false;
-                                for (String known : knownDocuments) {
-                                    if (known.equals(fileName)) {
-                                        alreadyLoaded = true;
-                                        break;
-                                    }
-                                }
-                                if (!alreadyLoaded) {
-                                    try {
-                                        loadAndEmbedDocument(fileName);
-                                        System.out.println("Loaded and embedded document: " + fileName);
-                                    } catch (Exception e) {
-                                        System.err.println("Error loading document " + fileName + ": " + e.getMessage());
-                                    }
-                                }
-                            });
-                    }
-                }
-            } catch (Exception e) {
-                // Ignore - we already tried known documents
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error loading documents: " + e.getMessage());
-            e.printStackTrace();
+            List<Path> configLocation = scan(splitConfigLocation);
+            InputStream configStream = Files.newInputStream(configLocation.getFirst());
+            splitConfig = new Yaml().load(configStream);
+        } catch (URISyntaxException | IOException e) {
+            LOGGER.log(Level.SEVERE, "Error loading split configuration: ", e);
         }
+
     }
 
-    /**
-     * Wipes all embeddings from the database.
-     */
+    private List<Path> scan(String directory) throws URISyntaxException {
+        Path dirPath;
+        if (directory.startsWith("classpath:/")) {
+            String resourceDir = directory.substring("classpath:/".length());
+            URL url = Thread.currentThread().getContextClassLoader().getResource(resourceDir);
+            dirPath = Paths.get(Objects.requireNonNull(url).toURI());
+        } else {
+            dirPath = Path.of(directory);
+        }
+
+        try (Stream<Path> files = Files.walk(dirPath)) {
+            return files.filter(Files::isRegularFile).toList();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error inspect directory path: ", e);
+        }
+        return List.of(dirPath);
+    }
+
+    public void embedLocalDocuments() {
+        try {
+            for (Path pathTrail : scan(documentsDir)) {
+                if (Files.exists(pathTrail)) {
+                    embedLoadedDocument(pathTrail);
+                    LOGGER.info("Loaded and embedded document: " + pathTrail);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error loading documents: ", e);
+        }
+    }
     public void wipeAllEmbeddings() {
-        try {
-            System.out.println("Wiping all embeddings from collection...");
-            // Remove all embeddings by using a filter that matches everything
-            // Since we can't easily delete all, we'll delete by document name for each known document
-            // and then try to clear the collection if possible
-            String collectionName = qdrantConfig.getCollectionName();
+        String truncate = "TRUNCATE TABLE " + embeddingTable.toUpperCase();
 
-            // Try to delete the collection and recreate it
-            try {
-                qdrantClient.deleteCollectionAsync(collectionName).get();
-                System.out.println("Deleted collection: " + collectionName);
-            } catch (Exception e) {
-                // Collection might not exist, that's fine
-                if (e.getMessage() != null && !e.getMessage().contains("doesn't exist")) {
-                    System.err.println("Error deleting collection: " + e.getMessage());
-                }
-            }
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(truncate)) {
+             ps.execute();
+        } catch (Exception truncateFailed) {
+            String delete = "DELETE FROM " + embeddingTable.toUpperCase();
+            try (Connection c = dataSource.getConnection();
+                 PreparedStatement ps = c.prepareStatement(delete)) {
+                 int deleted = ps.executeUpdate();
+                 LOGGER.info("Wiped embeddings table '" + embeddingTable + "'. Rows deleted: " + deleted);
 
-            // Reset collection checked flag so it will be recreated
-            collectionChecked = false;
-            ensureCollectionExists();
-            System.out.println("Database wiped successfully.");
-        } catch (Exception e) {
-            System.err.println("Error wiping database: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Ensures the Qdrant collection exists, creating it if necessary.
-     * Made public so StartupService can call it.
-     */
-    public void ensureCollectionExists() {
-        if (collectionChecked) {
-            return;
-        }
-        synchronized (this) {
-            if (collectionChecked) {
-                return;
-            }
-            try {
-                String collectionName = qdrantConfig.getCollectionName();
-                // Check if collection exists
-                boolean collectionExists = false;
-                try {
-                    qdrantClient.getCollectionInfoAsync(collectionName).get();
-                    // Collection exists
-                    collectionExists = true;
-                } catch (java.util.concurrent.ExecutionException e) {
-                    // Check if the cause is a NOT_FOUND error (collection doesn't exist)
-                    Throwable cause = e.getCause();
-                    if (cause instanceof io.grpc.StatusRuntimeException) {
-                        io.grpc.StatusRuntimeException grpcException = (io.grpc.StatusRuntimeException) cause;
-                        if (grpcException.getStatus().getCode() == io.grpc.Status.Code.NOT_FOUND) {
-                            // Collection doesn't exist - this is expected on first startup
-                            collectionExists = false;
-                        } else {
-                            // Some other error
-                            throw e;
-                        }
-                    } else {
-                        // Some other error
-                        throw e;
-                    }
-                }
-
-                if (!collectionExists) {
-                    // Collection doesn't exist, create it
-                    // Use configured embedding dimension (no OpenAI call needed)
-                    int dimension = embeddingDimension;
-
-                    // Create collection
-                    qdrantClient.createCollectionAsync(
-                        collectionName,
-                        io.qdrant.client.grpc.Collections.VectorParams.newBuilder()
-                            .setSize(dimension)
-                            .setDistance(io.qdrant.client.grpc.Collections.Distance.Cosine)
-                            .build()
-                    ).get();
-                    System.out.println("Created Qdrant collection: " + collectionName + " with dimension " + dimension);
-                }
-                collectionChecked = true;
-            } catch (Exception e) {
-                System.err.println("Error ensuring collection exists: " + e.getMessage());
-                e.printStackTrace();
-                // Don't set collectionChecked = true so we'll try again
+            } catch (Exception deleteFailed) {
+                LOGGER.log(Level.SEVERE, "Error wiping embeddings: ", deleteFailed);
             }
         }
     }
 
-    /**
-     * Loads and embeds a single document.
-     */
-    public void loadAndEmbedDocument(String documentName) throws Exception {
-        // Ensure collection exists before proceeding
-        ensureCollectionExists();
 
-        // Read document from static
-        InputStream docStream = getClass().getClassLoader()
-            .getResourceAsStream(DOCUMENTS_DIR + "/" + documentName);
-
-        if (docStream == null) {
-            throw new FileNotFoundException("Document not found: " + documentName);
+    public void embedLoadedDocument(Path path) throws Exception {
+        try (InputStream docStream = Files.newInputStream(path)) {
+            String content = new String(docStream.readAllBytes());
+            chunkAndEmbed(path.getFileName().toString(), content);
         }
+    }
 
-        String content = new String(docStream.readAllBytes());
-        docStream.close();
-
+    private void chunkAndEmbed(String documentName, String content) {
         Document document = Document.from(content);
 
-        // Determine chunking strategy
-        String strategy = getChunkingStrategy(documentName);
-
-        // Chunk the document
+        String strategy = matchChunkingStrategy(documentName);
         List<TextSegment> segments = chunkingService.chunkDocument(document, documentName, strategy);
 
-        // Delete existing embeddings for this document
         deleteDocumentEmbeddings(documentName);
 
-        // Embed and store each chunk
         for (TextSegment segment : segments) {
             Embedding embedding = embeddingModel.embed(segment.text()).content();
             embeddingStore.add(embedding, segment);
         }
     }
 
-    /**
-     * Deletes all embeddings for a document.
-     * Silently handles the case where the collection doesn't exist yet.
-     */
     public void deleteDocumentEmbeddings(String documentName) {
         try {
-            embeddingStore.removeAll(
-                metadataKey("documentName").isEqualTo(documentName)
-            );
+            embeddingStore.removeAll(metadataKey("documentName").isEqualTo(documentName));
         } catch (Exception e) {
-            // Collection might not exist yet (first startup) - this is fine, just ignore
-            String errorMsg = e.getMessage();
-            Throwable cause = e.getCause();
-            if (errorMsg != null && errorMsg.contains("doesn't exist")) {
-                // Expected on first startup, ignore
-                return;
-            }
-            // Also check cause (for wrapped exceptions like ExecutionException)
-            if (cause != null) {
-                String causeMsg = cause.getMessage();
-                if (causeMsg != null && causeMsg.contains("doesn't exist")) {
-                    // Expected on first startup, ignore
-                    return;
-                }
-            }
-            // For other errors, log but don't fail
-            System.err.println("Warning: Error deleting embeddings for " + documentName + ": " + errorMsg);
+            LOGGER.log(Level.SEVERE, "Warning: Error deleting embeddings for " + documentName + ": ", e);
         }
     }
 
-    /**
-     * Gets the chunking strategy for a document from config, or returns default.
-     */
-    private String getChunkingStrategy(String documentName) {
-        try {
-            InputStream configStream = getClass().getClassLoader()
-                .getResourceAsStream(CONFIG_DIR + "/document-splitting-config.yaml");
-
-            if (configStream == null) {
-                return defaultStrategy;
-            }
-
-            Yaml yaml = new Yaml();
-            Map<String, Object> config = yaml.load(configStream);
-            configStream.close();
-
-            if (config != null && config.containsKey("documents")) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> documents = (Map<String, Object>) config.get("documents");
-
-                if (documents.containsKey(documentName)) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> docConfig = (Map<String, Object>) documents.get(documentName);
-                    Object strategy = docConfig.get("strategy");
-                    if (strategy != null) {
-                        return strategy.toString();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error reading splitting config: " + e.getMessage());
-        }
-
-        return defaultStrategy;
+    private String matchChunkingStrategy(String documentName) {
+        return Optional.ofNullable(splitConfig)
+                .map(c -> c.get("documents"))
+                .map(m -> (Map<String, Object>) m)
+                .map(docs -> docs.get(documentName))
+                .filter(Map.class::isInstance)
+                .map(m -> (Map<String, Object>) m)
+                .map(doc -> doc.get("strategy"))
+                .map(Object::toString)
+                .orElse(defaultStrategy);
     }
 
-    /**
-     * Adds or updates a document with its content and RBAC teams.
-     */
-    public void upsertDocument(String documentName, String content, List<String> rbacTeams) throws Exception {
-        // Save document to static/documents
+    public void upsertDocument(String documentName, String content, List<String> rbacTeams) {
         saveDocumentToResources(documentName, content);
-
-        // Update access policy
         accessPolicyService.updateDocumentAccess(documentName, rbacTeams);
-
-        // Load and embed the document
-        Document document = Document.from(content);
-        String strategy = getChunkingStrategy(documentName);
-        List<TextSegment> segments = chunkingService.chunkDocument(document, documentName, strategy);
-
-        // Delete existing embeddings
-        deleteDocumentEmbeddings(documentName);
-
-        // Embed and store
-        for (TextSegment segment : segments) {
-            Embedding embedding = embeddingModel.embed(segment.text()).content();
-            embeddingStore.add(embedding, segment);
-        }
+        chunkAndEmbed(documentName, content);
     }
 
-    /**
-     * Saves a document to the static/documents directory.
-     * Note: In a real application, you'd want to handle this differently as static are typically read-only.
-     * For now, we'll just update the in-memory representation.
-     */
     private void saveDocumentToResources(String documentName, String content) {
-        // In a production system, you'd write to a writable directory
+        // TODO In a production system, you'd write to a writable directory
         // For now, we'll just keep it in memory or use a different location
         // This is a limitation of packaging static in JAR files
     }
 
     /**
-     * Gets all document names from both the access policy and from actual loaded documents.
+     * Gets all document names from access policy plus what’s actually stored in the databse.
+     * We query DISTINCT documentName from metadata JSON using JSON_VALUE.
+     * Adjust JSON path if your metadata structure differs.
      */
-    public List<String> getAllDocumentNames() {
-        java.util.Set<String> documentNames = new java.util.HashSet<>();
+    public List<String> findAllDocumentNames() {
+        Set<String> documentNames = new HashSet<>(accessPolicyService.getAllAccessPolicies().keySet());
 
-        // Add documents from access policy
-        documentNames.addAll(accessPolicyService.getAllAccessPolicies().keySet());
+        String sql = """
+                SELECT DISTINCT JSON_VALUE(%s, '$.documentName')
+                FROM %s
+                WHERE JSON_VALUE(%s, '$.documentName') IS NOT NULL
+                """.formatted(metadataColumn, embeddingTable, metadataColumn);
 
-        // Also get document names from chunks in Qdrant using direct scroll API
-        try {
-            Points.ScrollResponse response = qdrantClient.scrollAsync(
-                    Points.ScrollPoints.newBuilder()
-                            .setCollectionName(qdrantConfig.getCollectionName())
-                            .setLimit(10_000)
-                            .setWithPayload(
-                                    Points.WithPayloadSelector.newBuilder().setEnable(true).build()
-                            )
-                            .setWithVectors(
-                                    Points.WithVectorsSelector.newBuilder().setEnable(false).build()
-                            )
-                            .build()
-            ).get();
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-            response.getResultList().stream()
-                    .map(p -> {
-                        JsonWithInt.Value docNameValue = p.getPayloadMap().get("documentName");
-                        if (docNameValue != null && docNameValue.hasStringValue()) {
-                            return docNameValue.getStringValue();
-                        }
-                        return null;
-                    })
-                    .filter(name -> name != null)
-                    .forEach(documentNames::add);
+            while (rs.next()) {
+                String name = rs.getString(1);
+                if (name != null && !name.isBlank()) {
+                    documentNames.add(name);
+                }
+            }
         } catch (Exception e) {
-            System.err.println("Error getting document names from chunks: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error getting document names from Oracle embeddings table: ", e);
         }
 
-        return new ArrayList<>(documentNames);
+        return documentNames.stream().toList();
     }
 }

@@ -1,59 +1,59 @@
 package com.example.document.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toMap;
 
 @ApplicationScoped
 public class DocumentAccessPolicyService {
 
+    private static final Logger LOGGER = Logger.getLogger(DocumentAccessPolicyService.class.getName());
+
     private Map<String, List<String>> accessPolicy = new HashMap<>();
 
-    public DocumentAccessPolicyService() {
-        loadPolicy();
-    }
+    @ConfigProperty(name = "demo.config.access.location")
+    String accessConfigLocation;
 
-    /**
-     * Loads the document access policy from YAML file.
-     */
-    private void loadPolicy() {
+    @PostConstruct
+    void init() {
         try {
-            InputStream inputStream = getClass().getClassLoader()
-                .getResourceAsStream("config/document_access_policy.yaml");
-
-            if (inputStream == null) {
-                System.err.println("Warning: document_access_policy.yaml not found, using empty policy");
-                return;
-            }
+            List<Path> configLocation = scan(accessConfigLocation);
+            InputStream configStream = Files.newInputStream(configLocation.getFirst());
 
             Yaml yaml = new Yaml();
-            Map<String, Object> data = yaml.load(inputStream);
+            Map<String, List<String>> data = yaml.load(configStream);
 
-            if (data != null) {
-                for (Map.Entry<String, Object> entry : data.entrySet()) {
-                    String docName = entry.getKey();
-                    Object value = entry.getValue();
-
-                    if (value instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> docConfig = (Map<String, Object>) value;
-                        Object readObj = docConfig.get("read");
-
-                        if (readObj instanceof List) {
-                            @SuppressWarnings("unchecked")
-                            List<String> teams = (List<String>) readObj;
-                            accessPolicy.put(docName, new ArrayList<>(teams));
-                        }
-                    }
-                }
-            }
-
-            inputStream.close();
+            accessPolicy = Optional.ofNullable(data).orElse(Map.of()).entrySet().stream()
+                            .filter(e -> e.getValue() instanceof Map<?, ?>)
+                            .map(e -> Map.entry(e.getKey(), (Map<?, ?>) e.getValue()))
+                            .map(e -> Map.entry(e.getKey(), e.getValue().get("read")))
+                            .filter(e -> e.getValue() instanceof List<?>)
+                            .collect(toMap(
+                                    Map.Entry::getKey,
+                                    e -> ((List<?>) e.getValue())
+                                            .stream()
+                                            .filter(String.class::isInstance)
+                                            .map(String.class::cast)
+                                            .collect(toCollection(ArrayList::new))
+                            ));
         } catch (Exception e) {
-            System.err.println("Error loading document access policy: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error loading document access policy: ", e);
         }
     }
 
@@ -83,7 +83,6 @@ public class DocumentAccessPolicyService {
      */
     public void removeDocument(String documentName) {
         accessPolicy.remove(documentName);
-        // TODO: Persist to YAML file
     }
 
     /**
@@ -91,5 +90,23 @@ public class DocumentAccessPolicyService {
      */
     public Map<String, List<String>> getAllAccessPolicies() {
         return new HashMap<>(accessPolicy);
+    }
+
+    private List<Path> scan(String directory) throws URISyntaxException {
+        Path dirPath;
+        if (directory.startsWith("classpath:/")) {
+            String resourceDir = directory.substring("classpath:/".length());
+            URL url = Thread.currentThread().getContextClassLoader().getResource(resourceDir);
+            dirPath = Paths.get(Objects.requireNonNull(url).toURI());
+        } else {
+            dirPath = Path.of(directory);
+        }
+
+        try (Stream<Path> files = Files.walk(dirPath)) {
+            return files.filter(Files::isRegularFile).toList();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error inspect directory path: ", e);
+        }
+        return List.of(dirPath);
     }
 }

@@ -1,13 +1,13 @@
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6335:6333"  # HTTP port (host:container) - changed from 6333 to avoid conflict
-      - "6336:6334"  # gRPC port (host:container) - changed from 6334 to avoid conflict
-    volumes:
-      - qdrant_storage:/qdrant/storage
-    environment:
-      - QDRANT__SERVICE__GRPC_PORT=6334
+version: '3.8'
 
-volumes:
-  qdrant_storage:
+services:
+  oracle:
+    image: gvenzl/oracle-free:latest
+    container_name: oracle-free
+    restart: unless-stopped
+    ports:
+      - "1522:1521"
+    environment:
+      - ORACLE_PASSWORD=free
+      - APP_USER_PASSWORD=vector
+      - APP_USER=vector

@@ -12,7 +12,6 @@ public class LogService {
 
     public void addLog(String message, String type) {
         logs.offer(new LogEntry(message, type, System.currentTimeMillis()));
-        // Keep only last MAX_LOGS entries
         while (logs.size() > MAX_LOGS) {
             logs.poll();
         }
@@ -22,15 +21,5 @@ public class LogService {
         return new ArrayList<>(logs);
     }
 
-    public static class LogEntry {
-        public final String message;
-        public final String type;
-        public final long timestamp;
-
-        public LogEntry(String message, String type, long timestamp) {
-            this.message = message;
-            this.type = type;
-            this.timestamp = timestamp;
-        }
-    }
+    public record LogEntry(String message, String type, long timestamp) { }
 }
