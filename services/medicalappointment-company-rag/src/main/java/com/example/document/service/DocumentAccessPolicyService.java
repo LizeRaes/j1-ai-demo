@@ -2,7 +2,6 @@ package com.example.document.service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.yaml.snakeyaml.Yaml;
 
@@ -26,9 +25,8 @@ public class DocumentAccessPolicyService {
 
     private static final Logger LOGGER = Logger.getLogger(DocumentAccessPolicyService.class.getName());
 
-    private Map<String, List<String>> accessPolicy;
+    private Map<String, List<String>> accessPolicy = new HashMap<>();
 
-    @Inject
     @ConfigProperty(name = "demo.config.access.location")
     String accessConfigLocation;
 
@@ -55,7 +53,7 @@ public class DocumentAccessPolicyService {
                                             .collect(toCollection(ArrayList::new))
                             ));
         } catch (Exception e) {
-            LOGGER.severe("Error loading document access policy: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error loading document access policy: ", e);
         }
     }
 
@@ -91,7 +89,7 @@ public class DocumentAccessPolicyService {
      * Gets all documents and their access teams.
      */
     public Map<String, List<String>> getAllAccessPolicies() {
-        return accessPolicy;
+        return new HashMap<>(accessPolicy);
     }
 
     private List<Path> scan(String directory) throws URISyntaxException {

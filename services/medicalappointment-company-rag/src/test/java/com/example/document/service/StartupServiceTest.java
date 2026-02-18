@@ -3,12 +3,14 @@ package com.example.document.service;
 import static org.mockito.Mockito.*;
 
 import io.quarkus.arc.profile.IfBuildProfile;
+import io.quarkus.arc.profile.UnlessBuildProfile;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@UnlessBuildProfile("dev")
 @QuarkusTest
 public class StartupServiceTest {
 
@@ -36,7 +38,7 @@ public class StartupServiceTest {
         startupService.onStart(null);
 
         verify(documentService, times(1)).wipeAllEmbeddings();
-        verify(documentService, times(1)).embedLoadedDocuments();
+        verify(documentService, times(1)).embedLocalDocuments();
 
     }
 

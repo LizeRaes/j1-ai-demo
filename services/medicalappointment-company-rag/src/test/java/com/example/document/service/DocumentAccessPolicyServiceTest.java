@@ -2,7 +2,6 @@ package com.example.document.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,20 +20,20 @@ public class DocumentAccessPolicyServiceTest {
     }
 
     @Test
-    void testGetAccessTeams_DocumentExists() {
+    void testGetAccessTeamsDocumentExists() {
         List<String> teams = service.getAccessTeams("Approved_Response_Templates.txt");
         assertNotNull(teams);
     }
 
     @Test
-    void testGetAccessTeams_DocumentDoesNotExist() {
+    void testGetAccessTeamsDocumentDoesNotExist() {
         List<String> teams = service.getAccessTeams("NonExistentDocument.txt");
         assertNotNull(teams);
         assertTrue(teams.isEmpty());
     }
 
     @Test
-    void testUpdateDocumentAccess_WithTeams() {
+    void testUpdateDocumentAccessWithTeams() {
         String documentName = "TestDocument.txt";
         List<String> teams = List.of("Team1", "Team2");
         service.updateDocumentAccess(documentName, teams);
@@ -42,14 +41,14 @@ public class DocumentAccessPolicyServiceTest {
     }
 
     @Test
-    void testUpdateDocumentAccess_EmptyTeams() {
+    void testUpdateDocumentAccessEmptyTeams() {
         String documentName = "TestDocument.txt";
         service.updateDocumentAccess(documentName, List.of());
         assertTrue(service.getAccessTeams(documentName).isEmpty());
     }
 
     @Test
-    void testUpdateDocumentAccess_NullTeams() {
+    void testUpdateDocumentAccessNullTeams() {
         String documentName = "TestDocument.txt";
         service.updateDocumentAccess(documentName, null);
         assertTrue(service.getAccessTeams(documentName).isEmpty());
@@ -67,6 +66,9 @@ public class DocumentAccessPolicyServiceTest {
 
     @Test
     void testGetAllAccessPolicies() {
+        String documentName = "TestDocument.txt";
+        List<String> teams = List.of("Team1", "Team2");
+        service.updateDocumentAccess(documentName, teams);
         Map<String, List<String>> list = service.getAllAccessPolicies();
         assertNotNull(list);
         assertFalse(list.isEmpty());
@@ -77,4 +79,3 @@ public class DocumentAccessPolicyServiceTest {
         service = null;
     }
 }
-
