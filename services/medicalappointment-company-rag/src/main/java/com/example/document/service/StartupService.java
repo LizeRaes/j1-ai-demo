@@ -25,7 +25,7 @@ public class StartupService {
         if (loadDemoData) {
             LOGGER.info("demo.data.load=true: Wiping database and loading/embedding all documents...");
             documentService.wipeAllEmbeddings();
-            documentService.embedLoadedDocuments();
+            documentService.embedLocalDocuments();
             LOGGER.info("Startup complete - database wiped and all documents loaded and embedded.");
         } else {
             LOGGER.info("Starting up - preserving existing database (use -Ddemo.data.load=true to wipe and reload)");

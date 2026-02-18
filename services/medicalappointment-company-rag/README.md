@@ -14,7 +14,7 @@ This RAG system allows you to:
 
 - Java 25
 - Maven 3.8+
-- Docker (for Qdrant)
+- Docker (for Oracle 26 AI to run locally)
 - OpenAI API key (for embeddings)
 
 ## Setup
@@ -37,11 +37,11 @@ This RAG system allows you to:
 The application will run on port **8084**.
 
 **Important:** 
-- Make sure Qdrant is running before starting the application, otherwise you'll get connection errors.
+- Make sure the Oracle database is running before starting the application, otherwise you'll get connection errors.
 - **By default**, the application preserves existing data in the database and does NOT reload documents on startup.
-- **To wipe the database and reload all documents** from `src/main/resources/documents/`, use the `DemoData` system property:
+- **To wipe the database and reload all documents** from `src/main/resources/documents/`, use the `demo.data.load` system property:
   ```bash
-  mvn quarkus:dev -DDemoData=true
+  mvn quarkus:dev -Ddemo.data.load=true
   ```
 
 ## Web Dashboard

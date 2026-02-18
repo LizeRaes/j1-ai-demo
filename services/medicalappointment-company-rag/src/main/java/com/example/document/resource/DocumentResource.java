@@ -136,7 +136,7 @@ public class DocumentResource {
     @GET
     @Path("/all")
     public DocumentsResponse getAllDocuments() {
-        List<String> documentNames = documentService.getAllDocumentNames();
+        List<String> documentNames = documentService.findAllDocumentNames();
 
         List<DocumentsResponse.DocumentInfo> documents = documentNames.stream()
                 .map(name -> {
