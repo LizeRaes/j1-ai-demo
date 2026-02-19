@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8
-    container_name: ticketing-mysql
+    container_name: helpdesk
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: ticketing

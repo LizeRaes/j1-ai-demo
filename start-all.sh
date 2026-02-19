@@ -19,10 +19,7 @@ kill_tree() {
 }
 
 stop_containers() {
-  docker rm -f ticketing-mysql oracle-free 2>/dev/null || true
-  (cd "$ROOT/services/medicalappointment-helpdesk" && docker compose down --remove-orphans) 2>/dev/null || true
-  (cd "$ROOT/services/medicalappointment-similar-tickets" && docker compose down --remove-orphans) 2>/dev/null || true
-  (cd "$ROOT/services/medicalappointment-company-rag" && docker compose down --remove-orphans) 2>/dev/null || true
+  docker compose down --remove-orphans
 }
 
 cleanup() {
