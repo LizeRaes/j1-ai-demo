@@ -15,6 +15,8 @@
 
     <properties>
         <mainClass>org.example.similarity.Main</mainClass>
+        <mockito-core.version>5.21.0</mockito-core.version>
+        <maven.compiler.release>25</maven.compiler.release>
     </properties>
 
     <dependencies>
@@ -26,7 +28,19 @@
             <groupId>io.helidon.webserver</groupId>
             <artifactId>helidon-webserver-static-content</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>io.helidon.openapi</groupId>
+            <artifactId>helidon-openapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.integrations.openapi-ui</groupId>
+            <artifactId>helidon-integrations-openapi-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-open-api-ui</artifactId>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>io.helidon.config</groupId>
             <artifactId>helidon-config-yaml</artifactId>
@@ -90,6 +104,12 @@
         <dependency>
             <groupId>io.helidon.webclient</groupId>
             <artifactId>helidon-webclient</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito-core.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
