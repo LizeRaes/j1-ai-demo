@@ -2,7 +2,7 @@ package org.example.similarity.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record SearchRequest(@JsonProperty("type") String ticketType, @JsonProperty("text") String text,
+public record SearchRequest(@JsonProperty("ticketType") String ticketType, @JsonProperty("text") String text,
                             @JsonProperty("maxResults") Integer maxResults, @JsonProperty("minScore") Double minScore,
-                            @JsonProperty("id") Long ticketId) {
+                            @JsonProperty("ticketId") Long ticketId) {
 }

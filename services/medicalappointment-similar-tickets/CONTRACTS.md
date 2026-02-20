@@ -44,26 +44,16 @@ curl -X POST http://localhost:8082/api/similarity/tickets/upsert \
 
 ### 2. Delete Ticket Embedding
 
-- **Method**: `POST`
+- **Method**: `DELETE`
 - **Path**: `/api/similarity/tickets/delete`
 - **Description**: Delete a ticket embedding (idempotent; no-op if it does not exist).
-
-**Request Body**
-
-```json
-{
-  "ticketId": 912
-}
-```
 
 **Curl Example**
 
 ```bash
-curl -X POST http://localhost:8082/api/similarity/tickets/delete \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ticketId": 912
-  }'
+curl -X 'DELETE' \
+  'http://localhost:8082/api/similarity/tickets/delete/127' \
+  -H 'accept: application/json'
 ```
 
 **Response (200)**
