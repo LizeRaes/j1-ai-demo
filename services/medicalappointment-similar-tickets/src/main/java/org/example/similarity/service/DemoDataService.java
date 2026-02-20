@@ -3,9 +3,9 @@ package org.example.similarity.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class DemoDataService {
 
@@ -60,7 +60,7 @@ public class DemoDataService {
                     .getContextClassLoader()
                     .getResourceAsStream(filePath);
 
-            if (inputStream == null) {
+            if (Objects.isNull(inputStream)) {
                 throw new RuntimeException("Demo data file not found: " + filePath);
             }
 
@@ -68,10 +68,12 @@ public class DemoDataService {
 
             List<Map<String, Object>> tickets = objectMapper.readValue(
                     inputStream,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class)
+                    objectMapper
+                            .getTypeFactory()
+                            .constructCollectionType(List.class, Map.class)
             );
 
-            return tickets != null ? tickets : new ArrayList<>();
+            return tickets != null ? tickets : List.of();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load demo data from " + filePath, e);
         }

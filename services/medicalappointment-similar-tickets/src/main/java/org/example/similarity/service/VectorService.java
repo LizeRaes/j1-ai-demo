@@ -70,19 +70,19 @@ public class VectorService {
     }
 
     public void deleteAllTickets() {
-        String sql = "TRUNCATE TABLE " + tableName;
+        String sql = "TRUNCATE TABLE %s".formatted(tableName);
 
         try (Connection c = dataSource.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.execute();
         } catch (Exception truncateFailed) {
             // Fallback if TRUNCATE isn't allowed due to privileges
-            String delete = "DELETE FROM " + tableName;
+            String delete = "DELETE FROM %s".formatted(tableName);
             try (Connection c = dataSource.getConnection();
                  PreparedStatement ps = c.prepareStatement(delete)) {
                 ps.executeUpdate();
             } catch (Exception deleteFailed) {
-                throw new RuntimeException("Failed to delete all points from the database", deleteFailed);
+                throw new RuntimeException("Failed to delete all tickets from the database", deleteFailed);
             }
         }
     }
@@ -119,9 +119,6 @@ public class VectorService {
     }
 
     public List<TicketsResponse.TicketInfo> retrieveAllTickets() {
-        // TODO, make it smarter
-        // Ticket fields are stored in metadata JSON by our upsertTicket().
-        // Use JSON_VALUE to extract id & type.
         String sql = """
                 SELECT
                   JSON_VALUE(%s, '$.id' RETURNING NUMBER) AS ticket_id,
@@ -139,14 +136,9 @@ public class VectorService {
 
             while (rs.next()) {
                 Long ticketId = rs.getLong("ticket_id");
-                if (rs.wasNull()) {
-                    continue;
-                }
                 String ticketType = rs.getString("ticket_type");
                 String text = rs.getString("text_col");
-
-                float[] vector = readVectorAsFloatArray(rs);
-
+                float[] vector = rs.getObject("embedding_col", float[].class);
                 results.add(new TicketsResponse.TicketInfo(ticketId, ticketType, text != null ? text : "N/A", vector));
             }
         } catch (Exception e) {
@@ -154,57 +146,6 @@ public class VectorService {
         }
 
         return results;
-    }
-
-    private float[] readVectorAsFloatArray(ResultSet rs) throws Exception {
-        try {
-            float[] fa = rs.getObject("embedding_col", float[].class);
-            if (fa != null) return fa;
-        } catch (Exception ignored) {
-        }
-
-        try {
-            double[] da = rs.getObject("embedding_col", double[].class);
-            if (da != null) {
-                float[] fa = new float[da.length];
-                for (int i = 0; i < da.length; i++) fa[i] = (float) da[i];
-                return fa;
-            }
-        } catch (Exception ignored) {
-        }
-
-        Object v = rs.getObject("embedding_col");
-        if (v == null) return null;
-
-        if (v instanceof float[] fa2) {
-            return fa2;
-        }
-
-        try {
-            var m = v.getClass().getMethod("getFloatArray");
-            return (float[]) m.invoke(v);
-        } catch (NoSuchMethodException ignored) {
-        }
-
-        try {
-            var m = v.getClass().getMethod("toFloatArray");
-            return (float[]) m.invoke(v);
-        } catch (NoSuchMethodException ignored) {
-        }
-
-        try {
-            var m = v.getClass().getMethod("getValues");
-            Object values = m.invoke(v);
-            if (values instanceof java.util.List<?> list) {
-                float[] out = new float[list.size()];
-                for (int i = 0; i < list.size(); i++) {
-                    out[i] = ((Number) list.get(i)).floatValue();
-                }
-                return out;
-            }
-        } catch (NoSuchMethodException ignored) {
-        }
-        throw new IllegalStateException("Unsupported vector JDBC type: " + v.getClass().getName());
     }
 
     public record SearchResult(Long ticketId, double score) {}

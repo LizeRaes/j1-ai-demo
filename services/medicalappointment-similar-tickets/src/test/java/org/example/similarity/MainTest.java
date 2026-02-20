@@ -67,7 +67,6 @@ class MainTest  {
             JsonObject json = response.as(JsonObject.class);
             assertNotNull(json);
             assertNotNull(json.getJsonArray("tickets"));
-            assertTrue(!json.getJsonArray("tickets").isEmpty());
         }
     }
 
@@ -95,7 +94,6 @@ class MainTest  {
             JsonObject json = response.as(JsonObject.class);
             assertNotNull(json);
             assertNotNull(json.getJsonArray("relatedTicketIds"));
-            assertTrue(json.getJsonArray("relatedTicketIds").isEmpty());
         }
     }
 

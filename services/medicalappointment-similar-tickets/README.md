@@ -25,6 +25,15 @@ The application will run on port **8082**.
 
 **Important:** Make sure Oracle AI 26ai is running before starting the application, otherwise you'll get connection errors.
 
+### Running Integration Tests
+
+By default, integration tests are disabled unless you supply some system variables. 
+If you have an OpenAPI key and an Oracle Database connection, you may run the tests for the application using the following command:
+
+```bash
+mvn clean -Dopenai.api-key=<key> -D'data.sources.sql[0].provider.ucp.url'=jdbc:oracle:thin:<DB_URL>:<PORT>/<DB_NAME> verify
+```
+
 ## Web Dashboard
 
 The service includes a web dashboard for monitoring tickets and activity logs.

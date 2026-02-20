@@ -146,7 +146,7 @@ public class SimilarityService implements HttpService {
             logService.addLog("Stored embedding for ticket #" + request.ticketId(), "upsert");
             serverResponse.header(HeaderNames.CONTENT_TYPE, "application/json").send(new StatusResponse("OK"));
         } catch (Exception e) {
-            logService.addLog("No longer connected to the API key", e.toString());
+            logService.addLog("No longer connected to the API", e.toString());
             serverResponse.status(Status.BAD_REQUEST_400).send(Map.of("error", e.getMessage()));
         }
     }

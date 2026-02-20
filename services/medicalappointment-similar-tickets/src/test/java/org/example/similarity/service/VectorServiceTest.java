@@ -117,7 +117,7 @@ public class VectorServiceTest {
         when(statement.executeUpdate()).thenThrow(new SQLException("Delete failed"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, vectorService::deleteAllTickets);
-        assertEquals("Failed to delete all points from the database", exception.getMessage());
+        assertEquals("Failed to delete all tickets from the database", exception.getMessage());
     }
 
     @Test

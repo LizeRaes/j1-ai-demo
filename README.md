@@ -1,6 +1,6 @@
 # MedicalAppointment - AI-Powered Medical Support System
 
-MedicalAppointment is a demonstration platform consisting of multiple microservices that together form an AI-powered medical appointment and helpdesk system. Patients manage appointments and submit support requests through a web app; those requests flow into a centralized helpdesk that uses AI triage, semantic similarity search, and company-policy document retrieval to classify, prioritise, and route tickets.
+MedicalAppointment is a demonstration platform consisting of multiple microservices that together form an AI-powered medical appointment and helpdesk system. Patients manage appointments and submit support requests through a web app; those requests flow into a centralized helpdesk that uses AI triage, semantic similarity search, and company-policy document retrieval to classify, prioritize, and route tickets.
 
 ## System Architecture
 
@@ -27,13 +27,13 @@ MedicalAppointment is a demonstration platform consisting of multiple microservi
 
 ## Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| [medicalappointment-user-facing](services/medicalappointment-user-facing/) | 8083 | Patient-facing web app for appointments, billing, support requests |
-| [medicalappointment-helpdesk](services/medicalappointment-helpdesk/) | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle |
-| [medicalappointment-ai-triage](services/medicalappointment-ai-triage/) | 8081 | LLM-powered classification, urgency scoring, enrichment |
+| Service                                                                            | Port | Description                                                                      |
+|------------------------------------------------------------------------------------|------|----------------------------------------------------------------------------------|
+| [medicalappointment-user-facing](services/medicalappointment-user-facing/)         | 8083 | Patient-facing web app for appointments, billing, support requests               |
+| [medicalappointment-helpdesk](services/medicalappointment-helpdesk/)               | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle                     |
+| [medicalappointment-ai-triage](services/medicalappointment-ai-triage/)             | 8081 | LLM-powered classification, urgency scoring, enrichment                          |
 | [medicalappointment-similar-tickets](services/medicalappointment-similar-tickets/) | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings) |
-| [medicalappointment-company-rag](services/medicalappointment-company-rag/) | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
+| [medicalappointment-company-rag](services/medicalappointment-company-rag/)         | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
 
 Each service is independently deployable with its own `pom.xml`, `README.md`, and `CONTRACTS.md`.
 
@@ -44,7 +44,7 @@ Each service is independently deployable with its own `pom.xml`, `README.md`, an
 Start services in this order:
 
 ```bash
-#0 start the DB services
+# 0. Start the DB services
 docker compose up
 
 # 1. User-facing app
@@ -87,13 +87,13 @@ j1-ai-demo/
 
 ## Tech Stack
 
-| Service | Framework | AI / DB |
-|---------|-----------|---------|
-| medicalappointment-user-facing | Quarkus + Qute | — / in-memory |
-| medicalappointment-helpdesk | Quarkus + Hibernate/Panache | — / MySQL |
-| medicalappointment-ai-triage | Quarkus + LangChain4j | GPT-4o-mini / — |
-| medicalappointment-similar-tickets | Helidon + LangChain4j | OpenAI embeddings / Oracle AI |
-| medicalappointment-company-rag | Quarkus + LangChain4j | OpenAI embeddings / Oracle AI |
+| Service                            | Framework                   | AI / DB                       |
+|------------------------------------|-----------------------------|-------------------------------|
+| medicalappointment-user-facing     | Quarkus + Qute              | — / in-memory                 |
+| medicalappointment-helpdesk        | Quarkus + Hibernate/Panache | — / MySQL                     |
+| medicalappointment-ai-triage       | Quarkus + LangChain4j       | GPT-4o-mini / —               |
+| medicalappointment-similar-tickets | Helidon + LangChain4j       | OpenAI embeddings / Oracle AI |
+| medicalappointment-company-rag     | Quarkus + LangChain4j       | OpenAI embeddings / Oracle AI |
 
 ## Demo Notice
 
