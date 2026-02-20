@@ -10,12 +10,18 @@ import io.helidon.webserver.testing.junit5.RoutingTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 import jakarta.json.JsonObject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@EnabledIfSystemProperty(named = "openai.api-key", matches = ".+")
+@EnabledIfSystemProperty(named = "data.sources.sql[0].provider.ucp.url", matches = "jdbc:oracle:thin:.*")
 @RoutingTest
 class MainTest  {
     private final Http1Client client;
@@ -61,7 +67,7 @@ class MainTest  {
             JsonObject json = response.as(JsonObject.class);
             assertNotNull(json);
             assertNotNull(json.getJsonArray("tickets"));
-            assertTrue(json.getJsonArray("tickets").size() > 0);
+            assertTrue(!json.getJsonArray("tickets").isEmpty());
         }
     }
 
@@ -69,13 +75,8 @@ class MainTest  {
     @Test
     void testDelete() {
         try (Http1ClientResponse response = client
-                .post("/api/similarity/tickets/delete")
-                .contentType(MediaTypes.APPLICATION_JSON)
-                .submit(Json.toJson("""
-                        {
-                          "ticketId": 912
-                        }
-                        """))) {
+                .delete("/api/similarity/tickets/delete/912")
+                .request()) {
             assertThat(response.status(), is(Status.OK_200));
         }
     }
@@ -85,35 +86,27 @@ class MainTest  {
         try (Http1ClientResponse response = client
                 .post("/api/similarity/tickets/search")
                 .contentType(MediaTypes.APPLICATION_JSON)
-                .submit("""
-                        {
-                          "text": "reschedule button disabled",
-                           ticketType": "string",
-                          "ticketId": 912,
-                          "maxResults": 5,
-                          "minScore": 0.7
-                        }
-                        """)) {
+                .submit(Map.of("text", "reschedule button disabled",
+                        "ticketType", "string",
+                        "ticketId", 912,
+                        "maxResults", 5,
+                        "minScore", 0.7))) {
             assertThat(response.status(), is(Status.OK_200));
             JsonObject json = response.as(JsonObject.class);
             assertNotNull(json);
             assertNotNull(json.getJsonArray("relatedTicketIds"));
-            assertTrue(json.getJsonArray("relatedTicketIds").size() > 0);
+            assertTrue(json.getJsonArray("relatedTicketIds").isEmpty());
         }
     }
 
     @Test
     void testUpsert() {
         try (Http1ClientResponse response = client
-                .post("/api/similarity/tickets/search")
+                .post("/api/similarity/tickets/upsert")
                 .contentType(MediaTypes.APPLICATION_JSON)
-                .submit("""
-                        {
-                          "ticketId": 912,
-                          "ticketType": "BUG_APP",
-                          "text": "The reschedule button is disabled on my appointment."
-                        }
-                        """)) {
+                .submit(Map.of("ticketId", 912,
+                "ticketType", "BUG_APP",
+                "text", "The reschedule button is disabled on my appointment"))) {
             assertThat(response.status(), is(Status.OK_200));
             JsonObject json = response.as(JsonObject.class);
             assertNotNull(json);

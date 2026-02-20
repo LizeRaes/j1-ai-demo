@@ -22,15 +22,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
-  /api/similarity/tickets/delete:
-    post:
+  /api/similarity/tickets/delete/{ticketId}:
+    delete:
       summary: Delete a ticket from the store
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteRequest'
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: Status
@@ -38,6 +39,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
+          '400':
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
   /api/similarity/tickets/search:
     post:
       summary: Search for similar tickets
@@ -92,7 +102,7 @@ components:
   schemas:
     UpsertRequest:
       type: object
-      required: [ticketId, ticketType, text]
+      required: [ ticketId, ticketType, text ]
       properties:
         ticketId:
           type: integer
@@ -101,16 +111,9 @@ components:
           type: string
         text:
           type: string
-    DeleteRequest:
-      type: object
-      required: [ticketId]
-      properties:
-        ticketId:
-          type: integer
-          format: int64
     SearchRequest:
       type: object
-      required: [text, ticketId]
+      required: [ text, ticketId ]
       properties:
         ticketType:
           type: string

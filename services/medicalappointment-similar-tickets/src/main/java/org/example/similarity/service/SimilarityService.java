@@ -52,7 +52,7 @@ public class SimilarityService implements HttpService {
     @Override
     public void routing(HttpRules rules) {
         rules.post("/tickets/upsert", this::upsert)
-                .post("/tickets/delete", this::delete)
+                .delete("/tickets/delete/{ticketId}", this::delete)
                 .post("/tickets/search", this::search)
                 .get("/tickets/all", this::all)
                 .get("/tickets/logs", this::logs)
@@ -98,14 +98,14 @@ public class SimilarityService implements HttpService {
 
     private void delete(ServerRequest serverRequest, ServerResponse serverResponse) {
         try {
-            DeleteRequest request = serverRequest.content().as(DeleteRequest.class);
-            if (request.ticketId() == null) {
+            String ticketId = serverRequest.path().pathParameters().get("ticketId");
+            if (ticketId == null) {
                 serverResponse.status(Status.BAD_REQUEST_400).send(Map.of("error", "id is required"));
                 return;
             }
-            logService.addLog("Delete request for ticket #" + request.ticketId(), "delete");
-            vectorService.deleteTicket(request.ticketId());
-            ticketStore.removeTicket(request.ticketId());
+            logService.addLog("Delete request for ticket #" + ticketId, "delete");
+            vectorService.deleteTicket(Long.valueOf(ticketId));
+            ticketStore.removeTicket(Long.valueOf(ticketId));
             serverResponse.header(HeaderNames.CONTENT_TYPE, "application/json").send(new StatusResponse("OK"));
         } catch (Exception e) {
             serverResponse.status(Status.BAD_REQUEST_400).send(Map.of("error", e.getMessage()));
@@ -146,6 +146,7 @@ public class SimilarityService implements HttpService {
             logService.addLog("Stored embedding for ticket #" + request.ticketId(), "upsert");
             serverResponse.header(HeaderNames.CONTENT_TYPE, "application/json").send(new StatusResponse("OK"));
         } catch (Exception e) {
+            logService.addLog("No longer connected to the API key", e.toString());
             serverResponse.status(Status.BAD_REQUEST_400).send(Map.of("error", e.getMessage()));
         }
     }
