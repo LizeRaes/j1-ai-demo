@@ -1,5 +1,6 @@
 package com.example.document.service;
 
+import com.example.document.dto.LogsResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,10 +25,10 @@ public class LogServiceTest {
 
         logService.addLog(message, type);
 
-        List<LogService.LogEntry> logs = logService.getLogs();
+        List<LogsResponse.LogInfo> logs = logService.getLogs();
         assertEquals(1, logs.size(), "Exactly one log entry should be stored");
 
-        LogService.LogEntry entry = logs.getFirst();
+        LogsResponse.LogInfo entry = logs.getFirst();
         assertEquals(message, entry.message(), "Message must be preserved");
         assertEquals(type,    entry.type(),    "Type must be preserved");
 
@@ -36,12 +37,12 @@ public class LogServiceTest {
     @Test
     void getLogs() {
         logService.addLog("first", "info");
-        List<LogService.LogEntry> firstRead = logService.getLogs();
+        List<LogsResponse.LogInfo> firstRead = logService.getLogs();
 
         firstRead.clear();
-        firstRead.add(new LogService.LogEntry("tampered", "hack", System.currentTimeMillis()));
+        firstRead.add(new LogsResponse.LogInfo("tampered", "hack", System.currentTimeMillis()));
 
-        List<LogService.LogEntry> secondRead = logService.getLogs();
+        List<LogsResponse.LogInfo> secondRead = logService.getLogs();
         assertEquals(1, secondRead.size(), "Internal log storage must not be altered by the caller");
         assertEquals("first", secondRead.getFirst().message(), "Original message must still be present");
     }
@@ -56,7 +57,7 @@ public class LogServiceTest {
             logService.addLog("msg-" + i, "type");
         }
 
-        List<LogService.LogEntry> logs = logService.getLogs();
+        List<LogsResponse.LogInfo> logs = logService.getLogs();
 
         assertEquals(max, logs.size(),
                 "LogService should keep at most " + max + " entries");

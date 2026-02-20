@@ -94,26 +94,15 @@ curl -X POST http://localhost:8084/api/documents/upsert \
 
 ### 3. Delete Document
 
-- **Method**: `POST`
-- **Path**: `/api/documents/delete`
+- **Method**: `DELETE`
+- **Path**: `/api/documents/delete/{documentName}`
 - **Description**: Delete a document and all its embeddings (idempotent).
-
-**Request body**
-
-```json
-{
-  "documentName": "Old_Policy.txt"
-}
-```
 
 **Curl**
 
 ```bash
-curl -X POST http://localhost:8084/api/documents/delete \
-  -H "Content-Type: application/json" \
-  -d '{
-    "documentName": "Old_Policy.txt"
-  }'
+curl -X POST http://localhost:8084/api/documents/delete/Old_Policy.txt \
+  -H "Content-Type: application/json"
 ```
 
 **Example response**
@@ -129,7 +118,7 @@ curl -X POST http://localhost:8084/api/documents/delete \
 ### 4. Update Document RBAC
 
 - **Method**: `POST`
-- **Path**: `/api/documents/rbac/update`
+- **Path**: `/api/rbac/update`
 - **Description**: Update RBAC teams for a document. Empty `rbacTeams` means company-wide.
 
 **Request body**
@@ -144,7 +133,7 @@ curl -X POST http://localhost:8084/api/documents/delete \
 **Curl**
 
 ```bash
-curl -X POST http://localhost:8084/api/documents/rbac/update \
+curl -X POST http://localhost:8084/api/rbac/update \
   -H "Content-Type: application/json" \
   -d '{
     "documentName": "Approved_Response_Templates.txt",

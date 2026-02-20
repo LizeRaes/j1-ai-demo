@@ -1,6 +1,8 @@
 package com.example.document.service;
 
 import com.example.document.config.VectorDatabaseConfig;
+import com.example.document.dto.ChunksResponse;
+import com.example.document.dto.DocumentSearchResponse;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -38,7 +40,7 @@ public class DocumentSearchService {
     DocumentAccessPolicyService accessPolicyService;
 
 
-    public List<DocumentSearchResult> searchDocuments(String queryText, int maxResults, double minScore) {
+    public List<DocumentSearchResponse.DocumentResult> searchDocuments(String queryText, int maxResults, double minScore) {
         Embedding queryEmbedding = embeddingModel.embed(queryText).content();
 
         EmbeddingSearchRequest request = EmbeddingSearchRequest.builder()
@@ -49,7 +51,7 @@ public class DocumentSearchService {
 
         EmbeddingSearchResult<TextSegment> result = vectorDatabaseConfig.getEmbeddingStore().search(request);
 
-        List<DocumentSearchResult> searchResults = new ArrayList<>();
+        List<DocumentSearchResponse.DocumentResult> searchResults = new ArrayList<>();
 
         for (EmbeddingMatch<TextSegment> match : result.matches()) {
             TextSegment segment = match.embedded();
@@ -66,7 +68,7 @@ public class DocumentSearchService {
 
             String documentLink = "/documents/" + documentName;
 
-            searchResults.add(new DocumentSearchResult(
+            searchResults.add(new DocumentSearchResponse.DocumentResult(
                     documentName,
                     documentLink,
                     citation,
@@ -78,7 +80,7 @@ public class DocumentSearchService {
         return searchResults;
     }
 
-    public List<ChunkInfo> getAllChunks() {
+    public List<ChunksResponse.ChunkInfo> getAllChunks() {
         String sql = """
             SELECT
               JSON_VALUE(metadata, '$.documentName') AS document_name,
@@ -92,7 +94,7 @@ public class DocumentSearchService {
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            List<ChunkInfo> out = new ArrayList<>();
+            List<ChunksResponse.ChunkInfo> out = new ArrayList<>();
 
             while (rs.next()) {
                 String documentName = rs.getString("document_name");
@@ -111,7 +113,7 @@ public class DocumentSearchService {
 
                 float[] vector = rs.getObject("chunk_embedding", float[].class);
 
-                out.add(new ChunkInfo(documentName, chunkIndex, text, vector));
+                out.add(new ChunksResponse.ChunkInfo(documentName, chunkIndex, text, vector));
             }
 
             return out;
@@ -119,12 +121,5 @@ public class DocumentSearchService {
             LOGGER.log(Level.SEVERE, "Error getting all chunks: ", e);
             return List.of();
         }
-    }
-
-    public record DocumentSearchResult(String documentName, String documentLink, String citation, double score,
-                                       List<String> rbacTeams) {
-    }
-
-    public record ChunkInfo(String documentName, Integer chunkIndex, String text, float[] vector) {
     }
 }

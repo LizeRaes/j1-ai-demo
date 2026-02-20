@@ -29,7 +29,7 @@ This RAG system allows you to:
    export OPENAI_API_KEY=your-api-key-here
    ```
 
-3. **Build and run the application:**
+3. **Build and run the application in dev mode:**
    ```bash
    mvn quarkus:dev
    ```
@@ -42,6 +42,11 @@ The application will run on port **8084**.
 - **To wipe the database and reload all documents** from `src/main/resources/documents/`, use the `demo.data.load` system property:
   ```bash
   mvn quarkus:dev -Ddemo.data.load=true
+  ```
+4. By default, tests that do not end in `IT` can be run in dev mode. The integration tests require a database setup and you can run them via 
+
+  ```
+  mvn -Dtest=DocumentResourceIT,AccessResourceIT test
   ```
 
 ## Web Dashboard
@@ -397,12 +402,6 @@ Document_Name.txt:
 ```
 
 ## Troubleshooting
-
-**Qdrant Connection Errors:**
-- Ensure Qdrant is running: `docker-compose ps`
-- Check Qdrant logs: `docker-compose logs qdrant`
-- Verify port 6336 (gRPC) is accessible: `telnet localhost 6336`
-- **Note:** This project uses ports 6335 (HTTP) and 6336 (gRPC) to avoid conflicts with other Qdrant instances
 
 **OpenAI API Errors:**
 - Verify `OPENAI_API_KEY` is set correctly

@@ -1,7 +1,6 @@
 package com.example.document.resource;
 
 import com.example.document.dto.*;
-import com.example.document.service.DocumentAccessPolicyService;
 import com.example.document.service.DocumentSearchService;
 import com.example.document.service.DocumentService;
 import com.example.document.service.LogService;
@@ -25,9 +24,6 @@ public class DocumentResource {
 
     @Inject
     DocumentSearchService searchService;
-
-    @Inject
-    DocumentAccessPolicyService accessPolicyService;
 
     @Inject
     LogService logService;
@@ -98,54 +94,22 @@ public class DocumentResource {
         }
     }
 
-    @POST
-    @Path("/delete")
-    public StatusResponse delete(DocumentDeleteRequest request) {
-        if (request.documentName() == null) {
+    @DELETE
+    @Path("/{documentName}")
+    public StatusResponse deleteByName(@PathParam("documentName") String documentName) {
+        if (documentName == null || documentName.isBlank()) {
             throw new IllegalArgumentException("documentName is required");
         }
-
-        logService.addLog("Delete document: " + request.documentName(), "delete");
-
-        documentService.deleteDocumentEmbeddings(request.documentName());
-        accessPolicyService.removeDocument(request.documentName());
-
-        logService.addLog("Successfully deleted document: " + request.documentName(), "delete");
-        return new StatusResponse("OK");
-    }
-
-    @POST
-    @Path("/rbac/update")
-    public StatusResponse updateRbac(DocumentRbacUpdateRequest request) {
-        if (request.documentName() == null) {
-            throw new IllegalArgumentException("documentName is required");
-        }
-
-        logService.addLog("Update RBAC for document: " + request.documentName(), "rbac");
-
-        List<String> rbacTeams = request.rbacTeams() != null ?
-                request.rbacTeams() :
-                List.of(); // Empty list means document-wide
-
-        accessPolicyService.updateDocumentAccess(request.documentName(), rbacTeams);
-
-        logService.addLog("Successfully updated RBAC for document: " + request.documentName(), "rbac");
+        logService.addLog("Delete document: " + documentName, "delete");
+        documentService.deleteDocumentEmbeddings(documentName);
+        logService.addLog("Successfully deleted document: " + documentName, "delete");
         return new StatusResponse("OK");
     }
 
     @GET
     @Path("/all")
     public DocumentsResponse getAllDocuments() {
-        List<String> documentNames = documentService.findAllDocumentNames();
-
-        List<DocumentsResponse.DocumentInfo> documents = documentNames.stream()
-                .map(name -> {
-                    List<String> teams = accessPolicyService.getAccessTeams(name);
-                    String link = "/documents/" + name;
-                    return new DocumentsResponse.DocumentInfo(name, link, teams);
-                })
-                .collect(toList());
-
+        List<DocumentsResponse.DocumentInfo> documents= documentService.findAllDocuments();
         return new DocumentsResponse(documents);
     }
 
@@ -180,7 +144,7 @@ public class DocumentResource {
             String content = new String(docStream.readAllBytes());
             docStream.close();
 
-            return java.util.Map.of("content", content);
+            return Map.of("content", content);
         } catch (Exception e) {
             throw new InternalServerErrorException("Error reading document: " + e.getMessage());
         }
