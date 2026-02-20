@@ -1,6 +1,7 @@
 package com.example.document.service;
 
 import com.example.document.config.VectorDatabaseConfig;
+import com.example.document.dto.DocumentsResponse;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -31,6 +32,7 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
+import static java.util.stream.Collectors.toList;
 
 @ApplicationScoped
 public class DocumentService {
@@ -52,11 +54,9 @@ public class DocumentService {
     @Inject
     DocumentAccessPolicyService accessPolicyService;
 
-    @Inject
     @ConfigProperty(name = "demo.dir.location")
     String documentsDir;
 
-    @Inject
     @ConfigProperty(name = "demo.config.split.location")
     String splitConfigLocation;
 
@@ -119,13 +119,13 @@ public class DocumentService {
         }
     }
     public void wipeAllEmbeddings() {
-        String truncate = "TRUNCATE TABLE " + embeddingTable.toUpperCase();
+        String truncate = "TRUNCATE TABLE " + embeddingTable;
 
         try (Connection c = dataSource.getConnection();
              PreparedStatement ps = c.prepareStatement(truncate)) {
              ps.execute();
         } catch (Exception truncateFailed) {
-            String delete = "DELETE FROM " + embeddingTable.toUpperCase();
+            String delete = "DELETE FROM " + embeddingTable;
             try (Connection c = dataSource.getConnection();
                  PreparedStatement ps = c.prepareStatement(delete)) {
                  int deleted = ps.executeUpdate();
@@ -162,6 +162,7 @@ public class DocumentService {
     public void deleteDocumentEmbeddings(String documentName) {
         try {
             embeddingStore.removeAll(metadataKey("documentName").isEqualTo(documentName));
+            accessPolicyService.removeDocument(documentName);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Warning: Error deleting embeddings for " + documentName + ": ", e);
         }
@@ -191,12 +192,8 @@ public class DocumentService {
         // This is a limitation of packaging static in JAR files
     }
 
-    /**
-     * Gets all document names from access policy plus what’s actually stored in the databse.
-     * We query DISTINCT documentName from metadata JSON using JSON_VALUE.
-     * Adjust JSON path if your metadata structure differs.
-     */
-    public List<String> findAllDocumentNames() {
+
+    public List<DocumentsResponse.DocumentInfo> findAllDocuments() {
         Set<String> documentNames = new HashSet<>(accessPolicyService.getAllAccessPolicies().keySet());
 
         String sql = """
@@ -219,6 +216,14 @@ public class DocumentService {
             LOGGER.log(Level.SEVERE, "Error getting document names from Oracle embeddings table: ", e);
         }
 
-        return documentNames.stream().toList();
+        List<DocumentsResponse.DocumentInfo> documents = documentNames.stream()
+                .map(name -> {
+                    List<String> teams = accessPolicyService.getAccessTeams(name);
+                    String link = "/documents/" + name;
+                    return new DocumentsResponse.DocumentInfo(name, link, teams);
+                })
+                .collect(toList());
+
+        return documents;
     }
 }

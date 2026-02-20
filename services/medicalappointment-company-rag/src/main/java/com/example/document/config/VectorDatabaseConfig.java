@@ -8,11 +8,15 @@ import dev.langchain4j.store.embedding.oracle.OracleEmbeddingStore;
 
 import javax.sql.DataSource;
 
+import io.quarkus.runtime.Startup;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
+import jakarta.interceptor.Interceptor;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 
 @ApplicationScoped
 public class VectorDatabaseConfig {
@@ -20,7 +24,7 @@ public class VectorDatabaseConfig {
     @Inject
     DataSource dataSource;
 
-    @Inject
+    @Produces
     EmbeddingStore<TextSegment> embeddingStore;
 
     @ConfigProperty(name = "oracleai.embedding.table.name")
@@ -29,14 +33,13 @@ public class VectorDatabaseConfig {
     @ConfigProperty(name = "oracleai.embedding.metadata.column")
     String metadataColumn;
 
-    @Produces
-    @ApplicationScoped
-    EmbeddingStore<TextSegment> embeddingStore() {
-        return OracleEmbeddingStore.builder()
+    void onStart(@Observes @Priority(Interceptor.Priority.APPLICATION - 100) StartupEvent ev) {
+        embeddingStore = OracleEmbeddingStore.builder()
                 .dataSource(dataSource)
                 .embeddingTable(embeddingTable, CreateOption.CREATE_IF_NOT_EXISTS)
                 .build();
     }
+
 
     public EmbeddingStore<TextSegment> getEmbeddingStore() {
         return embeddingStore;
