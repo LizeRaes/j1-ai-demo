@@ -43,10 +43,10 @@ The application will run on port **8084**.
   ```bash
   mvn quarkus:dev -Ddemo.data.load=true
   ```
-4. By default, tests that do not end in `IT` can be run in dev mode. The integration tests require a database setup and you can run them via 
+4. By default, tests that do not end in `IT` can be run in dev mode. The integration tests require a database setup with demo data, and you can run them via 
 
   ```
-  mvn -Dtest=DocumentResourceIT,AccessResourceIT test
+  mvn -Dtest=DocumentResourceIT test
   ```
 
 ## Web Dashboard
@@ -351,7 +351,7 @@ Edit `src/main/resources/application.properties` to configure:
 - **Quarkus LangChain4J Extension** - Automatic EmbeddingModel configuration via BOM
 - **LangChain4j** - Embedding generation and QdrantEmbeddingStore (versions managed by BOM)
 - **OpenAI text-embedding-3-large** - Embedding model (3072-dimensional vectors)
-- **Qdrant** - Vector database for similarity search
+- **Oracle AI 26ai** - Vector database for similarity search
 - **SnakeYAML** - YAML parsing for document access policy
 
 ## Embedding Model

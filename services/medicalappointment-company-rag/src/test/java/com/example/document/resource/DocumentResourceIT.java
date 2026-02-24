@@ -114,4 +114,54 @@ class DocumentResourceIT {
                 .body("chunks[0].chunkIndex", equalTo(0))
                 .body("chunks[0].vector.size()", is(3072));
     }
+
+    @Test
+    void updateWithTeams() {
+        var body = """
+                    {"documentName":"DocA","rbacTeams":["team1","team2"]}
+                """;
+
+        given()
+                .contentType("application/json")
+                .body(body)
+                .when()
+                .post("/api/documents/rbac/update")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("OK"));
+
+    }
+
+    @Test
+    void updateWithoutTeams() {
+        var body = """
+                    {"documentName":"DocB"}
+                """;
+
+        given()
+                .contentType("application/json")
+                .body(body)
+                .when()
+                .post("/api/documents/rbac/update")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("OK"));
+
+    }
+
+    @Test
+    void updateMissingDocumentName() {
+        var body = """
+                    {"rbacTeams":["team1"]}
+                """;
+
+        given()
+                .contentType("application/json")
+                .body(body)
+                .when()
+                .post("/api/documents/rbac/update")
+                .then()
+                .statusCode(500);
+
+    }
 }
