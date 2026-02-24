@@ -8,7 +8,6 @@ import dev.langchain4j.store.embedding.oracle.OracleEmbeddingStore;
 
 import javax.sql.DataSource;
 
-import io.quarkus.runtime.Startup;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;

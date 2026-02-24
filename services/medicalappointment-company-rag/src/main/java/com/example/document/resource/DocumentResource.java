@@ -1,6 +1,7 @@
 package com.example.document.resource;
 
 import com.example.document.dto.*;
+import com.example.document.service.DocumentAccessPolicyService;
 import com.example.document.service.DocumentSearchService;
 import com.example.document.service.DocumentService;
 import com.example.document.service.LogService;
@@ -24,6 +25,9 @@ public class DocumentResource {
 
     @Inject
     DocumentSearchService searchService;
+
+    @Inject
+    DocumentAccessPolicyService accessPolicyService;
 
     @Inject
     LogService logService;
@@ -165,5 +169,24 @@ public class DocumentResource {
                 .collect(toList());
 
         return new ChunksResponse(chunkInfos);
+    }
+
+    @POST
+    @Path("/rbac/update")
+    public StatusResponse update(DocumentRbacUpdateRequest request) {
+        if (request.documentName() == null) {
+            throw new IllegalArgumentException("documentName is required");
+        }
+
+        logService.addLog("Update RBAC for document: " + request.documentName(), "rbac");
+
+        List<String> rbacTeams = request.rbacTeams() != null ?
+                request.rbacTeams() :
+                List.of(); // Empty list means document-wide
+
+        accessPolicyService.updateDocumentAccess(request.documentName(), rbacTeams);
+
+        logService.addLog("Successfully updated RBAC for document: " + request.documentName(), "rbac");
+        return new StatusResponse("OK");
     }
 }
