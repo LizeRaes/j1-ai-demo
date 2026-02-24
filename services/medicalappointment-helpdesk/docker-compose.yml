@@ -4,7 +4,7 @@ services:
     container_name: helpdesk
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: ticketing
+      MYSQL_DATABASE: helpdesk
       MYSQL_USER: ticketing
       MYSQL_PASSWORD: ticketing
     ports:

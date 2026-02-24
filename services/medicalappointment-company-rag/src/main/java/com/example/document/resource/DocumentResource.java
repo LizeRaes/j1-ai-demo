@@ -136,13 +136,13 @@ public class DocumentResource {
     @GET
     @Path("/content/{documentName}")
     @Produces(MediaType.APPLICATION_JSON)
-    public java.util.Map<String, String> getDocumentContent(@PathParam("documentName") String documentName) {
+    public Map<String, String> getDocumentContent(@PathParam("documentName") String documentName) {
         try {
             InputStream docStream = getClass().getClassLoader()
                     .getResourceAsStream("documents/" + documentName);
 
             if (docStream == null) {
-                throw new jakarta.ws.rs.NotFoundException("Document not found: " + documentName);
+                throw new NotFoundException("Document not found: " + documentName);
             }
 
             String content = new String(docStream.readAllBytes());
