@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class EventService {
         eventLogRepository.persist(event);
     }
 
-    public List<EventDto> getRecentEvents(Date since, int limit) {
+    public List<EventDto> getRecentEvents(LocalDateTime since, int limit) {
         List<EventLog> events;
         if (since != null) {
             // Get events since timestamp, in chronological order (oldest first)

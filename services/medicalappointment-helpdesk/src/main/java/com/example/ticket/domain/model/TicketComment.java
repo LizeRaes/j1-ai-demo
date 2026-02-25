@@ -10,7 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ticket_comments")
+@Table(name = "ticket_comment")
 public class TicketComment extends PanacheEntity {
     @Column(name = "ticket_id", nullable = false)
     private Long ticketId;

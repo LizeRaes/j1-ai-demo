@@ -11,7 +11,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.Map;
 
-@Path("/documents")
+@Path("/api//documents")
 public class DocumentResource {
 
     @Inject

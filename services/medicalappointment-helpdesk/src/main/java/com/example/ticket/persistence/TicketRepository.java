@@ -9,6 +9,7 @@ import java.util.List;
 
 @ApplicationScoped
 public class TicketRepository implements PanacheRepository<Ticket> {
+
     public List<Ticket> findByStatus(TicketStatus status) {
         return find("status", status).list();
     }

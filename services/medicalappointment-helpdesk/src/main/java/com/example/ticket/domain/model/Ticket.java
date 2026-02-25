@@ -4,13 +4,16 @@ import com.example.ticket.domain.constants.TicketSource;
 import com.example.ticket.domain.constants.TicketStatus;
 import com.example.ticket.domain.constants.TicketType;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tickets")
+@Table(name = "ticket")
 public class Ticket extends PanacheEntity {
+
     @Column(name = "user_id", nullable = false, length = 64)
     private String userId;
 
@@ -56,10 +59,20 @@ public class Ticket extends PanacheEntity {
     private Long incomingRequestId;
 
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", nullable = false, updatable = true)
+    @CreationTimestamp
     private LocalDateTime updatedAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getUserId() {
         return userId;

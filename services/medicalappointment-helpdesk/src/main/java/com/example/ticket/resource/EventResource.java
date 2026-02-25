@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Path("/events")
+@Path("/api/events")
 @Produces(MediaType.APPLICATION_JSON)
 public class EventResource {
     private static final Logger LOGGER = Logger.getLogger(EventResource.class.getName());
@@ -30,17 +30,9 @@ public class EventResource {
     @GET
     @Path("/recent")
     public List<EventDto> getRecentEvents(
-            @QueryParam("since") String sinceStr,
+            @QueryParam("since") LocalDateTime dateTime,
             @QueryParam("limit") Integer limit) {
-        Date since = Date.valueOf(LocalDateTime.now().toLocalDate());
-        if (sinceStr != null && !sinceStr.isEmpty()) {
-            try {
-                since = Date.valueOf(sinceStr);
-            } catch (Exception e) {
-                LOGGER.log(Level.INFO, "Invalid date given %s".formatted(sinceStr));
-            }
-        }
         int eventLimit = limit != null ? Math.min(limit, maxEventLimit) : maxEventLimit;
-        return eventService.getRecentEvents(since, eventLimit);
+        return eventService.getRecentEvents(dateTime, eventLimit);
     }
 }

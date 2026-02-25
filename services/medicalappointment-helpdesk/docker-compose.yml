@@ -1,11 +1,12 @@
 services:
   mysql:
-    image: mysql:8
+    image: mysql:8.4.0
     container_name: helpdesk
     environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: no
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: helpdesk
-      MYSQL_USER: ticketing
+      MYSQL_USER: helpdesk
       MYSQL_PASSWORD: ticketing
     ports:
       - "3306:3306"
