@@ -42,7 +42,7 @@ public class EventService {
             events = eventLogRepository.findRecent(limit);
         }
         return events.stream()
-            .map(e -> new EventDto(e.id, e.getTicketId(), e.getIncomingRequestId(), e.getEventType(), e.getSeverity(), e.getSource(), e.getMessage(), e.getPayloadJson(), e.getCreatedAt()))
-            .collect(Collectors.toList());
+                .map(e -> new EventDto(e.id, e.getTicketId(), e.getIncomingRequestId(), e.getEventType(), e.getSeverity(), e.getSource(), e.getMessage(), e.getPayloadJson(), e.getCreatedAt()))
+                .collect(Collectors.toList());
     }
 }

@@ -1,4 +1,4 @@
-package com.example.ticket.api;
+package com.example.ticket.resource;
 
 import com.example.ticket.domain.constants.RequestStatus;
 import com.example.ticket.dto.CreateIncomingRequestDto;
@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 
 @Path("/incoming-requests")

@@ -3,7 +3,10 @@ package com.example.ticket.resource;
 import com.example.ticket.dto.EventDto;
 import com.example.ticket.service.EventService;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -21,7 +24,7 @@ public class EventResource {
     @Inject
     EventService eventService;
 
-    @ConfigProperty(name="event.limit.max")
+    @ConfigProperty(name = "event.limit.max")
     int maxEventLimit;
 
     @GET

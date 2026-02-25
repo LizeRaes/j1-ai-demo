@@ -2,15 +2,10 @@ package com.example.ticket.dto;
 
 import com.example.ticket.domain.constants.TicketType;
 
-public class CreateTicketFromAIDto {
-    public String userId;
-    public String originalRequest;
-    public TicketType ticketType;
+public record CreateTicketFromAIDto(String userId, String originalRequest, TicketType ticketType,
+                                    double urgencyScore, boolean urgencyFlag, Double aiConfidence,
+                                    String aiPayloadJson, Long incomingRequestId) {
     // assignedTeam is derived from ticketType automatically - not part of DTO
     // AI is only allowed to suggest ticketType
-    public Boolean urgencyFlag;
-    public Double urgencyScore;
-    public Double aiConfidence;
-    public String aiPayloadJson;
-    public Long incomingRequestId;
+
 }

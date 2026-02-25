@@ -1,4 +1,4 @@
-package com.example.ticket.api;
+package com.example.ticket.resource;
 
 import com.example.ticket.domain.constants.TicketStatus;
 import com.example.ticket.dto.*;
@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 
 @Path("/tickets")

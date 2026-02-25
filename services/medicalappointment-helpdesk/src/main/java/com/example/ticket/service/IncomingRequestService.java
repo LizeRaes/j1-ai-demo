@@ -12,10 +12,15 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class IncomingRequestService {
+
+    private static final Logger LOGGER = Logger.getLogger(IncomingRequestService.class.getName());
+
     @Inject
     IncomingRequestRepository incomingRequestRepository;
 
@@ -28,23 +33,23 @@ public class IncomingRequestService {
     @Transactional
     public IncomingRequestDto createIncomingRequest(CreateIncomingRequestDto dto) {
         IncomingRequest request = new IncomingRequest();
-        request.setUserId(dto.userId);
-        request.setChannel(dto.channel);
-        request.setRawText(dto.rawText);
+        request.setUserId(dto.userId());
+        request.setChannel(dto.channel());
+        request.setRawText(dto.rawText());
         // All new requests start as NEW - AI triage worker processes them immediately
         request.setStatus(RequestStatus.NEW);
         incomingRequestRepository.persist(request);
 
         // Use channel as source for event, default to "ticketing-api"
-        String eventSource = dto.channel != null && !dto.channel.isEmpty()
-                ? dto.channel
+        String eventSource = dto.channel() != null && !dto.channel().isEmpty()
+                ? dto.channel()
                 : "ticketing-api";
 
         eventService.logEvent(
                 EventType.INCOMING_REQUEST_RECEIVED,
                 EventSeverity.INFO,
                 eventSource,
-                "Incoming request #" + request.id + " received from user " + dto.userId,
+                "Incoming request #" + request.id + " received from user " + dto.userId(),
                 null,
                 request.id,
                 null
@@ -61,8 +66,7 @@ public class IncomingRequestService {
         } catch (Exception e) {
             // Log error but don't fail the request creation
             // Request will remain as NEW and can be processed manually or appear in dispatcher inbox
-            System.err.println("Error in triage worker: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error in triage worker: ", e);
         }
 
         return new IncomingRequestDto(request.id, request.getUserId(),
@@ -140,15 +144,6 @@ public class IncomingRequestService {
         IncomingRequest request = incomingRequestRepository.findById(id);
         if (request != null) {
             request.setStatus(RequestStatus.AI_TRIAGE_IN_PROGRESS);
-            incomingRequestRepository.persist(request);
-        }
-    }
-
-    @Transactional
-    public void markAsAiTriageFailed(Long id) {
-        IncomingRequest request = incomingRequestRepository.findById(id);
-        if (request != null) {
-            request.setStatus(RequestStatus.AI_TRIAGE_FAILED);
             incomingRequestRepository.persist(request);
         }
     }

@@ -1,8 +1,7 @@
-package com.example.ticket.config;
+package com.example.ticket.mapper;
 
 import com.example.ticket.domain.constants.Team;
 import com.example.ticket.domain.constants.TicketType;
-import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Maps TicketType to Team deterministically.
@@ -18,10 +17,10 @@ import jakarta.enterprise.context.ApplicationScoped;
  * - OTHER → dispatch (AI couldn't classify, needs human dispatcher)
  */
 public class TicketTypeTeamMapper {
-    
+
     /**
      * Derives the assigned team from ticket type.
-     * 
+     *
      * @param ticketType The ticket type (must not be null)
      * @return The assigned team
      * @throws IllegalArgumentException if ticketType is null or invalid
@@ -43,11 +42,11 @@ public class TicketTypeTeamMapper {
         };
 
     }
-    
+
     /**
      * Checks if a ticket type requires human dispatcher review.
      * Tickets ending with _OTHER or generic OTHER require review.
-     * 
+     *
      * @param ticketType The ticket type
      * @return true if dispatcher review is required
      */

@@ -1,10 +1,9 @@
 package com.example.ticket.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.ticket.dto.SimilarityResponseDto;
 import com.example.ticket.dto.SimilarityUpsertRequestDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.net.URI;
@@ -22,17 +21,13 @@ import java.util.concurrent.Executors;
  */
 @ApplicationScoped
 public class SimilarityServiceClient {
-    
-    @ConfigProperty(name = "similarity-service.url")
-    String similarityServiceUrl;
-    
-    @Inject
-    ObjectMapper objectMapper;
-    
+
+    private static final Duration TIMEOUT = Duration.ofSeconds(30);
     private final HttpClient httpClient;
     private final Executor executor;
-    private static final Duration TIMEOUT = Duration.ofSeconds(30);
-    
+    @ConfigProperty(name = "similarity-service.url")
+    String similarityServiceUrl;
+
     public SimilarityServiceClient() {
         // Use a dedicated executor for similarity service calls to avoid blocking request threads
         this.executor = Executors.newCachedThreadPool(r -> {
@@ -41,31 +36,32 @@ public class SimilarityServiceClient {
             return t;
         });
         this.httpClient = HttpClient.newBuilder()
-            .executor(executor)
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+                .executor(executor)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
-    
+
     /**
      * Upsert a ticket embedding to the similarity service asynchronously.
-     * 
+     *
      * @param request The upsert request with ticketId, ticketType, and text
      * @return CompletableFuture that completes with the response or fails with an exception
      */
     public CompletableFuture<SimilarityResponseDto> upsertTicketAsync(SimilarityUpsertRequestDto request) {
         return CompletableFuture.supplyAsync(() -> {
             try {
+                ObjectMapper objectMapper = new ObjectMapper();
                 String requestBody = objectMapper.writeValueAsString(request);
-                
+
                 HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(similarityServiceUrl + "/api/similarity/tickets/upsert"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .timeout(TIMEOUT)
-                    .build();
-                
+                        .uri(URI.create(similarityServiceUrl + "/api/similarity/tickets/upsert"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                        .timeout(TIMEOUT)
+                        .build();
+
                 HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-                
+
                 if (response.statusCode() == 200) {
                     return objectMapper.readValue(response.body(), SimilarityResponseDto.class);
                 } else {

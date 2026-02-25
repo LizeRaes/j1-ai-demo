@@ -1,6 +1,5 @@
 package com.example.ticket.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.ticket.domain.constants.RequestStatus;
 import com.example.ticket.domain.constants.TicketSource;
 import com.example.ticket.domain.constants.TicketStatus;
@@ -8,14 +7,17 @@ import com.example.ticket.domain.constants.TicketType;
 import com.example.ticket.domain.model.IncomingRequest;
 import com.example.ticket.domain.model.Ticket;
 import com.example.ticket.domain.model.TicketComment;
+import com.example.ticket.mapper.TicketTypeTeamMapper;
 import com.example.ticket.persistence.CommentRepository;
 import com.example.ticket.persistence.TicketRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +39,6 @@ public class DataSeeder {
 
     @Inject
     ActorContext context;
-
-    @Inject
-    ObjectMapper objectMapper;
 
     @Inject
     EntityManager entityManager;
@@ -81,10 +80,10 @@ public class DataSeeder {
     private int loadDemoTicketsFromFiles() {
         // List of demo data files to load
         String[] demoFiles = {
-            "demo-data/demo-tickets-access-other.json",
-            "demo-data/demo-tickets-billing.json",
-            "demo-data/demo-tickets-engineering.json",
-            "demo-data/demo-tickets-scheduling.json"
+                "demo-data/demo-tickets-access-other.json",
+                "demo-data/demo-tickets-billing.json",
+                "demo-data/demo-tickets-engineering.json",
+                "demo-data/demo-tickets-scheduling.json"
         };
 
         int totalTickets = 0;
@@ -98,8 +97,9 @@ public class DataSeeder {
                     continue;
                 }
 
-                List<Map<String, Object>> tickets = objectMapper.readValue(is, 
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<Map<String, Object>> tickets = objectMapper.readValue(is,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
 
                 int fileTicketCount = 0;
                 int fileErrorCount = 0;
@@ -117,37 +117,37 @@ public class DataSeeder {
                                 ticketRepository.delete(existing);
                             }
                         }
-                        
+
                         Ticket ticket = createTicketFromMap(ticketData);
                         // Set explicit ID if provided - use native SQL INSERT to bypass IDENTITY generation
                         if (ticketId != null) {
                             ticket.id = ticketId;
-                            
+
                             // Use native SQL INSERT to set explicit ID (bypasses IDENTITY generation)
                             // Column order matches actual database schema
                             String sql = "INSERT INTO tickets (id, user_id, original_request, ticket_type, status, source, " +
-                                "assigned_team, assigned_to, urgency_flag, urgency_score, ai_confidence, rollback_allowed, " +
-                                "ai_payload_json, incoming_request_id) " +
-                                "VALUES (:id, :userId, :originalRequest, :ticketType, :status, :source, " +
-                                ":assignedTeam, :assignedTo, :urgencyFlag, :urgencyScore, :aiConfidence, :rollbackAllowed, " +
-                                ":aiPayloadJson, :incomingRequestId)";
-                            
+                                    "assigned_team, assigned_to, urgency_flag, urgency_score, ai_confidence, rollback_allowed, " +
+                                    "ai_payload_json, incoming_request_id) " +
+                                    "VALUES (:id, :userId, :originalRequest, :ticketType, :status, :source, " +
+                                    ":assignedTeam, :assignedTo, :urgencyFlag, :urgencyScore, :aiConfidence, :rollbackAllowed, " +
+                                    ":aiPayloadJson, :incomingRequestId)";
+
                             entityManager.createNativeQuery(sql)
-                                .setParameter("id", ticketId)
-                                .setParameter("userId", ticket.getUserId())
-                                .setParameter("originalRequest", ticket.getOriginalRequest())
-                                .setParameter("ticketType", ticket.getTicketType().name())
-                                .setParameter("status", ticket.getStatus().name())
-                                .setParameter("source", ticket.getSource().name())
-                                .setParameter("assignedTeam", ticket.getAssignedTeam())
-                                .setParameter("assignedTo", ticket.getAssignedTo())
-                                .setParameter("urgencyFlag", ticket.getUrgencyFlag())
-                                .setParameter("urgencyScore", ticket.getUrgencyScore())
-                                .setParameter("aiConfidence", ticket.getAiConfidence())
-                                .setParameter("rollbackAllowed", ticket.getRollbackAllowed())
-                                .setParameter("aiPayloadJson", ticket.getAiPayloadJson())
-                                .setParameter("incomingRequestId", ticket.getIncomingRequestId())
-                                .executeUpdate();
+                                    .setParameter("id", ticketId)
+                                    .setParameter("userId", ticket.getUserId())
+                                    .setParameter("originalRequest", ticket.getOriginalRequest())
+                                    .setParameter("ticketType", ticket.getTicketType().name())
+                                    .setParameter("status", ticket.getStatus().name())
+                                    .setParameter("source", ticket.getSource().name())
+                                    .setParameter("assignedTeam", ticket.getAssignedTeam())
+                                    .setParameter("assignedTo", ticket.getAssignedTo())
+                                    .setParameter("urgencyFlag", ticket.getUrgencyFlag())
+                                    .setParameter("urgencyScore", ticket.getUrgencyScore())
+                                    .setParameter("aiConfidence", ticket.getAiConfidence())
+                                    .setParameter("rollbackAllowed", ticket.getRollbackAllowed())
+                                    .setParameter("aiPayloadJson", ticket.getAiPayloadJson())
+                                    .setParameter("incomingRequestId", ticket.getIncomingRequestId())
+                                    .executeUpdate();
                         } else {
                             ticketRepository.persist(ticket);
                         }
@@ -184,12 +184,12 @@ public class DataSeeder {
                 }
                 is.close();
             } catch (Exception e) {
-               LOGGER.log(Level.SEVERE, "⚠ Error loading " + filePath + ": ", e);
+                LOGGER.log(Level.SEVERE, "⚠ Error loading " + filePath + ": ", e);
             }
         }
 
         if (filesLoaded == 0) {
-           LOGGER.warning("⚠ Warning: No demo data files found in resources/demo-data/");
+            LOGGER.warning("⚠ Warning: No demo data files found in resources/demo-data/");
         }
 
         return totalTickets;
@@ -199,40 +199,40 @@ public class DataSeeder {
         Ticket ticket = new Ticket();
         ticket.setUserId((String) data.get("userId"));
         ticket.setOriginalRequest((String) data.get("originalRequest"));
-        
+
         // Parse ticketType
         String ticketTypeStr = (String) data.get("ticketType");
         ticket.setTicketType(TicketType.valueOf(ticketTypeStr));
-        
+
         // Parse status (default to FROM_DISPATCH if not specified)
         // Map common status names to valid enum values
         String statusStr = (String) data.get("status");
         ticket.setStatus(mapStatusString(statusStr));
-        
+
         // Parse source (default to MANUAL if not specified)
         String sourceStr = (String) data.get("source");
         ticket.setSource(sourceStr != null ? TicketSource.valueOf(sourceStr) : TicketSource.MANUAL);
-        
+
         // Assign team based on ticket type
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).name());
-        
+
         // Assign to user (use provided or default for team)
         String assignedTo = (String) data.get("assignedTo");
         ticket.setAssignedTo(assignedTo != null ? assignedTo : context.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
-        
+
         // Urgency fields
         ticket.setUrgencyFlag(data.get("urgencyFlag") != null ? (Boolean) data.get("urgencyFlag") : false);
         if (data.get("urgencyScore") != null) {
             ticket.setUrgencyScore(((Number) data.get("urgencyScore")).doubleValue());
         }
-        
+
         // AI fields
         if (data.get("aiConfidence") != null) {
             ticket.setAiConfidence(((Number) data.get("aiConfidence")).doubleValue());
         }
         ticket.setAiPayloadJson((String) data.get("aiPayloadJson"));
         ticket.setRollbackAllowed(ticket.getSource().equals(TicketSource.AI) && ticket.getStatus().equals(TicketStatus.FROM_AI));
-        
+
         return ticket;
     }
 
@@ -258,7 +258,8 @@ public class DataSeeder {
         return switch (upper) {
             case "OPEN", "NEW", "PENDING" -> TicketStatus.FROM_DISPATCH;
             case "RESOLVED", "CLOSED" -> TicketStatus.COMPLETED;
-            case "TRIAGED", "IN_PROGRESS", "WAITING_ON_USER", "COMPLETED", "RETURNED_TO_DISPATCH", "ROLLED_BACK" -> TicketStatus.valueOf(upper);
+            case "TRIAGED", "IN_PROGRESS", "WAITING_ON_USER", "COMPLETED", "RETURNED_TO_DISPATCH", "ROLLED_BACK" ->
+                    TicketStatus.valueOf(upper);
             case String _ -> TicketStatus.FROM_DISPATCH;
         };
     }

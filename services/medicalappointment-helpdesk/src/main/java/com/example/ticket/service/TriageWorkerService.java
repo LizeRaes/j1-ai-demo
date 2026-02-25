@@ -1,6 +1,5 @@
 package com.example.ticket.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.ticket.domain.constants.EventSeverity;
 import com.example.ticket.domain.constants.EventType;
 import com.example.ticket.domain.constants.RequestStatus;
@@ -10,31 +9,38 @@ import com.example.ticket.dto.CreateTicketFromAIDto;
 import com.example.ticket.dto.IncomingRequestDto;
 import com.example.ticket.dto.TriageRequestDto;
 import com.example.ticket.dto.TriageResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jboss.logmanager.Level;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class TriageWorkerService {
+
+    private static final Logger LOGGER = Logger.getLogger(TriageWorkerService.class.getName());
+
     @Inject
     IncomingRequestService incomingRequestService;
 
     @Inject
     TicketService ticketService;
-    
+
     @Inject
     EventService eventService;
-    
+
     @Inject
     TriageClient triageClient;
-    
+
     @Inject
     ObjectMapper objectMapper;
-    
+
     // Self-injection to ensure @Transactional works in async contexts
     @Inject
     TriageWorkerService self;
@@ -55,146 +61,138 @@ public class TriageWorkerService {
         try {
             markRequestInProgress(request.id());
         } catch (Exception e) {
-            System.err.println("Error marking request as IN_PROGRESS: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.ERROR, "Error marking request as IN_PROGRESS: ", e);
             return;
         }
-        
+
         // Create placeholder ticket first (triage service requires ticketId)
         Ticket placeholderTicket;
         try {
             placeholderTicket = self.createPlaceholderTicketForTriage(request.userId(), request.rawText(), request.id());
         } catch (Exception e) {
-            System.err.println("Error creating placeholder ticket for request " + request.id() + ": " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.ERROR, "Error creating placeholder ticket for request " + request.id() + ": ", e);
             return;
         }
-        
+
         // Emit AI_TRIAGE_STARTED event
         eventService.logEvent(
-            EventType.AI_TRIAGE_STARTED,
-            EventSeverity.WARNING,
-            "ai-triage-worker",
-            "AI triage started for request #" + request.id() + " (ticket #" + placeholderTicket.id + ")",
-            placeholderTicket.id,
-            request.id(),
-            null
+                EventType.AI_TRIAGE_STARTED,
+                EventSeverity.WARNING,
+                "ai-triage-worker",
+                "AI triage started for request #" + request.id() + " (ticket #" + placeholderTicket.id + ")",
+                placeholderTicket.id,
+                request.id(),
+                null
         );
-        
+
         // Build triage request
-        TriageRequestDto triageRequest = new TriageRequestDto();
-        triageRequest.incomingRequestId = request.id();
-        triageRequest.message = request.rawText();
-        triageRequest.ticketId = placeholderTicket.id; // Required by triage service
-        triageRequest.allowedTicketTypes = TriageClient.buildAllowedTicketTypes();
-        
+        TriageRequestDto triageRequest = new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.id, TriageClient.buildAllowedTicketTypes());
+
         // Store ticketId in final variable for use in async callbacks
         final Long ticketId = placeholderTicket.id;
-        
+
         // Call AI triage service asynchronously
         // Completion happens in background thread - never blocks request thread
         triageClient.classifyAsync(triageRequest)
-            .thenComposeAsync(response -> {
-                // Process response in background - update placeholder ticket
-                // Use the same executor to ensure proper context
-                return CompletableFuture.runAsync(() -> {
-                    try {
-                        // Call through self-injected proxy to ensure @Transactional works
-                        self.handleTriageResponse(request, response, ticketId);
-                    } catch (Exception e) {
-                        System.err.println("Error handling triage response for request " + request.id() + ": " + e.getMessage());
-                        e.printStackTrace();
-                        // Fallback: update ticket with OTHER type
-                        self.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
-                    }
-                }, triageClient.getExecutor());
-            }, triageClient.getExecutor())
-            .exceptionally(throwable -> {
-                // Handle any exception in the async chain
-                System.err.println("Error in triage async chain for request " + request.id() + ": " + throwable.getMessage());
-                throwable.printStackTrace();
-                self.updateTicketAsFallback(ticketId, request, "Triage service exception: " + throwable.getMessage());
-                return null;
-            });
+                .thenComposeAsync(response -> {
+                    // Process response in background - update placeholder ticket
+                    // Use the same executor to ensure proper context
+                    return CompletableFuture.runAsync(() -> {
+                        try {
+                            // Call through self-injected proxy to ensure @Transactional works
+                            self.handleTriageResponse(request, response, ticketId);
+                        } catch (Exception e) {
+                            LOGGER.log(Level.ERROR, "Error handling triage response for request " + request.id() + ": ", e);
+                            // Fallback: update ticket with OTHER type
+                            self.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
+                        }
+                    }, triageClient.getExecutor());
+                }, triageClient.getExecutor())
+                .exceptionally(throwable -> {
+                    // Handle any exception in the async chain
+                    LOGGER.log(Level.ERROR, "Error in triage async chain for request " + request.id() + ": ", throwable);
+                    self.updateTicketAsFallback(ticketId, request, "Triage service exception: " + throwable.getMessage());
+                    return null;
+                });
     }
-    
+
     @Transactional
     public void markRequestInProgress(Long requestId) {
         incomingRequestService.markAsAiTriageInProgress(requestId);
     }
-    
+
     @Transactional
     public Ticket createPlaceholderTicketForTriage(String userId, String originalRequest, Long incomingRequestId) {
         return ticketService.createPlaceholderTicketForTriage(userId, originalRequest, incomingRequestId);
     }
-    
+
     @Transactional
     public void handleTriageResponse(IncomingRequestDto request, TriageResponseDto response, Long ticketId) {
-        if ("OK".equals(response.status)) {
+        if ("OK".equals(response.status())) {
             // Success - update placeholder ticket with AI classification
             ticketService.updateTicketWithTriageResults(
-                ticketId,
-                response.ticketType,
-                response.urgencyScore != null ? response.urgencyScore.doubleValue() : 5.0,
-                response.aiConfidencePercent != null ? response.aiConfidencePercent.doubleValue() : 0.0,
-                response.relatedTicketIds,
-                response.policyCitations
+                    ticketId,
+                    response.ticketType(),
+                    response.urgencyScore() != null ? response.urgencyScore().doubleValue() : 5.0,
+                    response.aiConfidencePercent() != null ? response.aiConfidencePercent().doubleValue() : 0.0,
+                    response.relatedTicketIds(),
+                    response.policyCitations()
             );
-            
+
             // Emit AI_TRIAGE_RESULT event
             Map<String, Object> aiPayload = new HashMap<>();
-            aiPayload.put("relatedTicketIds", response.relatedTicketIds != null ? response.relatedTicketIds : List.of());
-            aiPayload.put("policyCitations", response.policyCitations != null ? response.policyCitations : List.of());
+            aiPayload.put("relatedTicketIds", response.relatedTicketIds() != null ? response.relatedTicketIds() : List.of());
+            aiPayload.put("policyCitations", response.policyCitations() != null ? response.policyCitations() : List.of());
             String aiPayloadJson;
             try {
                 aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
             } catch (Exception e) {
                 aiPayloadJson = "{}";
             }
-            
+
             eventService.logEvent(
-                EventType.AI_TRIAGE_RESULT,
-                EventSeverity.WARNING,
-                "ai-triage-worker",
-                String.format("AI triage completed for request #%d (ticket #%d): %s (confidence: %d%%, urgency: %d)", 
-                    request.id(),
+                    EventType.AI_TRIAGE_RESULT,
+                    EventSeverity.WARNING,
+                    "ai-triage-worker",
+                    String.format("AI triage completed for request #%d (ticket #%d): %s (confidence: %d%%, urgency: %d)",
+                            request.id(),
+                            ticketId,
+                            response.ticketType(),
+                            response.aiConfidencePercent() != null ? response.aiConfidencePercent() : 0,
+                            response.urgencyScore() != null ? response.urgencyScore() : 0),
                     ticketId,
-                    response.ticketType, 
-                    response.aiConfidencePercent != null ? response.aiConfidencePercent : 0,
-                    response.urgencyScore != null ? response.urgencyScore : 0),
-                ticketId,
-                request.id(),
-                aiPayloadJson
+                    request.id(),
+                    aiPayloadJson
             );
-            
+
             // Emit AI_TICKET_CREATED event (ticket is now fully created)
             eventService.logEvent(
-                EventType.AI_TICKET_CREATED,
-                EventSeverity.INFO,
-                "ai-triage-worker",
-                "AI ticket #" + ticketId + " created from incoming request #" + request.id(),
-                ticketId,
-                request.id(),
-                aiPayloadJson
+                    EventType.AI_TICKET_CREATED,
+                    EventSeverity.INFO,
+                    "ai-triage-worker",
+                    "AI ticket #" + ticketId + " created from incoming request #" + request.id(),
+                    ticketId,
+                    request.id(),
+                    aiPayloadJson
             );
         } else {
             // Failed - update ticket as fallback
-            updateTicketAsFallback(ticketId, request, response.failReason != null ? response.failReason : "AI triage service returned FAILED status");
+            updateTicketAsFallback(ticketId, request, response.failReason() != null ? response.failReason() : "AI triage service returned FAILED status");
         }
     }
-    
+
     @Transactional
     public void updateTicketAsFallback(Long ticketId, IncomingRequestDto request, String failReason) {
         // Update placeholder ticket with OTHER type for dispatcher review
         ticketService.updateTicketWithTriageResults(
-            ticketId,
-            TicketType.OTHER.name(), // Maps to DISPATCH team
-            5.0,
-            0.0, // Zero confidence for fallback
-            List.of(),
-            List.of()
+                ticketId,
+                TicketType.OTHER.name(), // Maps to DISPATCH team
+                5.0,
+                0.0, // Zero confidence for fallback
+                List.of(),
+                List.of()
         );
-        
+
         // Store failure reason in AI payload
         Map<String, Object> aiPayload = new HashMap<>();
         aiPayload.put("failReason", failReason);
@@ -206,58 +204,54 @@ public class TriageWorkerService {
         } catch (Exception e) {
             aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
         }
-        
+
         // Update ticket's AI payload with failure reason
         // Note: This is a simplified approach - in a real system you might want to update the ticket's aiPayloadJson field
         // For now, the failure reason is logged in the event
-        
+
         // Emit AI_TRIAGE_FAILED event
         eventService.logEvent(
-            EventType.AI_TRIAGE_FAILED,
-            EventSeverity.ERROR,
-            "ai-triage-worker",
-            "AI triage failed for request #" + request.id() + " (ticket #" + ticketId + "): " + failReason,
-            ticketId,
-            request.id(),
-            aiPayloadJson
+                EventType.AI_TRIAGE_FAILED,
+                EventSeverity.ERROR,
+                "ai-triage-worker",
+                "AI triage failed for request #" + request.id() + " (ticket #" + ticketId + "): " + failReason,
+                ticketId,
+                request.id(),
+                aiPayloadJson
         );
     }
-    
+
     @Transactional
     public void createFallbackTicket(IncomingRequestDto request, String failReason) {
         // Legacy method - kept for backward compatibility
         // This should not be called in the new flow, but kept for safety
-        CreateTicketFromAIDto aiDto = new CreateTicketFromAIDto();
-        aiDto.userId = request.userId();
-        aiDto.originalRequest = request.rawText();
-        aiDto.incomingRequestId = request.id();
-        aiDto.ticketType = TicketType.OTHER; // Maps to DISPATCH team
-        aiDto.urgencyScore = 5.0;
-        aiDto.urgencyFlag = false;
-        aiDto.aiConfidence = 0.0; // Zero confidence for fallback
-        
+
         // Store failure reason in AI payload
         Map<String, Object> aiPayload = new HashMap<>();
         aiPayload.put("failReason", failReason);
         aiPayload.put("relatedTicketIds", List.of());
         aiPayload.put("policyCitations", List.of());
+        String aiPayloadJson;
         try {
-            aiDto.aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
+            aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
         } catch (Exception e) {
-            aiDto.aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
+            aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
         }
-        
+
+        CreateTicketFromAIDto aiDto = new CreateTicketFromAIDto(request.userId(), request.rawText(), TicketType.OTHER,
+                5.0, false, 0.0,
+                aiPayloadJson, request.id());
         ticketService.createTicketFromAi(aiDto);
-        
+
         // Emit AI_TRIAGE_FAILED event
         eventService.logEvent(
-            EventType.AI_TRIAGE_FAILED,
-            EventSeverity.ERROR,
-            "ai-triage-worker",
-            "AI triage failed for request #" + request.id() + ": " + failReason,
-            null,
-            request.id(),
-            aiDto.aiPayloadJson
+                EventType.AI_TRIAGE_FAILED,
+                EventSeverity.ERROR,
+                "ai-triage-worker",
+                "AI triage failed for request #" + request.id() + ": " + failReason,
+                null,
+                request.id(),
+                aiDto.aiPayloadJson()
         );
     }
 

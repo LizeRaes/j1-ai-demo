@@ -1,6 +1,4 @@
 package com.example.ticket.dto;
 
-public class AddCommentDto {
-    public String authorId;
-    public String body;
+public record AddCommentDto(String authorId, String body) {
 }
