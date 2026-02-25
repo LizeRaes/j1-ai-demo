@@ -1,10 +1,10 @@
 package com.example.ticket.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.ticket.domain.enums.RequestStatus;
-import com.example.ticket.domain.enums.TicketSource;
-import com.example.ticket.domain.enums.TicketStatus;
-import com.example.ticket.domain.enums.TicketType;
+import com.example.ticket.domain.constants.RequestStatus;
+import com.example.ticket.domain.constants.TicketSource;
+import com.example.ticket.domain.constants.TicketStatus;
+import com.example.ticket.domain.constants.TicketType;
 import com.example.ticket.domain.model.IncomingRequest;
 import com.example.ticket.domain.model.Ticket;
 import com.example.ticket.domain.model.TicketComment;
@@ -17,13 +17,15 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.io.InputStream;
-import java.sql.Timestamp;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class DataSeeder {
+
+    private static final Logger LOGGER = Logger.getLogger(DataSeeder.class.getName());
 
     @Inject
     TicketRepository ticketRepository;
@@ -31,11 +33,10 @@ public class DataSeeder {
     @Inject
     CommentRepository commentRepository;
 
-    @Inject
     TicketTypeTeamMapper ticketTypeTeamMapper;
 
     @Inject
-    TeamUserMapper teamUserMapper;
+    ActorContext context;
 
     @Inject
     ObjectMapper objectMapper;
@@ -43,26 +44,28 @@ public class DataSeeder {
     @Inject
     EntityManager entityManager;
 
+
     @Transactional
     void onStart(@Observes StartupEvent ev) {
         String demoDataMode = System.getProperty("DemoData");
         String emptyMode = System.getProperty("Empty");
+        ticketTypeTeamMapper = new TicketTypeTeamMapper();
 
         // Priority: DemoData > Empty > KeepData (default)
         if (demoDataMode != null && !demoDataMode.isEmpty()) {
             // Load demo data: clear database and load from all JSON files in demo-data/
             clearAllData();
             int totalTickets = loadDemoTicketsFromFiles();
-            System.out.println("✓ Demo data loaded: " + totalTickets + " tickets from demo-data/*.json files");
+            LOGGER.info("Demo data loaded: " + totalTickets + " tickets from demo-data/*.json files");
         } else if (emptyMode != null && !emptyMode.isEmpty()) {
             // Start with empty database
             clearAllData();
-            System.out.println("✓ Database cleared (Empty mode)");
+            LOGGER.info("Database cleared (Empty mode)");
         } else {
             // KeepData mode (default): only seed incoming requests if database is empty
             if (IncomingRequest.count() == 0) {
                 seedDefaultIncomingRequests();
-                System.out.println("✓ Default incoming requests seeded");
+                LOGGER.info("✓ Default incoming requests seeded");
             }
         }
     }
@@ -72,7 +75,7 @@ public class DataSeeder {
         commentRepository.deleteAll();
         ticketRepository.deleteAll();
         IncomingRequest.deleteAll();
-        System.out.println("  → Cleared all tickets, comments, and incoming requests");
+        LOGGER.info("Cleared all tickets, comments, and incoming requests");
     }
 
     private int loadDemoTicketsFromFiles() {
@@ -119,41 +122,31 @@ public class DataSeeder {
                         // Set explicit ID if provided - use native SQL INSERT to bypass IDENTITY generation
                         if (ticketId != null) {
                             ticket.id = ticketId;
-                            // Manually set timestamps since @PrePersist doesn't run with native SQL
-                            OffsetDateTime now = OffsetDateTime.now();
-                            ticket.createdAt = now;
-                            ticket.updatedAt = now;
-                            
-                            // Convert OffsetDateTime to Timestamp for MySQL datetime(6) compatibility
-                            Timestamp createdAtTs = Timestamp.from(now.toInstant());
-                            Timestamp updatedAtTs = Timestamp.from(now.toInstant());
                             
                             // Use native SQL INSERT to set explicit ID (bypasses IDENTITY generation)
                             // Column order matches actual database schema
                             String sql = "INSERT INTO tickets (id, user_id, original_request, ticket_type, status, source, " +
                                 "assigned_team, assigned_to, urgency_flag, urgency_score, ai_confidence, rollback_allowed, " +
-                                "ai_payload_json, incoming_request_id, created_at, updated_at) " +
+                                "ai_payload_json, incoming_request_id) " +
                                 "VALUES (:id, :userId, :originalRequest, :ticketType, :status, :source, " +
                                 ":assignedTeam, :assignedTo, :urgencyFlag, :urgencyScore, :aiConfidence, :rollbackAllowed, " +
-                                ":aiPayloadJson, :incomingRequestId, :createdAt, :updatedAt)";
+                                ":aiPayloadJson, :incomingRequestId)";
                             
                             entityManager.createNativeQuery(sql)
                                 .setParameter("id", ticketId)
-                                .setParameter("userId", ticket.userId)
-                                .setParameter("originalRequest", ticket.originalRequest)
-                                .setParameter("ticketType", ticket.ticketType.name())
-                                .setParameter("status", ticket.status.name())
-                                .setParameter("source", ticket.source.name())
-                                .setParameter("assignedTeam", ticket.assignedTeam)
-                                .setParameter("assignedTo", ticket.assignedTo)
-                                .setParameter("urgencyFlag", ticket.urgencyFlag)
-                                .setParameter("urgencyScore", ticket.urgencyScore)
-                                .setParameter("aiConfidence", ticket.aiConfidence)
-                                .setParameter("rollbackAllowed", ticket.rollbackAllowed)
-                                .setParameter("aiPayloadJson", ticket.aiPayloadJson)
-                                .setParameter("incomingRequestId", ticket.incomingRequestId)
-                                .setParameter("createdAt", createdAtTs)
-                                .setParameter("updatedAt", updatedAtTs)
+                                .setParameter("userId", ticket.getUserId())
+                                .setParameter("originalRequest", ticket.getOriginalRequest())
+                                .setParameter("ticketType", ticket.getTicketType().name())
+                                .setParameter("status", ticket.getStatus().name())
+                                .setParameter("source", ticket.getSource().name())
+                                .setParameter("assignedTeam", ticket.getAssignedTeam())
+                                .setParameter("assignedTo", ticket.getAssignedTo())
+                                .setParameter("urgencyFlag", ticket.getUrgencyFlag())
+                                .setParameter("urgencyScore", ticket.getUrgencyScore())
+                                .setParameter("aiConfidence", ticket.getAiConfidence())
+                                .setParameter("rollbackAllowed", ticket.getRollbackAllowed())
+                                .setParameter("aiPayloadJson", ticket.getAiPayloadJson())
+                                .setParameter("incomingRequestId", ticket.getIncomingRequestId())
                                 .executeUpdate();
                         } else {
                             ticketRepository.persist(ticket);
@@ -191,13 +184,12 @@ public class DataSeeder {
                 }
                 is.close();
             } catch (Exception e) {
-                System.err.println("⚠ Error loading " + filePath + ": " + e.getMessage());
-                e.printStackTrace();
+               LOGGER.log(Level.SEVERE, "⚠ Error loading " + filePath + ": ", e);
             }
         }
 
         if (filesLoaded == 0) {
-            System.err.println("⚠ Warning: No demo data files found in resources/demo-data/");
+           LOGGER.warning("⚠ Warning: No demo data files found in resources/demo-data/");
         }
 
         return totalTickets;
@@ -205,91 +197,76 @@ public class DataSeeder {
 
     private Ticket createTicketFromMap(Map<String, Object> data) {
         Ticket ticket = new Ticket();
-        ticket.userId = (String) data.get("userId");
-        ticket.originalRequest = (String) data.get("originalRequest");
+        ticket.setUserId((String) data.get("userId"));
+        ticket.setOriginalRequest((String) data.get("originalRequest"));
         
         // Parse ticketType
         String ticketTypeStr = (String) data.get("ticketType");
-        ticket.ticketType = TicketType.valueOf(ticketTypeStr);
+        ticket.setTicketType(TicketType.valueOf(ticketTypeStr));
         
         // Parse status (default to FROM_DISPATCH if not specified)
         // Map common status names to valid enum values
         String statusStr = (String) data.get("status");
-        ticket.status = mapStatusString(statusStr);
+        ticket.setStatus(mapStatusString(statusStr));
         
         // Parse source (default to MANUAL if not specified)
         String sourceStr = (String) data.get("source");
-        ticket.source = sourceStr != null ? TicketSource.valueOf(sourceStr) : TicketSource.MANUAL;
+        ticket.setSource(sourceStr != null ? TicketSource.valueOf(sourceStr) : TicketSource.MANUAL);
         
         // Assign team based on ticket type
-        ticket.assignedTeam = ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.ticketType).name();
+        ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).name());
         
         // Assign to user (use provided or default for team)
         String assignedTo = (String) data.get("assignedTo");
-        ticket.assignedTo = assignedTo != null ? assignedTo : teamUserMapper.getDefaultUserIdForTeam(ticket.assignedTeam);
+        ticket.setAssignedTo(assignedTo != null ? assignedTo : context.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
         
         // Urgency fields
-        ticket.urgencyFlag = data.get("urgencyFlag") != null ? (Boolean) data.get("urgencyFlag") : false;
+        ticket.setUrgencyFlag(data.get("urgencyFlag") != null ? (Boolean) data.get("urgencyFlag") : false);
         if (data.get("urgencyScore") != null) {
-            ticket.urgencyScore = ((Number) data.get("urgencyScore")).doubleValue();
+            ticket.setUrgencyScore(((Number) data.get("urgencyScore")).doubleValue());
         }
         
         // AI fields
         if (data.get("aiConfidence") != null) {
-            ticket.aiConfidence = ((Number) data.get("aiConfidence")).doubleValue();
+            ticket.setAiConfidence(((Number) data.get("aiConfidence")).doubleValue());
         }
-        ticket.aiPayloadJson = (String) data.get("aiPayloadJson");
-        ticket.rollbackAllowed = ticket.source == TicketSource.AI && ticket.status == TicketStatus.FROM_AI;
+        ticket.setAiPayloadJson((String) data.get("aiPayloadJson"));
+        ticket.setRollbackAllowed(ticket.getSource().equals(TicketSource.AI) && ticket.getStatus().equals(TicketStatus.FROM_AI));
         
         return ticket;
     }
 
     private void seedDefaultIncomingRequests() {
-        createRequest("u-alex", "web", 
-            "I tried to cancel my appointment but it says it's too late, even though it's still 36 hours away.");
-        createRequest("u-samira", "web", 
-            "I was charged for an appointment that the doctor cancelled. Can I get a refund?");
-        createRequest("u-jonas", "web", 
-            "The reschedule button is disabled on my appointment and I can't change the time.");
-        createRequest("u-lea", "web", 
-            "I get an error when uploading my insurance card: 'Upload failed (E102)'.");
-        createRequest("u-pascal", "web", 
-            "Urgent: I need to cancel today's appointment in 2 hours. I'm sick.");
+        createRequest("u-alex",
+                "I tried to cancel my appointment but it says it's too late, even though it's still 36 hours away.");
+        createRequest("u-samira",
+                "I was charged for an appointment that the doctor cancelled. Can I get a refund?");
+        createRequest("u-jonas",
+                "The reschedule button is disabled on my appointment and I can't change the time.");
+        createRequest("u-lea",
+                "I get an error when uploading my insurance card: 'Upload failed (E102)'.");
+        createRequest("u-pascal",
+                "Urgent: I need to cancel today's appointment in 2 hours. I'm sick.");
     }
 
     private TicketStatus mapStatusString(String statusStr) {
         if (statusStr == null || statusStr.isEmpty()) {
             return TicketStatus.FROM_DISPATCH;
         }
-        
-        // Map common status names to valid enum values
+
         String upper = statusStr.toUpperCase();
-        switch (upper) {
-            case "OPEN":
-                // OPEN typically means a new ticket that needs triage
-                return TicketStatus.FROM_DISPATCH;
-            case "NEW":
-                return TicketStatus.FROM_DISPATCH;
-            case "PENDING":
-                return TicketStatus.FROM_DISPATCH;
-            case "RESOLVED":
-            case "CLOSED":
-                return TicketStatus.COMPLETED;
-            default:
-                // Try to parse as-is, throw exception if invalid
-                try {
-                    return TicketStatus.valueOf(upper);
-                } catch (IllegalArgumentException e) {
-                    System.err.println("  ⚠ Invalid status '" + statusStr + "', defaulting to FROM_DISPATCH");
-                    return TicketStatus.FROM_DISPATCH;
-                }
-        }
+        return switch (upper) {
+            case "OPEN", "NEW", "PENDING" -> TicketStatus.FROM_DISPATCH;
+            case "RESOLVED", "CLOSED" -> TicketStatus.COMPLETED;
+            case "TRIAGED", "IN_PROGRESS", "WAITING_ON_USER", "COMPLETED", "RETURNED_TO_DISPATCH", "ROLLED_BACK" -> TicketStatus.valueOf(upper);
+            case String _ -> TicketStatus.FROM_DISPATCH;
+        };
     }
 
-    private void createRequest(String userId, String channel, String rawText) {
+    private void createRequest(String userId, String rawText) {
         IncomingRequest request = new IncomingRequest();
         request.setUserId(userId);
-        request.setChannel(channel);
+        request.setChannel("web");
         request.setRawText(rawText);
         request.setStatus(RequestStatus.NEW);
         request.persist();

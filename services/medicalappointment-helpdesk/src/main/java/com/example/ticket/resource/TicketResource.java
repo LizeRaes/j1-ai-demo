@@ -1,5 +1,6 @@
 package com.example.ticket.api;
 
+import com.example.ticket.domain.constants.TicketStatus;
 import com.example.ticket.dto.*;
 import com.example.ticket.service.TicketService;
 import jakarta.inject.Inject;
@@ -24,7 +25,7 @@ public class TicketResource {
 
     @POST
     @Path("/from-ai")
-    public Response createTicketFromAi(CreateTicketFromAiDto dto) {
+    public Response createTicketFromAi(CreateTicketFromAIDto dto) {
         TicketDto ticket = ticketService.createTicketFromAi(dto);
         return Response.status(Response.Status.CREATED).entity(ticket).build();
     }
@@ -69,8 +70,8 @@ public class TicketResource {
 
     @POST
     @Path("/{id}/status")
-    public Response updateTicketStatus(@PathParam("id") Long id, UpdateTicketStatusDto dto) {
-        TicketDto ticket = ticketService.updateTicketStatus(id, dto);
+    public Response updateTicketStatus(@PathParam("id") Long id, TicketStatus status) {
+        TicketDto ticket = ticketService.updateTicketStatus(id, status);
         if (ticket == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

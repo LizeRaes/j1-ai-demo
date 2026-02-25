@@ -1,73 +1,183 @@
 package com.example.ticket.domain.model;
 
-import com.example.ticket.domain.enums.TicketSource;
-import com.example.ticket.domain.enums.TicketStatus;
-import com.example.ticket.domain.enums.TicketType;
+import com.example.ticket.domain.constants.TicketSource;
+import com.example.ticket.domain.constants.TicketStatus;
+import com.example.ticket.domain.constants.TicketType;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tickets")
 public class Ticket extends PanacheEntity {
     @Column(name = "user_id", nullable = false, length = 64)
-    public String userId;
+    private String userId;
 
     @Lob
     @Column(name = "original_request", nullable = false)
-    public String originalRequest;
+    private String originalRequest;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ticket_type", nullable = false, length = 32)
-    public TicketType ticketType;
+    private TicketType ticketType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
-    public TicketStatus status;
+    private TicketStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "source", nullable = false, length = 16)
-    public TicketSource source;
+    private TicketSource source;
 
     @Column(name = "assigned_team", nullable = false, length = 64)
-    public String assignedTeam;
+    private String assignedTeam;
 
     @Column(name = "assigned_to", length = 64)
-    public String assignedTo;
+    private String assignedTo;
 
     @Column(name = "urgency_flag", nullable = false)
-    public Boolean urgencyFlag;
+    private Boolean urgencyFlag;
 
     @Column(name = "urgency_score")
-    public Double urgencyScore;
+    private Double urgencyScore;
 
     @Column(name = "ai_confidence")
-    public Double aiConfidence;
+    private Double aiConfidence;
 
     @Column(name = "rollback_allowed", nullable = false)
-    public Boolean rollbackAllowed;
+    private Boolean rollbackAllowed;
 
     @Lob
     @Column(name = "ai_payload_json", columnDefinition = "TEXT")
-    public String aiPayloadJson;
+    private String aiPayloadJson;
 
     @Column(name = "incoming_request_id")
-    public Long incomingRequestId;
+    private Long incomingRequestId;
 
     @Column(name = "created_at", nullable = false)
-    public OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    public OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
+    public String getUserId() {
+        return userId;
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getOriginalRequest() {
+        return originalRequest;
+    }
+
+    public void setOriginalRequest(String originalRequest) {
+        this.originalRequest = originalRequest;
+    }
+
+    public TicketType getTicketType() {
+        return ticketType;
+    }
+
+    public void setTicketType(TicketType ticketType) {
+        this.ticketType = ticketType;
+    }
+
+    public TicketStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TicketStatus status) {
+        this.status = status;
+    }
+
+    public TicketSource getSource() {
+        return source;
+    }
+
+    public void setSource(TicketSource source) {
+        this.source = source;
+    }
+
+    public String getAssignedTeam() {
+        return assignedTeam;
+    }
+
+    public void setAssignedTeam(String assignedTeam) {
+        this.assignedTeam = assignedTeam;
+    }
+
+    public String getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(String assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
+    public Boolean getUrgencyFlag() {
+        return urgencyFlag;
+    }
+
+    public void setUrgencyFlag(Boolean urgencyFlag) {
+        this.urgencyFlag = urgencyFlag;
+    }
+
+    public Double getUrgencyScore() {
+        return urgencyScore;
+    }
+
+    public void setUrgencyScore(Double urgencyScore) {
+        this.urgencyScore = urgencyScore;
+    }
+
+    public Double getAiConfidence() {
+        return aiConfidence;
+    }
+
+    public void setAiConfidence(Double aiConfidence) {
+        this.aiConfidence = aiConfidence;
+    }
+
+    public Boolean getRollbackAllowed() {
+        return rollbackAllowed;
+    }
+
+    public void setRollbackAllowed(Boolean rollbackAllowed) {
+        this.rollbackAllowed = rollbackAllowed;
+    }
+
+    public String getAiPayloadJson() {
+        return aiPayloadJson;
+    }
+
+    public void setAiPayloadJson(String aiPayloadJson) {
+        this.aiPayloadJson = aiPayloadJson;
+    }
+
+    public Long getIncomingRequestId() {
+        return incomingRequestId;
+    }
+
+    public void setIncomingRequestId(Long incomingRequestId) {
+        this.incomingRequestId = incomingRequestId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

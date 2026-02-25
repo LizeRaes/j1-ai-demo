@@ -1,14 +1,13 @@
 package com.example.ticket.config;
 
-import com.example.ticket.domain.enums.Team;
-import com.example.ticket.domain.enums.TicketType;
+import com.example.ticket.domain.constants.Team;
+import com.example.ticket.domain.constants.TicketType;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Maps TicketType to Team deterministically.
- * 
  * Rule: TicketType defines intent; AssignedTeam is a derived consequence.
- * 
+ * <p>
  * Mapping:
  * - BILLING_* → billing
  * - SCHEDULING_* → reschedule
@@ -18,7 +17,6 @@ import jakarta.enterprise.context.ApplicationScoped;
  * - ENGINEERING_* → engineering
  * - OTHER → dispatch (AI couldn't classify, needs human dispatcher)
  */
-@ApplicationScoped
 public class TicketTypeTeamMapper {
     
     /**
@@ -32,42 +30,18 @@ public class TicketTypeTeamMapper {
         if (ticketType == null) {
             throw new IllegalArgumentException("TicketType cannot be null");
         }
-        
-        String typeName = ticketType.name();
-        
-        // Billing domain
-        if (typeName.startsWith("BILLING_")) {
-            return Team.billing;
-        }
-        
-        // Scheduling domain
-        if (typeName.startsWith("SCHEDULING_")) {
-            return Team.reschedule;
-        }
-        
-        // Account / General Support domain
-        if (typeName.startsWith("ACCOUNT_")) {
-            return Team.dispatch;
-        }
-        if (typeName.equals("SUPPORT_OTHER")) {
-            return Team.dispatch;
-        }
-        
-        // Bugs / Engineering domain
-        if (typeName.startsWith("BUG_")) {
-            return Team.engineering;
-        }
-        if (typeName.startsWith("ENGINEERING_")) {
-            return Team.engineering;
-        }
-        
-        // Generic OTHER - AI couldn't classify, send to human dispatcher
-        if (typeName.equals("OTHER")) {
-            return Team.dispatch;
-        }
-        
-        // Should never reach here if enum is properly maintained
-        throw new IllegalArgumentException("Unknown TicketType: " + ticketType);
+
+        return switch (ticketType.name()) {
+            case String type when type.startsWith("BILLING_") -> Team.billing;
+            case String type when type.startsWith("SCHEDULING_") -> Team.reschedule;
+            case String type when type.startsWith("ACCOUNT_") -> Team.dispatch;
+            case String type when type.startsWith("SUPPORT_OTHER") -> Team.dispatch;
+            case String type when type.startsWith("BUG_") -> Team.engineering;
+            case String type when type.startsWith("ENGINEERING_") -> Team.engineering;
+            case String type when type.equals("OTHER") -> Team.dispatch;
+            case String t -> throw new IllegalArgumentException("Unknown TicketType: " + t);
+        };
+
     }
     
     /**

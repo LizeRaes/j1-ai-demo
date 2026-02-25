@@ -1,10 +1,11 @@
 package com.example.ticket.domain.model;
 
-import com.example.ticket.domain.enums.RequestStatus;
+import com.example.ticket.domain.constants.RequestStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "incoming_requests")
@@ -24,10 +25,10 @@ public class IncomingRequest extends PanacheEntity {
     private RequestStatus status;
 
     @Column(name = "created_at", nullable = false)
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
     public String getUserId() {
         return userId;
@@ -61,19 +62,19 @@ public class IncomingRequest extends PanacheEntity {
         this.status = status;
     }
 
-    public Date getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Date getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Date updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

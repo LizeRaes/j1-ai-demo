@@ -1,8 +1,8 @@
 package com.example.ticket.dto;
 
-import com.example.ticket.domain.enums.TicketType;
+import com.example.ticket.domain.constants.TicketType;
 
-public class CreateTicketFromAiDto {
+public class CreateTicketFromAIDto {
     public String userId;
     public String originalRequest;
     public TicketType ticketType;

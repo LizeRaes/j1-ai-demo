@@ -1,12 +1,12 @@
 package com.example.ticket.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.ticket.domain.enums.EventSeverity;
-import com.example.ticket.domain.enums.EventType;
-import com.example.ticket.domain.enums.RequestStatus;
-import com.example.ticket.domain.enums.TicketType;
+import com.example.ticket.domain.constants.EventSeverity;
+import com.example.ticket.domain.constants.EventType;
+import com.example.ticket.domain.constants.RequestStatus;
+import com.example.ticket.domain.constants.TicketType;
 import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.dto.CreateTicketFromAiDto;
+import com.example.ticket.dto.CreateTicketFromAIDto;
 import com.example.ticket.dto.IncomingRequestDto;
 import com.example.ticket.dto.TriageRequestDto;
 import com.example.ticket.dto.TriageResponseDto;
@@ -227,7 +227,7 @@ public class TriageWorkerService {
     public void createFallbackTicket(IncomingRequestDto request, String failReason) {
         // Legacy method - kept for backward compatibility
         // This should not be called in the new flow, but kept for safety
-        CreateTicketFromAiDto aiDto = new CreateTicketFromAiDto();
+        CreateTicketFromAIDto aiDto = new CreateTicketFromAIDto();
         aiDto.userId = request.userId();
         aiDto.originalRequest = request.rawText();
         aiDto.incomingRequestId = request.id();

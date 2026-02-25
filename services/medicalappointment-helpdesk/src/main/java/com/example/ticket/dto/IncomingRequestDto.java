@@ -1,9 +1,9 @@
 package com.example.ticket.dto;
 
-import com.example.ticket.domain.enums.RequestStatus;
+import com.example.ticket.domain.constants.RequestStatus;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public record IncomingRequestDto (Long id, String userId, String channel, String rawText, RequestStatus status,
-                                  Date createdAt, Date updatedAt) {
+                                  LocalDateTime createdAt, LocalDateTime updatedAt) {
 }

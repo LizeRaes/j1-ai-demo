@@ -3,12 +3,14 @@ package com.example.ticket.persistence;
 import com.example.ticket.domain.model.EventLog;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+
+import java.sql.Date;
 import java.time.OffsetDateTime;
 import java.util.List;
 
 @ApplicationScoped
 public class EventLogRepository implements PanacheRepository<EventLog> {
-    public List<EventLog> findRecentSince(OffsetDateTime since, int limit) {
+    public List<EventLog> findRecentSince(Date since, int limit) {
         return find("createdAt > ?1 ORDER BY createdAt ASC", since)
             .page(0, limit)
             .list();

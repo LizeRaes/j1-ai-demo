@@ -1,6 +1,6 @@
 package com.example.ticket.api;
 
-import com.example.ticket.domain.enums.RequestStatus;
+import com.example.ticket.domain.constants.RequestStatus;
 import com.example.ticket.dto.CreateIncomingRequestDto;
 import com.example.ticket.dto.IncomingRequestDto;
 import com.example.ticket.service.IncomingRequestService;

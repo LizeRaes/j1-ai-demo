@@ -1,34 +1,43 @@
-package com.example.ticket.api;
+package com.example.ticket.resource;
 
-import com.example.ticket.config.AppConfig;
 import com.example.ticket.dto.EventDto;
 import com.example.ticket.service.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import java.time.OffsetDateTime;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Path("/events")
 @Produces(MediaType.APPLICATION_JSON)
 public class EventResource {
+    private static final Logger LOGGER = Logger.getLogger(EventResource.class.getName());
+
     @Inject
     EventService eventService;
+
+    @ConfigProperty(name="event.limit.max")
+    int maxEventLimit;
 
     @GET
     @Path("/recent")
     public List<EventDto> getRecentEvents(
             @QueryParam("since") String sinceStr,
             @QueryParam("limit") Integer limit) {
-        OffsetDateTime since = null;
+        Date since = Date.valueOf(LocalDateTime.now().toLocalDate());
         if (sinceStr != null && !sinceStr.isEmpty()) {
             try {
-                since = OffsetDateTime.parse(sinceStr);
+                since = Date.valueOf(sinceStr);
             } catch (Exception e) {
-                // Invalid format, ignore
+                LOGGER.log(Level.INFO, "Invalid date given %s".formatted(sinceStr));
             }
         }
-        int eventLimit = limit != null ? Math.min(limit, AppConfig.MAX_EVENT_LIMIT) : AppConfig.MAX_EVENT_LIMIT;
+        int eventLimit = limit != null ? Math.min(limit, maxEventLimit) : maxEventLimit;
         return eventService.getRecentEvents(since, eventLimit);
     }
 }

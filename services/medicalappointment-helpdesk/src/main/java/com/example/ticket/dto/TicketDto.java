@@ -1,27 +1,15 @@
 package com.example.ticket.dto;
 
-import com.example.ticket.domain.enums.TicketSource;
-import com.example.ticket.domain.enums.TicketStatus;
-import com.example.ticket.domain.enums.TicketType;
-import java.time.OffsetDateTime;
+import com.example.ticket.domain.constants.TicketSource;
+import com.example.ticket.domain.constants.TicketStatus;
+import com.example.ticket.domain.constants.TicketType;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
-public class TicketDto {
-    public Long id;
-    public String userId;
-    public String originalRequest;
-    public TicketType ticketType;
-    public TicketStatus status;
-    public TicketSource source;
-    public String assignedTeam;
-    public String assignedTo;
-    public Boolean urgencyFlag;
-    public Double urgencyScore;
-    public Double aiConfidence;
-    public Boolean rollbackAllowed;
-    public String aiPayloadJson;
-    public Long incomingRequestId;
-    public OffsetDateTime createdAt;
-    public OffsetDateTime updatedAt;
-    public List<CommentDto> comments;
+public record TicketDto(Long id, String userId, String originalRequest,
+                        TicketType ticketType, TicketStatus status, TicketSource source,
+                        String assignedTeam, String assignedTo, Boolean urgencyFlag, Double urgencyScore,
+                        Double aiConfidence, Boolean rollbackAllowed, String aiPayloadJson, Long incomingRequestId,
+                        LocalDateTime createdAt, LocalDateTime updatedAt, List<CommentDto> comments) {
 }

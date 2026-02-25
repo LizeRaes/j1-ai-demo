@@ -4,8 +4,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.sql.Date;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ticket_comments")
@@ -22,7 +21,7 @@ public class TicketComment extends PanacheEntity {
 
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     public Long getTicketId() {
         return ticketId;

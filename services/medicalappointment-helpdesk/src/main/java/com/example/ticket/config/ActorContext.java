@@ -1,7 +1,6 @@
 package com.example.ticket.config;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 
@@ -9,9 +8,6 @@ import jakarta.ws.rs.core.Context;
 public class ActorContext {
     @Context
     ContainerRequestContext requestContext;
-    
-    @Inject
-    TeamUserMapper teamUserMapper;
 
     public String getActorId() {
         if (requestContext == null) return "demo-user";
@@ -32,7 +28,15 @@ public class ActorContext {
     }
 
     public String getDefaultUserIdForTeam(String team) {
-        // Delegate to ApplicationScoped service that works in async contexts
-        return teamUserMapper.getDefaultUserIdForTeam(team);
+        if (team == null) return "demo-user";
+
+        String teamLower = team.toLowerCase();
+        return switch (teamLower) {
+            case "dispatch" -> "dispatch-user1";
+            case "billing" -> "billing-user1";
+            case "reschedule" -> "reschedule-user1";
+            case "engineering" -> "engineering-user1";
+            case String _ -> teamLower + "-user1";
+        };
     }
 }

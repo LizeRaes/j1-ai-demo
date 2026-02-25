@@ -1,8 +1,8 @@
 package com.example.ticket.service;
 
-import com.example.ticket.domain.enums.EventSeverity;
-import com.example.ticket.domain.enums.EventType;
-import com.example.ticket.domain.enums.RequestStatus;
+import com.example.ticket.domain.constants.EventSeverity;
+import com.example.ticket.domain.constants.EventType;
+import com.example.ticket.domain.constants.RequestStatus;
 import com.example.ticket.domain.model.IncomingRequest;
 import com.example.ticket.dto.CreateIncomingRequestDto;
 import com.example.ticket.dto.IncomingRequestDto;

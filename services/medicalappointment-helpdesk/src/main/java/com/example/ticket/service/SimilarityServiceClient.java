@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 @ApplicationScoped
 public class SimilarityServiceClient {
     
-    @ConfigProperty(name = "similarity-service.url", defaultValue = "http://localhost:8082")
+    @ConfigProperty(name = "similarity-service.url")
     String similarityServiceUrl;
     
     @Inject

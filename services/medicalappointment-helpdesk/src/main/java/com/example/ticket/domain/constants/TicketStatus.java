@@ -1,4 +1,4 @@
-package com.example.ticket.domain.enums;
+package com.example.ticket.domain.constants;
 
 public enum TicketStatus {
     FROM_DISPATCH,

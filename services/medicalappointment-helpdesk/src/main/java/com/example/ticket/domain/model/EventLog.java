@@ -1,43 +1,103 @@
 package com.example.ticket.domain.model;
 
-import com.example.ticket.domain.enums.EventSeverity;
-import com.example.ticket.domain.enums.EventType;
+import com.example.ticket.domain.constants.EventSeverity;
+import com.example.ticket.domain.constants.EventType;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "event_log")
 public class EventLog extends PanacheEntity {
     @Column(name = "ticket_id")
-    public Long ticketId;
+    private Long ticketId;
 
     @Column(name = "incoming_request_id")
-    public Long incomingRequestId;
+    private Long incomingRequestId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 64)
-    public EventType eventType;
+    private EventType eventType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "severity", nullable = false, length = 16)
-    public EventSeverity severity;
+    private EventSeverity severity;
 
     @Column(name = "source", nullable = false, length = 64)
-    public String source;
+    private String source;
 
     @Column(name = "message", nullable = false, length = 512)
-    public String message;
+    private String message;
 
     @Lob
     @Column(name = "payload_json", columnDefinition = "TEXT")
-    public String payloadJson;
+    private String payloadJson;
 
     @Column(name = "created_at", nullable = false)
-    public OffsetDateTime createdAt;
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = OffsetDateTime.now();
+    public Long getTicketId() {
+        return ticketId;
     }
+
+    public void setTicketId(Long ticketId) {
+        this.ticketId = ticketId;
+    }
+
+    public Long getIncomingRequestId() {
+        return incomingRequestId;
+    }
+
+    public void setIncomingRequestId(Long incomingRequestId) {
+        this.incomingRequestId = incomingRequestId;
+    }
+
+    public EventType getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(EventType eventType) {
+        this.eventType = eventType;
+    }
+
+    public EventSeverity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(EventSeverity severity) {
+        this.severity = severity;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getPayloadJson() {
+        return payloadJson;
+    }
+
+    public void setPayloadJson(String payloadJson) {
+        this.payloadJson = payloadJson;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+
 }
