@@ -1,8 +1,8 @@
-import { getIncomingRequests } from '../api/requestsApi.js';
-import { submitTicket } from '../api/dispatchApi.js';
-import { formatDateTime } from '../util/format.js';
-import { $, createElement, clearElement } from '../util/dom.js';
-import { state } from './state.js';
+import {getIncomingRequests} from '../api/requestsApi.js';
+import {submitTicket} from '../api/dispatchApi.js';
+import {formatDateTime} from '../util/format.js';
+import {$, clearElement, createElement} from '../util/dom.js';
+import {state} from './state.js';
 
 export async function renderDispatcherInbox() {
     console.log('renderDispatcherInbox called');
@@ -20,7 +20,7 @@ export async function renderDispatcherInbox() {
         // Pass null to get all dispatcher inbox requests
         const requests = await getIncomingRequests(null);
         console.log('Received requests:', requests);
-        
+
         // Always clear the loading message first - do this immediately after API call
         clearElement(container);
 
@@ -154,7 +154,7 @@ function showDispatchForm(request) {
             ticketType: document.getElementById('dispatch-ticket-type').value,
             // assignedTeam is derived automatically from ticketType - not sent
             urgencyFlag: document.getElementById('dispatch-urgency').checked,
-            urgencyScore: document.getElementById('dispatch-urgency-score').value ? 
+            urgencyScore: document.getElementById('dispatch-urgency-score').value ?
                 parseFloat(document.getElementById('dispatch-urgency-score').value) : null,
             dispatcherId: state.currentUserId,
             notes: document.getElementById('dispatch-notes').value,

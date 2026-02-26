@@ -1,8 +1,8 @@
-import { switchTab } from './ui/router.js';
-import { startEventPolling } from './ui/renderLogs.js';
-import { renderActorContext, getActorContext } from './ui/actorContext.js';
-import { state } from './ui/state.js';
-import { loadTicketDetail } from './ui/renderTicketDetail.js';
+import {switchTab} from './ui/router.js';
+import {startEventPolling} from './ui/renderLogs.js';
+import {getActorContext, renderActorContext} from './ui/actorContext.js';
+import {state} from './ui/state.js';
+import {loadTicketDetail} from './ui/renderTicketDetail.js';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupTicketNavigation() {
     const backBtn = document.getElementById('ticket-nav-back');
     const forwardBtn = document.getElementById('ticket-nav-forward');
-    
+
     if (backBtn) {
         backBtn.addEventListener('click', async () => {
             const ticketId = state.navigateBack();
@@ -58,7 +58,7 @@ function setupTicketNavigation() {
                         });
                         listItem.classList.add('selected');
                         state.selectedTicketId = ticketId;
-                        listItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        listItem.scrollIntoView({behavior: 'smooth', block: 'center'});
                     }
                     await loadTicketDetail(ticketId);
                     updateNavButtons();
@@ -66,7 +66,7 @@ function setupTicketNavigation() {
             }
         });
     }
-    
+
     if (forwardBtn) {
         forwardBtn.addEventListener('click', async () => {
             const ticketId = state.navigateForward();
@@ -82,7 +82,7 @@ function setupTicketNavigation() {
                         });
                         listItem.classList.add('selected');
                         state.selectedTicketId = ticketId;
-                        listItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        listItem.scrollIntoView({behavior: 'smooth', block: 'center'});
                     }
                     await loadTicketDetail(ticketId);
                     updateNavButtons();
@@ -90,7 +90,7 @@ function setupTicketNavigation() {
             }
         });
     }
-    
+
     // Initial button state
     updateNavButtons();
 }
@@ -98,7 +98,7 @@ function setupTicketNavigation() {
 export function updateNavButtons() {
     const backBtn = document.getElementById('ticket-nav-back');
     const forwardBtn = document.getElementById('ticket-nav-forward');
-    
+
     if (backBtn) {
         backBtn.disabled = !state.canNavigateBack();
     }

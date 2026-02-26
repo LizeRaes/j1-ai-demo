@@ -1,4 +1,4 @@
-import { getActorHeaders } from '../ui/actorContext.js';
+import {getActorHeaders} from '../ui/actorContext.js';
 
 const API_BASE = '/api';
 

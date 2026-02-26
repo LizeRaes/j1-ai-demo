@@ -1,9 +1,8 @@
-import { getRecentEvents } from '../api/eventsApi.js';
-import { formatTime, getEventColorClass } from '../util/format.js';
-import { $, createElement, clearElement } from '../util/dom.js';
-import { switchTab } from './router.js';
-import { UI_CONFIG } from '../config.js';
-import { state } from './state.js';
+import {getRecentEvents} from '../api/eventsApi.js';
+import {formatTime, getEventColorClass} from '../util/format.js';
+import {$, createElement} from '../util/dom.js';
+import {switchTab} from './router.js';
+import {UI_CONFIG} from '../config.js';
 
 let lastEventTime = null;
 let pollInterval = null;
@@ -19,7 +18,7 @@ export function startEventPolling() {
     if (container && container.querySelector('.loading')) {
         container.innerHTML = '';
     }
-    
+
     // Initialize zoom level from config or localStorage
     const savedLogsZoom = localStorage.getItem('logsZoomLevel');
     if (savedLogsZoom) {
@@ -28,7 +27,7 @@ export function startEventPolling() {
         logsZoomLevel = UI_CONFIG.DEFAULT_ZOOM_LEVEL;
     }
     applyLogsZoom();
-    
+
     // Initialize main zoom level
     const savedMainZoom = localStorage.getItem('mainZoomLevel');
     if (savedMainZoom) {
@@ -37,16 +36,16 @@ export function startEventPolling() {
         mainZoomLevel = UI_CONFIG.DEFAULT_ZOOM_LEVEL;
     }
     applyMainZoom();
-    
+
     // Setup toggle button
     setupLogsToggle();
-    
+
     // Setup zoom controls
     setupZoomControls();
-    
+
     // Setup filter buttons
     setupFilterButtons();
-    
+
     loadEvents();
     pollInterval = setInterval(loadEvents, 1500); // Poll every 1.5 seconds
 }
@@ -57,10 +56,10 @@ function setupFilterButtons() {
             // Update active state
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             // Update filter
             currentFilter = btn.dataset.filter;
-            
+
             // Re-render events with filter
             applyFilter();
         });
@@ -70,7 +69,7 @@ function setupFilterButtons() {
 function applyFilter() {
     const container = $('#logs-content');
     if (!container) return;
-    
+
     // Filter events based on current filter
     let filteredEvents = allEvents;
     if (currentFilter !== 'all') {
@@ -79,7 +78,7 @@ function applyFilter() {
             return severity === currentFilter.toLowerCase();
         });
     }
-    
+
     // Clear container and re-render
     container.innerHTML = '';
     if (filteredEvents.length > 0) {
@@ -101,7 +100,7 @@ function setupLogsToggle() {
     const toggleBtn = $('#logs-toggle-btn');
     const logsPane = $('#logs-pane');
     if (!toggleBtn || !logsPane) return;
-    
+
     toggleBtn.addEventListener('click', () => {
         logsCollapsed = !logsCollapsed;
         if (logsCollapsed) {
@@ -121,7 +120,7 @@ function setupZoomControls() {
     const logsZoomOutBtn = $('#logs-zoom-out');
     const logsZoomInBtn = $('#logs-zoom-in');
     const logsZoomLevelEl = $('#logs-zoom-level');
-    
+
     // Debug: Check if buttons are found
     if (!logsZoomOutBtn) {
         console.error('logs-zoom-out button not found');
@@ -132,7 +131,7 @@ function setupZoomControls() {
     if (!logsZoomLevelEl) {
         console.error('logs-zoom-level element not found');
     }
-    
+
     if (logsZoomOutBtn && logsZoomInBtn && logsZoomLevelEl) {
         logsZoomOutBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -143,7 +142,7 @@ function setupZoomControls() {
                 localStorage.setItem('logsZoomLevel', logsZoomLevel.toString());
             }
         });
-        
+
         logsZoomInBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -156,12 +155,12 @@ function setupZoomControls() {
     } else {
         console.error('Failed to setup logs zoom controls - one or more elements not found');
     }
-    
+
     // Main content zoom controls
     const mainZoomOutBtn = $('#main-zoom-out');
     const mainZoomInBtn = $('#main-zoom-in');
     const mainZoomLevelEl = $('#main-zoom-level');
-    
+
     if (mainZoomOutBtn && mainZoomInBtn && mainZoomLevelEl) {
         mainZoomOutBtn.addEventListener('click', () => {
             if (mainZoomLevel > 50) {
@@ -170,7 +169,7 @@ function setupZoomControls() {
                 localStorage.setItem('mainZoomLevel', mainZoomLevel.toString());
             }
         });
-        
+
         mainZoomInBtn.addEventListener('click', () => {
             if (mainZoomLevel < 200) {
                 mainZoomLevel += 10;
@@ -214,21 +213,21 @@ function refreshTicketViews() {
     // Refresh all ticket views to show new tickets
     // We refresh all relevant views, not just the current tab, so users see new tickets
     // regardless of which tab they're on
-    
+
     // Refresh "All Tickets" view (inbox)
-    import('./renderTickets.js').then(({ renderTickets }) => {
+    import('./renderTickets.js').then(({renderTickets}) => {
         renderTickets('inbox').catch(err => {
             console.error('Error refreshing inbox tickets:', err);
         });
     });
-    
+
     // Refresh dispatcher inbox (in case a new request was converted)
-    import('./renderDispatcherInbox.js').then(({ renderDispatcherInbox }) => {
+    import('./renderDispatcherInbox.js').then(({renderDispatcherInbox}) => {
         renderDispatcherInbox().catch(err => {
             console.error('Error refreshing dispatcher inbox:', err);
         });
     });
-    
+
     // Note: We don't refresh team/mine views as those are filtered by actor context
     // and new tickets might not belong to the current user/team
 }
@@ -247,7 +246,7 @@ async function loadEvents() {
         if (events.length > 0) {
             // Track new ticket creation events to trigger refresh
             const newTicketEvents = [];
-            
+
             // Add new events to allEvents array (avoid duplicates)
             events.forEach(event => {
                 const exists = allEvents.find(e => e.id === event.id);
@@ -260,18 +259,18 @@ async function loadEvents() {
                     }
                 }
             });
-            
+
             // Sort allEvents by createdAt (oldest first) to maintain order
             allEvents.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            
+
             // Apply current filter and render
             applyFilter();
-            
+
             // If new tickets were created, refresh the ticket lists
             if (newTicketEvents.length > 0) {
                 refreshTicketViews();
             }
-            
+
             // Update last event time to most recent (last item in ASC array)
             lastEventTime = events[events.length - 1].createdAt;
         } else {
@@ -319,10 +318,10 @@ function renderEvents(events, updateAllEvents = true) {
 
     // Clear container and render all filtered events
     container.innerHTML = '';
-    
+
     // Create entries for all events
     const entries = events.map(event => createLogEntry(event));
-    
+
     // Prepend in reverse order so newest is at top
     entries.reverse().forEach(entry => {
         container.insertBefore(entry, container.firstChild);
@@ -337,7 +336,7 @@ function renderEvents(events, updateAllEvents = true) {
 function createLogEntry(event) {
     const entry = createElement('div', 'log-entry');
     entry.dataset.eventId = event.id;
-    
+
     const colorClass = getEventColorClass(event);
     entry.classList.add(colorClass);
 

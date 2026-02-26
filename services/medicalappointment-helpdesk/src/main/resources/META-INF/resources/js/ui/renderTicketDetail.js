@@ -1,10 +1,16 @@
-import { acceptTicket, rejectAndReturnToDispatch, updateTicketStatus, addComment, rollbackToRequest } from '../api/ticketsApi.js';
-import { state } from './state.js';
-import { formatDateTime } from '../util/format.js';
-import { $, createElement, clearElement } from '../util/dom.js';
-import { renderTickets } from './renderTickets.js';
-import { getActorContext } from './actorContext.js';
-import { fetchDocumentContent } from '../api/documentsApi.js';
+import {
+    acceptTicket,
+    addComment,
+    rejectAndReturnToDispatch,
+    rollbackToRequest,
+    updateTicketStatus
+} from '../api/ticketsApi.js';
+import {state} from './state.js';
+import {formatDateTime} from '../util/format.js';
+import {$, clearElement, createElement} from '../util/dom.js';
+import {renderTickets} from './renderTickets.js';
+import {getActorContext} from './actorContext.js';
+import {fetchDocumentContent} from '../api/documentsApi.js';
 
 export function renderTicketDetail(ticket) {
     const container = $('#detail-pane');
@@ -73,7 +79,7 @@ export function renderTicketDetail(ticket) {
                     await rollbackToRequest(ticket.id);
                     alert('Ticket converted back to request! It will reappear in the dispatcher inbox.');
                     // Refresh the view
-                    const { renderTickets } = await import('./renderTickets.js');
+                    const {renderTickets} = await import('./renderTickets.js');
                     await renderTickets('inbox');
                     // Clear detail pane since ticket is now hidden
                     const container = $('#detail-pane');
@@ -111,20 +117,20 @@ export function renderTicketDetail(ticket) {
         const typeSelect = createElement('select', 'form-select');
         typeSelect.style.marginRight = '8px';
         typeSelect.style.marginBottom = '8px';
-        
+
         const ticketTypes = [
-            { value: 'BILLING_REFUND', label: 'Billing - Refund', group: 'Billing' },
-            { value: 'BILLING_OTHER', label: 'Billing - Other', group: 'Billing' },
-            { value: 'SCHEDULING_CANCELLATION', label: 'Scheduling - Cancellation', group: 'Scheduling' },
-            { value: 'SCHEDULING_OTHER', label: 'Scheduling - Other', group: 'Scheduling' },
-            { value: 'ACCOUNT_ACCESS', label: 'Account - Access', group: 'Account / General Support' },
-            { value: 'SUPPORT_OTHER', label: 'Support - Other', group: 'Account / General Support' },
-            { value: 'BUG_APP', label: 'Bug - App', group: 'Bugs / Engineering' },
-            { value: 'BUG_BACKEND', label: 'Bug - Backend', group: 'Bugs / Engineering' },
-            { value: 'ENGINEERING_OTHER', label: 'Engineering - Other', group: 'Bugs / Engineering' },
-            { value: 'OTHER', label: 'Other (Needs Dispatcher Review)', group: 'Unclassified' }
+            {value: 'BILLING_REFUND', label: 'Billing - Refund', group: 'Billing'},
+            {value: 'BILLING_OTHER', label: 'Billing - Other', group: 'Billing'},
+            {value: 'SCHEDULING_CANCELLATION', label: 'Scheduling - Cancellation', group: 'Scheduling'},
+            {value: 'SCHEDULING_OTHER', label: 'Scheduling - Other', group: 'Scheduling'},
+            {value: 'ACCOUNT_ACCESS', label: 'Account - Access', group: 'Account / General Support'},
+            {value: 'SUPPORT_OTHER', label: 'Support - Other', group: 'Account / General Support'},
+            {value: 'BUG_APP', label: 'Bug - App', group: 'Bugs / Engineering'},
+            {value: 'BUG_BACKEND', label: 'Bug - Backend', group: 'Bugs / Engineering'},
+            {value: 'ENGINEERING_OTHER', label: 'Engineering - Other', group: 'Bugs / Engineering'},
+            {value: 'OTHER', label: 'Other (Needs Dispatcher Review)', group: 'Unclassified'}
         ];
-        
+
         ticketTypes.forEach(type => {
             const option = createElement('option');
             option.value = type.value;
@@ -137,8 +143,8 @@ export function renderTicketDetail(ticket) {
         updateTypeBtn.style.marginBottom = '8px';
         updateTypeBtn.addEventListener('click', async () => {
             try {
-                const { updateTicketType } = await import('../api/ticketsApi.js');
-                await updateTicketType(ticket.id, { ticketType: typeSelect.value });
+                const {updateTicketType} = await import('../api/ticketsApi.js');
+                await updateTicketType(ticket.id, {ticketType: typeSelect.value});
                 alert('Ticket type updated! Team will be updated automatically.');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
@@ -170,7 +176,7 @@ export function renderTicketDetail(ticket) {
         const updateBtn = createElement('button', 'btn btn-primary', 'Update Status');
         updateBtn.addEventListener('click', async () => {
             try {
-                await updateTicketStatus(ticket.id, { status: statusSelect.value });
+                await updateTicketStatus(ticket.id, {status: statusSelect.value});
                 alert('Status updated!');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
@@ -189,7 +195,7 @@ export function renderTicketDetail(ticket) {
     const relatedTicketsSection = createElement('div', 'ticket-section related-section');
     relatedTicketsSection.innerHTML = '<h4>Related Tickets</h4>';
     const relatedTicketsList = createElement('div', 'related-list');
-    
+
     // Parse aiPayloadJson to extract relatedTicketIds
     let relatedTicketIds = [];
     if (ticket.aiPayloadJson) {
@@ -202,7 +208,7 @@ export function renderTicketDetail(ticket) {
             console.error('Error parsing aiPayloadJson:', e);
         }
     }
-    
+
     if (relatedTicketIds.length > 0) {
         relatedTicketIds.forEach(ticketId => {
             const relatedItem = createElement('div', 'related-item');
@@ -211,7 +217,7 @@ export function renderTicketDetail(ticket) {
             relatedLink.addEventListener('click', async (e) => {
                 e.preventDefault();
                 // Switch to inbox tab first
-                const { switchTab } = await import('./router.js');
+                const {switchTab} = await import('./router.js');
                 switchTab('inbox');
                 // Wait a bit for the list to render, then select and load the ticket
                 setTimeout(async () => {
@@ -224,7 +230,7 @@ export function renderTicketDetail(ticket) {
                         listItem.classList.add('selected');
                         state.selectedTicketId = ticketId;
                         // Scroll to the selected item
-                        listItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        listItem.scrollIntoView({behavior: 'smooth', block: 'center'});
                     }
                     // Add to navigation history
                     state.addTicketToHistory(ticketId);
@@ -242,7 +248,7 @@ export function renderTicketDetail(ticket) {
         const emptyMsg = createElement('div', 'related-empty', 'No related tickets');
         relatedTicketsList.appendChild(emptyMsg);
     }
-    
+
     relatedTicketsSection.appendChild(relatedTicketsList);
     detail.appendChild(relatedTicketsSection);
 
@@ -250,7 +256,7 @@ export function renderTicketDetail(ticket) {
     const relatedDocsSection = createElement('div', 'ticket-section related-section');
     relatedDocsSection.innerHTML = '<h4>Related Company Docs</h4>';
     const relatedDocsList = createElement('div', 'related-list');
-    
+
     // Parse aiPayloadJson to extract policyCitations
     let policyCitations = [];
     if (ticket.aiPayloadJson) {
@@ -263,25 +269,25 @@ export function renderTicketDetail(ticket) {
             console.error('Error parsing aiPayloadJson:', e);
         }
     }
-    
+
     // Get current user's team for RBAC check
     const actorContext = getActorContext();
     const userTeam = actorContext.team ? actorContext.team.toLowerCase() : null;
-    
+
     if (policyCitations.length > 0) {
         policyCitations.forEach(citation => {
             const relatedItem = createElement('div', 'related-item');
-            
+
             // Check RBAC: only show document link if user's team is in rbacTeams
-            const hasAccess = citation.rbacTeams && 
-                             Array.isArray(citation.rbacTeams) && 
-                             citation.rbacTeams.some(team => team.toLowerCase() === userTeam);
-            
+            const hasAccess = citation.rbacTeams &&
+                Array.isArray(citation.rbacTeams) &&
+                citation.rbacTeams.some(team => team.toLowerCase() === userTeam);
+
             // Debug logging
             if (citation.documentName) {
                 console.log('Document:', citation.documentName, 'User team:', userTeam, 'RBAC teams:', citation.rbacTeams, 'Has access:', hasAccess);
             }
-            
+
             if (hasAccess && citation.documentName) {
                 // User has access - show clickable document link
                 const docLink = createElement('a', 'related-link', citation.documentName || 'Document');
@@ -289,7 +295,7 @@ export function renderTicketDetail(ticket) {
                 docLink.style.cursor = 'pointer';
                 docLink.style.textDecoration = 'underline';
                 docLink.style.color = '#0066cc';
-                
+
                 // Add click handler to fetch and display document
                 docLink.addEventListener('click', async (e) => {
                     e.preventDefault();
@@ -300,7 +306,7 @@ export function renderTicketDetail(ticket) {
                         alert('Error loading document: ' + error.message);
                     }
                 });
-                
+
                 relatedItem.appendChild(docLink);
             } else if (citation.documentName) {
                 // User doesn't have access - show document name but not as link
@@ -313,7 +319,7 @@ export function renderTicketDetail(ticket) {
                 }
                 relatedItem.appendChild(docName);
             }
-            
+
             // Show citation preview
             if (citation.citation) {
                 const quote = createElement('div', 'related-quote');
@@ -324,7 +330,7 @@ export function renderTicketDetail(ticket) {
                 quote.textContent = `"${citation.citation.substring(0, 100)}${citation.citation.length > 100 ? '...' : ''}"`;
                 relatedItem.appendChild(quote);
             }
-            
+
             // Show relevance score if available
             if (citation.score !== undefined && citation.score !== null) {
                 const score = createElement('div', 'related-score');
@@ -334,14 +340,14 @@ export function renderTicketDetail(ticket) {
                 score.textContent = `Relevance: ${(citation.score * 100).toFixed(1)}%`;
                 relatedItem.appendChild(score);
             }
-            
+
             relatedDocsList.appendChild(relatedItem);
         });
     } else {
         const emptyMsg = createElement('div', 'related-empty', 'No related company documents');
         relatedDocsList.appendChild(emptyMsg);
     }
-    
+
     relatedDocsSection.appendChild(relatedDocsList);
     detail.appendChild(relatedDocsSection);
 
@@ -393,7 +399,7 @@ export function renderTicketDetail(ticket) {
 
 export async function loadTicketDetail(ticketId) {
     try {
-        const { getTicket } = await import('../api/ticketsApi.js');
+        const {getTicket} = await import('../api/ticketsApi.js');
         const ticket = await getTicket(ticketId);
         renderTicketDetail(ticket);
         // Update navigation buttons after loading
@@ -411,16 +417,16 @@ export async function loadTicketDetail(ticketId) {
 async function showDocument(documentName, documentLink) {
     // Use documentLink if available (it might have the full path), otherwise use documentName
     const documentToFetch = documentLink || documentName;
-    
+
     if (!documentToFetch) {
         throw new Error('Document name or link is required');
     }
-    
+
     try {
         console.log('Fetching document:', documentToFetch, '(name:', documentName + ')');
         // fetchDocumentContent will extract the filename from the link if needed
         const content = await fetchDocumentContent(documentToFetch);
-        
+
         // Create modal overlay
         const overlay = createElement('div', 'document-overlay');
         overlay.style.position = 'fixed';
@@ -433,7 +439,7 @@ async function showDocument(documentName, documentLink) {
         overlay.style.display = 'flex';
         overlay.style.alignItems = 'center';
         overlay.style.justifyContent = 'center';
-        
+
         // Create modal content
         const modal = createElement('div', 'document-modal');
         modal.style.backgroundColor = 'white';
@@ -443,7 +449,7 @@ async function showDocument(documentName, documentLink) {
         modal.style.maxHeight = '80%';
         modal.style.overflow = 'auto';
         modal.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)';
-        
+
         // Header with close button
         const header = createElement('div', 'document-header');
         header.style.display = 'flex';
@@ -452,19 +458,19 @@ async function showDocument(documentName, documentLink) {
         header.style.marginBottom = '1rem';
         header.style.borderBottom = '1px solid #ddd';
         header.style.paddingBottom = '0.5rem';
-        
+
         const title = createElement('h3', 'document-title', documentName);
         title.style.margin = '0';
-        
+
         const closeBtn = createElement('button', 'btn btn-secondary', 'Close');
         closeBtn.style.marginLeft = '1rem';
         closeBtn.addEventListener('click', () => {
             document.body.removeChild(overlay);
         });
-        
+
         header.appendChild(title);
         header.appendChild(closeBtn);
-        
+
         // Document content
         const contentDiv = createElement('div', 'document-content');
         contentDiv.style.whiteSpace = 'pre-wrap';
@@ -472,18 +478,18 @@ async function showDocument(documentName, documentLink) {
         contentDiv.style.fontSize = '0.9rem';
         contentDiv.style.lineHeight = '1.5';
         contentDiv.textContent = content;
-        
+
         modal.appendChild(header);
         modal.appendChild(contentDiv);
         overlay.appendChild(modal);
-        
+
         // Close on overlay click
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
                 document.body.removeChild(overlay);
             }
         });
-        
+
         // Close on Escape key
         const escapeHandler = (e) => {
             if (e.key === 'Escape') {
@@ -492,7 +498,7 @@ async function showDocument(documentName, documentLink) {
             }
         };
         document.addEventListener('keydown', escapeHandler);
-        
+
         document.body.appendChild(overlay);
     } catch (error) {
         console.error('Error showing document:', error);

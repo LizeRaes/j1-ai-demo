@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>MedicalAppointment - Submit Request</title>
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/components.css">
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
     <style>
         body {
             display: flex;
@@ -15,26 +15,31 @@
             background: #f5f5f5;
             padding: 2rem;
         }
+
         .intake-container {
             background: white;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             max-width: 600px;
             width: 100%;
         }
+
         .intake-header {
             margin-bottom: 2rem;
             text-align: center;
         }
+
         .intake-header h1 {
             color: #333;
             margin-bottom: 0.5rem;
         }
+
         .intake-header p {
             color: #666;
             font-size: 0.9rem;
         }
+
         .spinner {
             display: none;
             border: 3px solid #f3f3f3;
@@ -45,13 +50,20 @@
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
+
         .spinner.active {
             display: block;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .success-message {
             display: none;
             padding: 1rem;
@@ -61,9 +73,11 @@
             text-align: center;
             margin-top: 1rem;
         }
+
         .success-message.show {
             display: block;
         }
+
         .error-message {
             display: none;
             padding: 1rem;
@@ -73,108 +87,110 @@
             text-align: center;
             margin-top: 1rem;
         }
+
         .error-message.show {
             display: block;
         }
     </style>
 </head>
 <body>
-    <div class="intake-container">
-        <div class="intake-header">
-            <h1>Submit a Request</h1>
-            <p>We're here to help. Please fill out the form below.</p>
-        </div>
-
-        <form id="intake-form">
-            <div class="form-group">
-                <label class="form-label" for="userId">User ID</label>
-                <input type="text" class="form-input" id="userId" name="userId" required placeholder="e.g., u-john">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="persona">Persona (Optional)</label>
-                <select class="form-select" id="persona" name="persona">
-                    <option value="">Select persona...</option>
-                    <option value="patient">Patient</option>
-                    <option value="provider">Healthcare Provider</option>
-                    <option value="admin">Administrator</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="message">Message</label>
-                <textarea class="form-textarea" id="message" name="message" required rows="6" placeholder="Describe your issue or question..."></textarea>
-            </div>
-
-            <div class="ticket-actions">
-                <button type="submit" class="btn btn-primary" id="submit-btn">Submit</button>
-            </div>
-
-            <div class="spinner" id="spinner"></div>
-            <div class="success-message" id="success-message">
-                ✓ Request submitted successfully! We'll get back to you soon.
-            </div>
-            <div class="error-message" id="error-message"></div>
-        </form>
+<div class="intake-container">
+    <div class="intake-header">
+        <h1>Submit a Request</h1>
+        <p>We're here to help. Please fill out the form below.</p>
     </div>
 
-    <script>
-        const form = document.getElementById('intake-form');
-        const spinner = document.getElementById('spinner');
-        const submitBtn = document.getElementById('submit-btn');
-        const successMessage = document.getElementById('success-message');
-        const errorMessage = document.getElementById('error-message');
+    <form id="intake-form">
+        <div class="form-group">
+            <label class="form-label" for="userId">User ID</label>
+            <input class="form-input" id="userId" name="userId" placeholder="e.g., u-john" required type="text">
+        </div>
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Reset messages
-            successMessage.classList.remove('show');
-            errorMessage.classList.remove('show');
-            
-            // Show spinner, disable button
-            spinner.classList.add('active');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
+        <div class="form-group">
+            <label class="form-label" for="persona">Persona (Optional)</label>
+            <select class="form-select" id="persona" name="persona">
+                <option value="">Select persona...</option>
+                <option value="patient">Patient</option>
+                <option value="provider">Healthcare Provider</option>
+                <option value="admin">Administrator</option>
+            </select>
+        </div>
 
-            const formData = {
-                userId: document.getElementById('userId').value.trim(),
-                message: document.getElementById('message').value.trim()
-            };
+        <div class="form-group">
+            <label class="form-label" for="message">Message</label>
+            <textarea class="form-textarea" id="message" name="message" placeholder="Describe your issue or question..." required
+                      rows="6"></textarea>
+        </div>
 
-            try {
-                const response = await fetch('/api/intake/incoming-request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
+        <div class="ticket-actions">
+            <button class="btn btn-primary" id="submit-btn" type="submit">Submit</button>
+        </div>
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || `HTTP error! status: ${response.status}`);
-                }
+        <div class="spinner" id="spinner"></div>
+        <div class="success-message" id="success-message">
+            ✓ Request submitted successfully! We'll get back to you soon.
+        </div>
+        <div class="error-message" id="error-message"></div>
+    </form>
+</div>
 
-                // Success
-                spinner.classList.remove('active');
-                successMessage.classList.add('show');
-                form.reset();
-                
-                // Reset button after 2 seconds
-                setTimeout(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit';
-                }, 2000);
+<script>
+    const form = document.getElementById('intake-form');
+    const spinner = document.getElementById('spinner');
+    const submitBtn = document.getElementById('submit-btn');
+    const successMessage = document.getElementById('success-message');
+    const errorMessage = document.getElementById('error-message');
 
-            } catch (error) {
-                spinner.classList.remove('active');
-                errorMessage.textContent = `Error: ${error.message}`;
-                errorMessage.classList.add('show');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Reset messages
+        successMessage.classList.remove('show');
+        errorMessage.classList.remove('show');
+
+        // Show spinner, disable button
+        spinner.classList.add('active');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        const formData = {
+            userId: document.getElementById('userId').value.trim(),
+            message: document.getElementById('message').value.trim()
+        };
+
+        try {
+            const response = await fetch('/api/intake/incoming-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `HTTP error! status: ${response.status}`);
+            }
+
+            // Success
+            spinner.classList.remove('active');
+            successMessage.classList.add('show');
+            form.reset();
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit';
-            }
-        });
-    </script>
+            }, 2000);
+
+        } catch (error) {
+            spinner.classList.remove('active');
+            errorMessage.textContent = `Error: ${error.message}`;
+            errorMessage.classList.add('show');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+        }
+    });
+</script>
 </body>
 </html>
