@@ -26,17 +26,4 @@ public class ActorContext {
         String team = requestContext.getHeaderString("X-Actor-Team");
         return team != null ? team : "DISPATCHER";
     }
-
-    public String getDefaultUserIdForTeam(String team) {
-        if (team == null) return "demo-user";
-
-        String teamLower = team.toLowerCase();
-        return switch (teamLower) {
-            case "dispatch" -> "dispatch-user1";
-            case "billing" -> "billing-user1";
-            case "reschedule" -> "reschedule-user1";
-            case "engineering" -> "engineering-user1";
-            case String _ -> teamLower + "-user1";
-        };
-    }
 }

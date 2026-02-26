@@ -156,6 +156,30 @@ curl -X POST http://localhost:8080/api/tickets/manual \
 
 - **HTTP**: `POST /api/tickets/from-ai`
 
+**Request body**
+
+```json
+{
+  "userId": "user-123",
+  "originalRequest": "The reschedule button is disabled on my appointment.",
+  "ticketType": "BUG_APP",
+  "urgencyScore": 5.0,
+  "aiConfidencePercent": 85,
+  "relatedTicketIds": [912, 847],
+  "policyCitations": [
+    {
+      "documentName": "Known_Bugs_Limitations.txt",
+      "documentLink": "/documents/Known_Bugs_Limitations.txt",
+      "citation": "BUG-001 ...",
+      "score": 0.82,
+      "rbacTeams": ["dispatch", "engineering"]
+    }
+  ]
+}
+```
+
+**Curl**
+
 ```bash
 curl -X POST http://localhost:8080/api/tickets/from-ai \
   -H "Content-Type: application/json" \

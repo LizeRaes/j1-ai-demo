@@ -9,12 +9,15 @@ import com.example.ticket.dto.CreateTicketFromAIDto;
 import com.example.ticket.dto.IncomingRequestDto;
 import com.example.ticket.dto.TriageRequestDto;
 import com.example.ticket.dto.TriageResponseDto;
+import com.example.ticket.external.TriageClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logmanager.Level;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +39,7 @@ public class TriageWorkerService {
     EventService eventService;
 
     @Inject
+    @RestClient
     TriageClient triageClient;
 
     @Inject
@@ -86,7 +90,20 @@ public class TriageWorkerService {
         );
 
         // Build triage request
-        TriageRequestDto triageRequest = new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.getId(), TriageClient.buildAllowedTicketTypes());
+        List<TriageRequestDto.AllowedTicketType> types = new ArrayList<>();
+
+        types.add(new TriageRequestDto.AllowedTicketType("BILLING_REFUND", "User is asking for a refund or billing reimbursement"));
+        types.add(new TriageRequestDto.AllowedTicketType("BILLING_OTHER", "Other billing-related issue requiring human review"));
+        types.add(new TriageRequestDto.AllowedTicketType("SCHEDULING_CANCELLATION", "User wants to cancel or reschedule an appointment"));
+        types.add(new TriageRequestDto.AllowedTicketType("SCHEDULING_OTHER", "Scheduling-related issue that does not clearly fit cancellation or rescheduling"));
+        types.add(new TriageRequestDto.AllowedTicketType("ACCOUNT_ACCESS", "Problems logging in, password reset, or account access"));
+        types.add(new TriageRequestDto.AllowedTicketType("SUPPORT_OTHER", "General support question not clearly related to billing or scheduling"));
+        types.add(new TriageRequestDto.AllowedTicketType("BUG_APP", "Bug or error in the user-facing application or UI"));
+        types.add(new TriageRequestDto.AllowedTicketType("BUG_BACKEND", "Bug or error in backend systems, APIs, or data processing"));
+        types.add(new TriageRequestDto.AllowedTicketType("ENGINEERING_OTHER", "Engineering-related issue that does not clearly fit a known bug category"));
+        types.add(new TriageRequestDto.AllowedTicketType("OTHER", "AI cannot confidently classify this request and a human dispatcher must decide"));
+
+        TriageRequestDto triageRequest = new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.getId(), types);
 
         // Store ticketId in final variable for use in async callbacks
         final Long ticketId = placeholderTicket.getId();
@@ -106,8 +123,8 @@ public class TriageWorkerService {
                             // Fallback: update ticket with OTHER type
                             self.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
                         }
-                    }, triageClient.getExecutor());
-                }, triageClient.getExecutor())
+                    });
+                })
                 .exceptionally(throwable -> {
                     // Handle any exception in the async chain
                     LOGGER.log(Level.ERROR, "Error in triage async chain for request " + request.id() + ": ", throwable);

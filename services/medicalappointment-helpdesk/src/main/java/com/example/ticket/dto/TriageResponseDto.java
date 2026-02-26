@@ -1,9 +1,11 @@
 package com.example.ticket.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record TriageResponseDto(@JsonProperty("status") String status,
                                 @JsonProperty("ticketType") String ticketType,
                                 @JsonProperty("urgencyScore") Integer urgencyScore,
@@ -12,6 +14,7 @@ public record TriageResponseDto(@JsonProperty("status") String status,
                                 @JsonProperty("policyCitations") List<PolicyCitation> policyCitations,
                                 @JsonProperty("failReason") String failReason) {
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record PolicyCitation(@JsonProperty("documentName") String documentName,
                                  @JsonProperty("documentLink") String documentLink,
                                  @JsonProperty("citation") String citation,

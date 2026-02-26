@@ -5,6 +5,7 @@ import com.example.ticket.domain.constants.*;
 import com.example.ticket.domain.model.Ticket;
 import com.example.ticket.domain.model.TicketComment;
 import com.example.ticket.dto.*;
+import com.example.ticket.external.SimilarityClient;
 import com.example.ticket.mapper.TicketTypeTeamMapper;
 import com.example.ticket.persistence.CommentRepository;
 import com.example.ticket.persistence.TicketRepository;
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +38,8 @@ public class TicketService {
     ActorContext actorContext;
 
     @Inject
-    SimilarityServiceClient similarityServiceClient;
+    @RestClient
+    SimilarityClient similarityClient;
 
     @Inject
     IncomingRequestService incomingRequestService;
@@ -58,7 +61,7 @@ public class TicketService {
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
         // Auto-assign to default user for the team
-        ticket.setAssignedTo(actorContext.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
+        ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
         ticket.setUrgencyFlag(dto.urgencyFlag() != null ? dto.urgencyFlag() : false);
         ticket.setUrgencyScore(dto.urgencyScore());
         ticket.setRollbackAllowed(false);
@@ -114,7 +117,7 @@ public class TicketService {
         Team assignedTeam = ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType());
         ticket.setAssignedTeam(assignedTeam.name());
         // Auto-assign to default user if not specified
-        ticket.setAssignedTo(dto.assignedTo() != null ? dto.assignedTo() : actorContext.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
+        ticket.setAssignedTo(dto.assignedTo() != null ? dto.assignedTo() : mapUserIdForTeam(ticket.getAssignedTeam()));
         ticket.setUrgencyFlag(dto.urgencyFlag() != null ? dto.urgencyFlag() : false);
         ticket.setUrgencyScore(dto.urgencyScore());
         ticket.setRollbackAllowed(false);
@@ -149,6 +152,7 @@ public class TicketService {
         }
 
         Ticket ticket = new Ticket();
+        ticket.setId(ticketRepository.findMaxId() + 1);
         ticket.setUserId(dto.userId());
         ticket.setOriginalRequest(dto.originalRequest());
         ticket.setTicketType(dto.ticketType());
@@ -158,7 +162,7 @@ public class TicketService {
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
         // Auto-assign to default user for the team
-        ticket.setAssignedTo(actorContext.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
+        ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
         ticket.setUrgencyFlag(dto.urgencyFlag());
         ticket.setUrgencyScore(dto.urgencyScore());
         ticket.setAiConfidence(dto.aiConfidence());
@@ -194,10 +198,10 @@ public class TicketService {
     }
 
     public List<TicketDto> findTickets(String view, String team, String user) {
-        List<Ticket> tickets = switch (team) {
-          case String _ when view.equals("team") -> ticketRepository.findByAssignedTeam(team);
-          case String _ when (user != null && view.equals("mine")) -> ticketRepository.findByAssignedTo(user);
-          case String _ ->  ticketRepository.listAll();
+        List<Ticket> tickets = switch (view) {
+            case "team" -> ticketRepository.findByAssignedTeam(team);
+            case String v when (user != null && v.equals("mine")) -> ticketRepository.findByAssignedTo(user);
+            case String _ -> ticketRepository.listAll();
         };
 
         // Filter out ROLLED_BACK tickets from normal views
@@ -342,7 +346,7 @@ public class TicketService {
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
         // Re-assign to default user for the new team if not already assigned
         if (ticket.getAssignedTo() == null) {
-            ticket.setAssignedTo(actorContext.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
+            ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
         }
         ticketRepository.persist(ticket);
 
@@ -535,7 +539,7 @@ public class TicketService {
         // Update assigned team based on new ticket type
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).name());
-        ticket.setAssignedTo(actorContext.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
+        ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
 
         // Store relatedTicketIds and policyCitations in aiPayloadJson
         Map<String, Object> aiPayload = new HashMap<>();
@@ -568,7 +572,7 @@ public class TicketService {
     private void sendTicketToSimilarityService(Ticket ticket) {
         SimilarityUpsertRequestDto request = new SimilarityUpsertRequestDto(ticket.getId(), ticket.getTicketType().name(), ticket.getOriginalRequest());
 
-        similarityServiceClient.upsertTicketAsync(request)
+        similarityClient.upsertTicketAsync(request)
                 .thenAccept(_ -> {
                     // Success - log event
                     eventService.logEvent(
@@ -598,5 +602,18 @@ public class TicketService {
                     );
                     return null;
                 });
+    }
+
+    private static String mapUserIdForTeam(String team) {
+        if (team == null) return "demo-user";
+
+        String teamLower = team.toLowerCase();
+        return switch (teamLower) {
+            case "dispatch" -> "dispatch-user1";
+            case "billing" -> "billing-user1";
+            case "reschedule" -> "reschedule-user1";
+            case "engineering" -> "engineering-user1";
+            case String _ -> teamLower + "-user1";
+        };
     }
 }
