@@ -17,12 +17,12 @@ function extractDocumentName(documentLinkOrName) {
     if (!documentLinkOrName) {
         return null;
     }
-    
+
     // If it's already just a filename, return it
     if (!documentLinkOrName.includes('/')) {
         return documentLinkOrName;
     }
-    
+
     // Extract filename from path
     // Handle both "/documents/name.txt" and "http://.../documents/name.txt"
     const parts = documentLinkOrName.split('/');
@@ -33,16 +33,16 @@ export async function fetchDocumentContent(documentLinkOrName) {
     if (!documentLinkOrName) {
         throw new Error('Document name or link is required');
     }
-    
+
     // Extract just the filename from the link
     const documentName = extractDocumentName(documentLinkOrName);
     if (!documentName) {
         throw new Error('Could not extract document name from: ' + documentLinkOrName);
     }
-    
+
     const url = `${DOCUMENTS_API_BASE}/content/${encodeURIComponent(documentName)}`;
     console.log('Fetching document from:', url, '(extracted from:', documentLinkOrName + ')');
-    
+
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -52,17 +52,17 @@ export async function fetchDocumentContent(documentLinkOrName) {
             // Note: CORS is handled by the server, but if there are issues, 
             // the error will be caught below
         });
-        
+
         console.log('Response status:', response.status, response.statusText);
-        
+
         if (!response.ok) {
             const errorText = await response.text().catch(() => response.statusText);
             throw new Error(`Failed to fetch document (${response.status}): ${errorText || response.statusText}`);
         }
-        
+
         let content = await response.text();
         console.log('Document fetched successfully, length:', content.length);
-        
+
         // Check if response is JSON (documents API returns JSON with "content" field)
         if (content.trim().startsWith('{') && content.includes('"content"')) {
             try {
@@ -75,7 +75,7 @@ export async function fetchDocumentContent(documentLinkOrName) {
                 console.warn('Failed to parse JSON response, using raw content:', e);
             }
         }
-        
+
         return content;
     } catch (error) {
         console.error('Error fetching document:', error);

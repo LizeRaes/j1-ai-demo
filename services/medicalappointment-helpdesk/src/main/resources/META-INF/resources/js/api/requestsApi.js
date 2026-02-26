@@ -1,4 +1,4 @@
-import { get, post } from './http.js';
+import {get, post} from './http.js';
 
 export async function getIncomingRequests(status) {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';

@@ -1,4 +1,4 @@
-package com.example.ticket.resource;
+package com.example.ticket.external;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -10,7 +10,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import java.util.Map;
 
 @Path("/api/documents")
-@RegisterRestClient(configKey = "company-rag.api")
+@RegisterRestClient
 public interface InternalDocumentClient {
 
     @GET

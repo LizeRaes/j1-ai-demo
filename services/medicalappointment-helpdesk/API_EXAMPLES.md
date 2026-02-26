@@ -21,6 +21,7 @@ curl -X POST http://localhost:8080/api/tickets/manual \
 ```
 
 **With all fields:**
+
 ```bash
 curl -X POST http://localhost:8080/api/tickets/manual \
   -H "Content-Type: application/json" \
@@ -61,6 +62,7 @@ curl -X POST http://localhost:8080/api/tickets/from-ai \
 ```
 
 **With AI payload:**
+
 ```bash
 curl -X POST http://localhost:8080/api/tickets/from-ai \
   -H "Content-Type: application/json" \
@@ -97,6 +99,7 @@ curl -X POST http://localhost:8080/api/incoming-requests \
 ```
 
 **Then dispatch it:**
+
 ```bash
 curl -X POST http://localhost:8080/api/dispatch/submit-ticket \
   -H "Content-Type: application/json" \
@@ -146,12 +149,13 @@ curl -X POST http://localhost:8080/api/dispatch/submit-ticket \
 ## Notes
 
 - **Actor Headers**: All endpoints accept `X-Actor-Id`, `X-Actor-Role`, and `X-Actor-Team` headers for demo mode
-- **Auto-assignment**: When a ticket is dispatched to a team, it's automatically assigned to the default user for that team:
-  - DISPATCHER → dispatch-user1
-  - BILLING → billing-user1
-  - SCHEDULING → scheduling-user1
-  - TECHNICAL_SUPPORT → engineering-user1
-  - CUSTOMER_SERVICE → customer-service-user1
-  - ADMIN → admin-user1
+- **Auto-assignment**: When a ticket is dispatched to a team, it's automatically assigned to the default user for that
+  team:
+    - DISPATCHER → dispatch-user1
+    - BILLING → billing-user1
+    - SCHEDULING → scheduling-user1
+    - TECHNICAL_SUPPORT → engineering-user1
+    - CUSTOMER_SERVICE → customer-service-user1
+    - ADMIN → admin-user1
 - **Urgency Score**: Range is 1-10 (not 0-1)
 - **AI Confidence**: Range is 0.0-1.0

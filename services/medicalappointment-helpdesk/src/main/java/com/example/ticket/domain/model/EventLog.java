@@ -2,15 +2,19 @@ package com.example.ticket.domain.model;
 
 import com.example.ticket.domain.constants.EventSeverity;
 import com.example.ticket.domain.constants.EventType;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "event_log")
-public class EventLog extends PanacheEntity {
+@Table(name = "event_logs")
+public class EventLog {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
     @Column(name = "ticket_id")
     private Long ticketId;
 
@@ -38,6 +42,10 @@ public class EventLog extends PanacheEntity {
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public Long getId() {
+        return id;
+    }
 
     public Long getTicketId() {
         return ticketId;

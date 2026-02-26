@@ -79,17 +79,17 @@ public class TriageWorkerService {
                 EventType.AI_TRIAGE_STARTED,
                 EventSeverity.WARNING,
                 "ai-triage-worker",
-                "AI triage started for request #" + request.id() + " (ticket #" + placeholderTicket.id + ")",
-                placeholderTicket.id,
+                "AI triage started for request #" + request.id() + " (ticket #" + placeholderTicket.getId() + ")",
+                placeholderTicket.getId(),
                 request.id(),
                 null
         );
 
         // Build triage request
-        TriageRequestDto triageRequest = new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.id, TriageClient.buildAllowedTicketTypes());
+        TriageRequestDto triageRequest = new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.getId(), TriageClient.buildAllowedTicketTypes());
 
         // Store ticketId in final variable for use in async callbacks
-        final Long ticketId = placeholderTicket.id;
+        final Long ticketId = placeholderTicket.getId();
 
         // Call AI triage service asynchronously
         // Completion happens in background thread - never blocks request thread

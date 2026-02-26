@@ -1,11 +1,11 @@
 package com.example.ticket.service;
 
 import com.example.ticket.config.ActorContext;
-import com.example.ticket.mapper.TicketTypeTeamMapper;
 import com.example.ticket.domain.constants.*;
 import com.example.ticket.domain.model.Ticket;
 import com.example.ticket.domain.model.TicketComment;
 import com.example.ticket.dto.*;
+import com.example.ticket.mapper.TicketTypeTeamMapper;
 import com.example.ticket.persistence.CommentRepository;
 import com.example.ticket.persistence.TicketRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,10 +19,10 @@ import jakarta.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TicketService {
+
     @Inject
     TicketRepository ticketRepository;
 
@@ -38,8 +38,6 @@ public class TicketService {
     @Inject
     SimilarityServiceClient similarityServiceClient;
 
-    @Inject
-    ObjectMapper objectMapper;
     @Inject
     IncomingRequestService incomingRequestService;
 
@@ -71,8 +69,8 @@ public class TicketService {
                 EventType.DISPATCH_SUBMITTED,
                 EventSeverity.INFO,
                 "dispatch-ui",
-                "Ticket #" + ticket.id + " dispatched by " + dto.dispatcherId() + (dto.incomingRequestId() != null ? " (from request #" + dto.incomingRequestId() + ")" : ""),
-                ticket.id,
+                "Ticket #" + ticket.getId() + " dispatched by " + dto.dispatcherId() + (dto.incomingRequestId() != null ? " (from request #" + dto.incomingRequestId() + ")" : ""),
+                ticket.getId(),
                 dto.incomingRequestId(),
                 null
         );
@@ -81,8 +79,8 @@ public class TicketService {
                 EventType.TICKET_CREATED,
                 EventSeverity.INFO,
                 "ticketing-api",
-                "Ticket #" + ticket.id + " created from dispatch" + (dto.incomingRequestId() != null ? " (request #" + dto.incomingRequestId() + ")" : ""),
-                ticket.id,
+                "Ticket #" + ticket.getId() + " created from dispatch" + (dto.incomingRequestId() != null ? " (request #" + dto.incomingRequestId() + ")" : ""),
+                ticket.getId(),
                 dto.incomingRequestId(),
                 null
         );
@@ -90,7 +88,7 @@ public class TicketService {
         // Send to similarity service (async, non-blocking)
         sendTicketToSimilarityService(ticket);
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -126,8 +124,8 @@ public class TicketService {
                 EventType.TICKET_CREATED,
                 EventSeverity.INFO,
                 "ticketing-api",
-                "Ticket #" + ticket.id + " created via API endpoint",
-                ticket.id,
+                "Ticket #" + ticket.getId() + " created via API endpoint",
+                ticket.getId(),
                 null,
                 null
         );
@@ -135,7 +133,7 @@ public class TicketService {
         // Send to similarity service (async, non-blocking)
         sendTicketToSimilarityService(ticket);
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -178,8 +176,8 @@ public class TicketService {
                 EventType.AI_TICKET_CREATED,
                 EventSeverity.INFO,
                 "ai-triage-worker",
-                "AI ticket #" + ticket.id + " created from incoming request #" + (dto.incomingRequestId() != null ? dto.incomingRequestId() : "N/A"),
-                ticket.id,
+                "AI ticket #" + ticket.getId() + " created from incoming request #" + (dto.incomingRequestId() != null ? dto.incomingRequestId() : "N/A"),
+                ticket.getId(),
                 dto.incomingRequestId(),
                 dto.aiPayloadJson()
         );
@@ -187,7 +185,7 @@ public class TicketService {
         // Send to similarity service (async, non-blocking)
         sendTicketToSimilarityService(ticket);
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -195,22 +193,19 @@ public class TicketService {
                 ticket.getUpdatedAt(), List.of());
     }
 
-    public List<TicketDto> getTickets(String view, String team, String user) {
-        List<Ticket> tickets;
-        if ("team".equals(view) && team != null) {
-            tickets = ticketRepository.findByAssignedTeam(team);
-        } else if ("mine".equals(view) && user != null) {
-            tickets = ticketRepository.findByAssignedTo(user);
-        } else {
-            tickets = ticketRepository.listAll();
-        }
+    public List<TicketDto> findTickets(String view, String team, String user) {
+        List<Ticket> tickets = switch (team) {
+          case String _ when view.equals("team") -> ticketRepository.findByAssignedTeam(team);
+          case String _ when (user != null && view.equals("mine")) -> ticketRepository.findByAssignedTo(user);
+          case String _ ->  ticketRepository.listAll();
+        };
 
         // Filter out ROLLED_BACK tickets from normal views
         tickets = tickets.stream()
                 .filter(t -> t.getStatus() != TicketStatus.ROLLED_BACK)
-                .collect(Collectors.toList());
+                .toList();
         return tickets.stream()
-                .map(ticket -> new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+                .map(ticket -> new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                         ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                         ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                         ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -219,19 +214,19 @@ public class TicketService {
                 .toList();
     }
 
-    public TicketDto getTicket(Long id) {
+    public TicketDto findTicket(Long id) {
         Ticket ticket = ticketRepository.findById(id);
         if (ticket == null) {
             return null;
         }
         List<TicketComment> comments = commentRepository.findByTicketId(id);
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
                 filterAiPayloadForCurrentActor(ticket.getAiPayloadJson()), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
                 ticket.getUpdatedAt(), comments.stream()
-                .map(c -> new CommentDto(c.id, c.getTicketId(), c.getAuthorId(), c.getBody()))
+                .map(c -> new CommentDto(c.id, ticket.getId(), c.getAuthorId(), c.getBody()))
                 .toList());
     }
 
@@ -249,13 +244,13 @@ public class TicketService {
                 EventType.TICKET_ACCEPTED,
                 EventSeverity.INFO,
                 "ticketing-ui",
-                "Ticket #" + ticket.id + " accepted by " + userId,
-                ticket.id,
+                "Ticket #" + ticket.getId() + " accepted by " + userId,
+                ticket.getId(),
                 null,
                 null
         );
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -278,13 +273,13 @@ public class TicketService {
                 EventType.RETURNED_TO_DISPATCH,
                 EventSeverity.INFO,
                 "ticketing-ui",
-                "Ticket #" + ticket.id + " returned to dispatch",
-                ticket.id,
+                "Ticket #" + ticket.getId() + " returned to dispatch",
+                ticket.getId(),
                 null,
                 null
         );
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -305,13 +300,13 @@ public class TicketService {
                 EventType.TICKET_STATUS_CHANGED,
                 EventSeverity.INFO,
                 "ticketing-ui",
-                "Ticket #" + ticket.id + " status changed to " + status,
-                ticket.id,
+                "Ticket #" + ticket.getId() + " status changed to " + status,
+                ticket.getId(),
                 null,
                 null
         );
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -355,13 +350,13 @@ public class TicketService {
                 EventType.TICKET_TYPE_CHANGED,
                 EventSeverity.INFO,
                 "ticketing-ui",
-                "Ticket #" + ticket.id + " type changed from " + oldType + " to " + dto.ticketType() + " (team: " + ticket.getAssignedTeam() + ")",
-                ticket.id,
+                "Ticket #" + ticket.getId() + " type changed from " + oldType + " to " + dto.ticketType() + " (team: " + ticket.getAssignedTeam() + ")",
+                ticket.getId(),
                 null,
                 null
         );
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -376,7 +371,7 @@ public class TicketService {
             return null;
         }
         TicketComment comment = new TicketComment();
-        comment.setTicketId(ticketId);
+        comment.setTicket(ticket);
         comment.setAuthorId(dto.authorId());
         comment.setBody(dto.body());
         commentRepository.persist(comment);
@@ -391,7 +386,7 @@ public class TicketService {
                 null
         );
 
-        return new CommentDto(comment.id, comment.getTicketId(), comment.getAuthorId(), comment.getBody());
+        return new CommentDto(comment.id, comment.getTicket().getId(), comment.getAuthorId(), comment.getBody());
     }
 
     @Transactional
@@ -423,13 +418,13 @@ public class TicketService {
                 EventType.AI_TICKET_ROLLED_BACK,
                 EventSeverity.INFO,
                 "ticketing-ui",
-                "AI ticket #" + ticket.id + " rolled back to incoming request #" + ticket.getIncomingRequestId(),
-                ticket.id,
+                "AI ticket #" + ticket.getId() + " rolled back to incoming request #" + ticket.getIncomingRequestId(),
+                ticket.getId(),
                 ticket.getIncomingRequestId(),
                 null
         );
 
-        return new TicketDto(ticket.id, ticket.getUserId(), ticket.getOriginalRequest(),
+        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                 ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
@@ -483,6 +478,7 @@ public class TicketService {
         }
 
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
             JsonNode root = objectMapper.readTree(aiPayloadJson);
             JsonNode citationsNode = root.get("policyCitations");
             if (citationsNode == null || !citationsNode.isArray()) {
@@ -546,6 +542,7 @@ public class TicketService {
         aiPayload.put("relatedTicketIds", relatedTicketIds != null ? relatedTicketIds : List.of());
         aiPayload.put("policyCitations", policyCitations != null ? policyCitations : List.of());
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
             ticket.setAiPayloadJson(objectMapper.writeValueAsString(aiPayload));
         } catch (Exception e) {
             System.err.println("Error serializing AI payload: " + e.getMessage());
@@ -569,7 +566,7 @@ public class TicketService {
      * Non-blocking: errors are logged but don't affect ticket creation.
      */
     private void sendTicketToSimilarityService(Ticket ticket) {
-        SimilarityUpsertRequestDto request = new SimilarityUpsertRequestDto(ticket.id, ticket.getTicketType().name(), ticket.getOriginalRequest());
+        SimilarityUpsertRequestDto request = new SimilarityUpsertRequestDto(ticket.getId(), ticket.getTicketType().name(), ticket.getOriginalRequest());
 
         similarityServiceClient.upsertTicketAsync(request)
                 .thenAccept(_ -> {
@@ -578,8 +575,8 @@ public class TicketService {
                             EventType.SYSTEM_STEP,
                             EventSeverity.INFO,
                             "ticketing-api",
-                            "Sending ticket #" + ticket.id + " to embedding service",
-                            ticket.id,
+                            "Sending ticket #" + ticket.getId() + " to embedding service",
+                            ticket.getId(),
                             null,
                             null
                     );
@@ -595,7 +592,7 @@ public class TicketService {
                             EventSeverity.WARNING,
                             "ticketing-api",
                             "sent to ticket similarity system: error - " + throwable.getClass().getSimpleName() + " - " + errorMessage,
-                            ticket.id,
+                            ticket.getId(),
                             null,
                             null
                     );

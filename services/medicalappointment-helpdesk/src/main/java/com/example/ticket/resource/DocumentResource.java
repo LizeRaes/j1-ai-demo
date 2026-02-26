@@ -1,5 +1,6 @@
 package com.example.ticket.resource;
 
+import com.example.ticket.external.InternalDocumentClient;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -11,7 +12,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.Map;
 
-@Path("/api//documents")
+@Path("/api/documents")
 public class DocumentResource {
 
     @Inject

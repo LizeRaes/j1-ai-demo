@@ -3,16 +3,20 @@ package com.example.ticket.domain.model;
 import com.example.ticket.domain.constants.TicketSource;
 import com.example.ticket.domain.constants.TicketStatus;
 import com.example.ticket.domain.constants.TicketType;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "ticket")
-public class Ticket extends PanacheEntity {
+@Table(name = "tickets")
+public class Ticket {
+    @Id
+    private Long id;
+
+    private String name;
 
     @Column(name = "user_id", nullable = false, length = 64)
     private String userId;
@@ -63,8 +67,11 @@ public class Ticket extends PanacheEntity {
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false, updatable = true)
-    @CreationTimestamp
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TicketComment> comments;
 
     public Long getId() {
         return id;
@@ -176,6 +183,14 @@ public class Ticket extends PanacheEntity {
 
     public void setIncomingRequestId(Long incomingRequestId) {
         this.incomingRequestId = incomingRequestId;
+    }
+
+    public List<TicketComment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<TicketComment> comments) {
+        this.comments = comments;
     }
 
     public LocalDateTime getCreatedAt() {

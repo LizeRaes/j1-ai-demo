@@ -4,7 +4,6 @@ import com.example.ticket.domain.model.EventLog;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
 

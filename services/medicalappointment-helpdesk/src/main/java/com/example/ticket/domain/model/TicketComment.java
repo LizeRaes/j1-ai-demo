@@ -1,19 +1,17 @@
 package com.example.ticket.domain.model;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ticket_comment")
-public class TicketComment extends PanacheEntity {
-    @Column(name = "ticket_id", nullable = false)
-    private Long ticketId;
+@Table(name = "ticket_comments")
+public class TicketComment {
+
+    @Id
+    @GeneratedValue
+    public Long id;
 
     @Column(name = "author_id", nullable = false, length = 64)
     private String authorId;
@@ -25,13 +23,11 @@ public class TicketComment extends PanacheEntity {
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+    @ManyToOne
+    private Ticket ticket;
 
-    public Long getTicketId() {
-        return ticketId;
-    }
-
-    public void setTicketId(Long ticketId) {
-        this.ticketId = ticketId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getAuthorId() {
@@ -48,5 +44,21 @@ public class TicketComment extends PanacheEntity {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public Ticket getTicket() {
+        return ticket;
+    }
+
+    public void setTicket(Ticket ticket) {
+        this.ticket = ticket;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

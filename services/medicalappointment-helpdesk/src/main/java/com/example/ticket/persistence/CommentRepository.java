@@ -10,6 +10,6 @@ import java.util.List;
 @ApplicationScoped
 public class CommentRepository implements PanacheRepository<TicketComment> {
     public List<TicketComment> findByTicketId(Long ticketId) {
-        return find("ticketId", Sort.ascending("createdAt"), ticketId).list();
+        return find("ticket.id", Sort.ascending("createdAt"), ticketId).list();
     }
 }

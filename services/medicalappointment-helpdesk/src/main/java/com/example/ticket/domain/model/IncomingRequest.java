@@ -1,16 +1,20 @@
 package com.example.ticket.domain.model;
 
 import com.example.ticket.domain.constants.RequestStatus;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "incoming_request")
-public class IncomingRequest extends PanacheEntity {
+@Table(name = "incoming_requests")
+public class IncomingRequest {
+    @Id
+    @GeneratedValue
+    private Long id;
+
     @Column(name = "user_id", nullable = false, length = 64)
     private String userId;
 
@@ -30,8 +34,12 @@ public class IncomingRequest extends PanacheEntity {
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    @CreationTimestamp
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public Long getId() {
+        return id;
+    }
 
     public String getUserId() {
         return userId;

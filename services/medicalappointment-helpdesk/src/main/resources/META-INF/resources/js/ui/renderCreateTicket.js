@@ -1,7 +1,6 @@
-import { createTicketManual, createTicketFromAi } from '../api/ticketsApi.js';
-import { $, createElement, clearElement } from '../util/dom.js';
-import { state } from './state.js';
-import { switchTab } from './router.js';
+import {createTicketFromAi, createTicketManual} from '../api/ticketsApi.js';
+import {$, clearElement, createElement} from '../util/dom.js';
+import {switchTab} from './router.js';
 
 export function renderCreateTicket() {
     const listContainer = $('#list-content');
@@ -98,7 +97,7 @@ export function renderCreateTicket() {
                 ticketType: document.getElementById('create-ticket-type').value,
                 // assignedTeam is derived automatically from ticketType - not sent
                 urgencyFlag: document.getElementById('create-urgency').checked,
-                urgencyScore: document.getElementById('create-urgency-score').value ? 
+                urgencyScore: document.getElementById('create-urgency-score').value ?
                     parseFloat(document.getElementById('create-urgency-score').value) : null,
                 aiConfidence: parseFloat(document.getElementById('create-ai-confidence').value) || 0.8,
             };
@@ -118,7 +117,7 @@ export function renderCreateTicket() {
                 // assignedTeam is derived automatically from ticketType - not sent
                 status: 'FROM_DISPATCH',
                 urgencyFlag: document.getElementById('create-urgency').checked,
-                urgencyScore: document.getElementById('create-urgency-score').value ? 
+                urgencyScore: document.getElementById('create-urgency-score').value ?
                     parseFloat(document.getElementById('create-urgency-score').value) : null,
             };
 

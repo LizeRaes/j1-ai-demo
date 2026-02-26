@@ -1,4 +1,4 @@
-import { get, post } from './http.js';
+import {get, post} from './http.js';
 
 export async function getTickets(view, team, user) {
     const params = new URLSearchParams();
@@ -34,7 +34,7 @@ export async function rollbackToRequest(id) {
 }
 
 export async function updateTicketStatus(id, status) {
-    return post(`/tickets/${id}/status`, { status });
+    return post(`/tickets/${id}/status`, {status});
 }
 
 export async function updateTicketType(id, data) {
@@ -42,5 +42,5 @@ export async function updateTicketType(id, data) {
 }
 
 export async function addComment(id, authorId, body) {
-    return post(`/tickets/${id}/comments`, { authorId, body });
+    return post(`/tickets/${id}/comments`, {authorId, body});
 }

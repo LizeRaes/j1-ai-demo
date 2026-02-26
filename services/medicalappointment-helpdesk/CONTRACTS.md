@@ -1,15 +1,17 @@
 ## API Contracts
 
-This document lists the primary HTTP endpoints exposed by the MedicalAppointment Ticketing System, with **`curl` examples** and **example responses**.
+This document lists the primary HTTP endpoints exposed by the MedicalAppointment Ticketing System, with **`curl`
+examples** and **example responses**.
 
 Unless otherwise noted:
+
 - **Base URL**: `http://localhost:8080`
 - **API prefix**: `/api`
 - **Content type**: `application/json`
 - Actor/persona headers:
-  - `X-Actor-Id`
-  - `X-Actor-Role`
-  - `X-Actor-Team` (one of: `dispatch`, `billing`, `reschedule`, `engineering`)
+    - `X-Actor-Id`
+    - `X-Actor-Role`
+    - `X-Actor-Team` (one of: `dispatch`, `billing`, `reschedule`, `engineering`)
 
 For brevity, responses are **trimmed** to the most relevant fields.
 
@@ -417,7 +419,8 @@ curl -X POST http://localhost:8080/api/triage-worker/process \
 ### 6. Documents (Proxy – RBAC-Aware Display in UI)
 
 The helpdesk UI does **not** call the external documents service directly (to avoid CORS).  
-Instead, it uses a **proxy endpoint** in this service, and the UI applies RBAC based on `rbacTeams` and the current persona/team.
+Instead, it uses a **proxy endpoint** in this service, and the UI applies RBAC based on `rbacTeams` and the current
+persona/team.
 
 #### 6.1 Proxy: Get Document Content
 
@@ -471,5 +474,6 @@ curl "http://localhost:8084/api/documents/content/Approved_Response_Templates.tx
 }
 ```
 
-The ticketing UI should **only show document links for teams listed in `rbacTeams`** returned by AI triage; the backend filters `policyCitations` per actor team before sending data to the browser.
+The ticketing UI should **only show document links for teams listed in `rbacTeams`** returned by AI triage; the backend
+filters `policyCitations` per actor team before sending data to the browser.
 

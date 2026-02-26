@@ -36,13 +36,13 @@ public class TicketResource {
             @QueryParam("view") String view,
             @QueryParam("team") String team,
             @QueryParam("user") String user) {
-        return ticketService.getTickets(view, team, user);
+        return ticketService.findTickets(view, team, user);
     }
 
     @GET
     @Path("/{id}")
     public Response getTicket(@PathParam("id") Long id) {
-        TicketDto ticket = ticketService.getTicket(id);
+        TicketDto ticket = ticketService.findTicket(id);
         if (ticket == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

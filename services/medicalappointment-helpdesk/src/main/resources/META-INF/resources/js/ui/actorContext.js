@@ -26,7 +26,7 @@ export function getActorContext() {
             console.error('Failed to parse actor context:', e);
         }
     }
-    
+
     // Default context
     return {
         team: 'dispatch',
@@ -71,7 +71,7 @@ export function renderActorContext() {
     // Update actor ID when team changes
     const teamSelect = document.getElementById('actor-team');
     const actorIdInput = document.getElementById('actor-id');
-    
+
     teamSelect.addEventListener('change', () => {
         const newTeam = teamSelect.value;
         const defaultUserId = getDefaultUserIdForTeam(newTeam);
@@ -95,12 +95,12 @@ function updateActorContext() {
     };
 
     saveActorContext(context);
-    
+
     // Update state
     if (window.state) {
         window.state.currentUserId = actorId;
     }
-    
+
     // NOTE: We intentionally do NOT force a tab change here.
     // The current view (list + selected ticket) should stay as-is when persona changes.
 }

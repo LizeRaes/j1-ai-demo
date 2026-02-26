@@ -1,9 +1,9 @@
-import { getTickets, getTicket } from '../api/ticketsApi.js';
-import { renderTicketDetail, loadTicketDetail } from './renderTicketDetail.js';
-import { state } from './state.js';
-import { formatDateTime } from '../util/format.js';
-import { $, createElement, clearElement } from '../util/dom.js';
-import { getActorContext } from './actorContext.js';
+import {getTickets} from '../api/ticketsApi.js';
+import {loadTicketDetail} from './renderTicketDetail.js';
+import {state} from './state.js';
+import {formatDateTime} from '../util/format.js';
+import {$, clearElement, createElement} from '../util/dom.js';
+import {getActorContext} from './actorContext.js';
 
 export async function renderTickets(view) {
     const container = $('#list-content');
@@ -72,7 +72,7 @@ function createTicketListItem(ticket) {
         });
         item.classList.add('selected');
         state.selectedTicketId = ticket.id;
-        
+
         // Add to navigation history
         state.addTicketToHistory(ticket.id);
         if (window.updateNavButtons) {

@@ -10,10 +10,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Path("/api/events")

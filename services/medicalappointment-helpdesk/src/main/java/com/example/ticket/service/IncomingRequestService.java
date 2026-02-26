@@ -49,15 +49,15 @@ public class IncomingRequestService {
                 EventType.INCOMING_REQUEST_RECEIVED,
                 EventSeverity.INFO,
                 eventSource,
-                "Incoming request #" + request.id + " received from user " + dto.userId(),
+                "Incoming request #" + request.getId() + " received from user " + dto.userId(),
                 null,
-                request.id,
+                request.getId(),
                 null
         );
 
         // Immediately trigger AI triage worker to process this new request
         // This runs synchronously for now, will become async later
-        IncomingRequestDto requestDto = new IncomingRequestDto(request.id, request.getUserId()
+        IncomingRequestDto requestDto = new IncomingRequestDto(request.getId(), request.getUserId()
                 , request.getChannel(), request.getRawText(),
                 request.getStatus(), request.getCreatedAt(), request.getUpdatedAt());
 //                mapper.toDto(request);
@@ -69,7 +69,7 @@ public class IncomingRequestService {
             LOGGER.log(Level.SEVERE, "Error in triage worker: ", e);
         }
 
-        return new IncomingRequestDto(request.id, request.getUserId(),
+        return new IncomingRequestDto(request.getId(), request.getUserId(),
                 request.getChannel(), request.getRawText(),
                 request.getStatus(), request.getCreatedAt(),
                 request.getUpdatedAt());
@@ -83,7 +83,7 @@ public class IncomingRequestService {
             requests = incomingRequestRepository.listAll();
         }
         return requests.stream()
-                .map(request -> new IncomingRequestDto(request.id, request.getUserId(),
+                .map(request -> new IncomingRequestDto(request.getId(), request.getUserId(),
                         request.getChannel(), request.getRawText(),
                         request.getStatus(), request.getCreatedAt(),
                         request.getUpdatedAt()))
@@ -103,7 +103,7 @@ public class IncomingRequestService {
         allRequests.addAll(returnedRequests);
 
         return allRequests.stream()
-                .map(request -> new IncomingRequestDto(request.id, request.getUserId(),
+                .map(request -> new IncomingRequestDto(request.getId(), request.getUserId(),
                         request.getChannel(), request.getRawText(),
                         request.getStatus(), request.getCreatedAt(),
                         request.getUpdatedAt())).collect(Collectors.toList());
@@ -115,7 +115,7 @@ public class IncomingRequestService {
             return null;
         }
 
-        return new IncomingRequestDto(request.id, request.getUserId(),
+        return new IncomingRequestDto(request.getId(), request.getUserId(),
                 request.getChannel(), request.getRawText(),
                 request.getStatus(), request.getCreatedAt(),
                 request.getUpdatedAt());
@@ -146,6 +146,14 @@ public class IncomingRequestService {
             request.setStatus(RequestStatus.AI_TRIAGE_IN_PROGRESS);
             incomingRequestRepository.persist(request);
         }
+    }
+
+    public void deleteAll() {
+        incomingRequestRepository.deleteAll();
+    }
+
+    public long count() {
+        return incomingRequestRepository.count();
     }
 
 }

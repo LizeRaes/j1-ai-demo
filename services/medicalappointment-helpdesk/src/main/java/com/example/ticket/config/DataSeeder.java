@@ -1,26 +1,26 @@
 package com.example.ticket.config;
 
-import com.example.ticket.domain.constants.RequestStatus;
+import com.example.ticket.domain.constants.Team;
 import com.example.ticket.domain.constants.TicketSource;
 import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.constants.TicketType;
-import com.example.ticket.domain.model.IncomingRequest;
 import com.example.ticket.domain.model.Ticket;
 import com.example.ticket.domain.model.TicketComment;
+import com.example.ticket.dto.CreateIncomingRequestDto;
+import com.example.ticket.dto.TicketDto;
 import com.example.ticket.mapper.TicketTypeTeamMapper;
 import com.example.ticket.persistence.CommentRepository;
 import com.example.ticket.persistence.TicketRepository;
+import com.example.ticket.service.IncomingRequestService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,13 +35,13 @@ public class DataSeeder {
     @Inject
     CommentRepository commentRepository;
 
+    @Inject
+    IncomingRequestService incomingRequestService;
+
     TicketTypeTeamMapper ticketTypeTeamMapper;
 
     @Inject
     ActorContext context;
-
-    @Inject
-    EntityManager entityManager;
 
 
     @Transactional
@@ -62,22 +62,22 @@ public class DataSeeder {
             LOGGER.info("Database cleared (Empty mode)");
         } else {
             // KeepData mode (default): only seed incoming requests if database is empty
-            if (IncomingRequest.count() == 0) {
+            if (incomingRequestService.count() == 0) {
                 seedDefaultIncomingRequests();
-                LOGGER.info("✓ Default incoming requests seeded");
+                LOGGER.info(" Default incoming requests seeded");
             }
         }
     }
 
     private void clearAllData() {
-        // Delete in order to respect foreign key constraints
         commentRepository.deleteAll();
         ticketRepository.deleteAll();
-        IncomingRequest.deleteAll();
+        incomingRequestService.deleteAll();
         LOGGER.info("Cleared all tickets, comments, and incoming requests");
     }
 
-    private int loadDemoTicketsFromFiles() {
+    @Transactional
+    int loadDemoTicketsFromFiles() {
         // List of demo data files to load
         String[] demoFiles = {
                 "demo-data/demo-tickets-access-other.json",
@@ -87,7 +87,6 @@ public class DataSeeder {
         };
 
         int totalTickets = 0;
-        int filesLoaded = 0;
 
         for (String filePath : demoFiles) {
             try {
@@ -97,156 +96,74 @@ public class DataSeeder {
                     continue;
                 }
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<Map<String, Object>> tickets = objectMapper.readValue(is,
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
-
                 int fileTicketCount = 0;
-                int fileErrorCount = 0;
-                for (Map<String, Object> ticketData : tickets) {
-                    try {
-                        // Check if ticket ID is specified in JSON
-                        Long ticketId = null;
-                        if (ticketData.get("id") != null) {
-                            ticketId = ((Number) ticketData.get("id")).longValue();
-                            // Delete existing ticket with this ID if it exists (to override)
-                            Ticket existing = ticketRepository.findById(ticketId);
-                            if (existing != null) {
-                                // Delete comments first (foreign key constraint)
-                                commentRepository.findByTicketId(ticketId).forEach(commentRepository::delete);
-                                ticketRepository.delete(existing);
-                            }
-                        }
+                ObjectMapper mapper = new ObjectMapper();
+                List<TicketDto> tickets = mapper.readValue(is, new TypeReference<>() {
+                });
 
-                        Ticket ticket = createTicketFromMap(ticketData);
-                        // Set explicit ID if provided - use native SQL INSERT to bypass IDENTITY generation
-                        if (ticketId != null) {
-                            ticket.id = ticketId;
+                for (TicketDto dto : tickets) {
+                    Ticket ticket = new Ticket();
+                    ticket.setUserId(dto.userId());
+                    ticket.setOriginalRequest(dto.originalRequest());
+                    ticket.setTicketType(dto.ticketType());
+                    ticket.setAiConfidence(dto.aiConfidence());
+                    ticket.setAiPayloadJson(dto.aiPayloadJson());
+                    Team assignedTeam = ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType());
+                    ticket.setAssignedTeam(assignedTeam.name());
+                    ticket.setStatus(dto.status());
+                    ticket.setAssignedTo(dto.assignedTo() != null ? dto.assignedTo() : context.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
+                    ticket.setSource(dto.source());
+                    ticket.setUrgencyFlag(dto.urgencyFlag());
+                    ticket.setUrgencyScore(dto.urgencyScore());
+                    ticket.setRollbackAllowed(dto.source().equals(TicketSource.AI) && dto.status().equals(TicketStatus.FROM_AI));
 
-                            // Use native SQL INSERT to set explicit ID (bypasses IDENTITY generation)
-                            // Column order matches actual database schema
-                            String sql = "INSERT INTO tickets (id, user_id, original_request, ticket_type, status, source, " +
-                                    "assigned_team, assigned_to, urgency_flag, urgency_score, ai_confidence, rollback_allowed, " +
-                                    "ai_payload_json, incoming_request_id) " +
-                                    "VALUES (:id, :userId, :originalRequest, :ticketType, :status, :source, " +
-                                    ":assignedTeam, :assignedTo, :urgencyFlag, :urgencyScore, :aiConfidence, :rollbackAllowed, " +
-                                    ":aiPayloadJson, :incomingRequestId)";
-
-                            entityManager.createNativeQuery(sql)
-                                    .setParameter("id", ticketId)
-                                    .setParameter("userId", ticket.getUserId())
-                                    .setParameter("originalRequest", ticket.getOriginalRequest())
-                                    .setParameter("ticketType", ticket.getTicketType().name())
-                                    .setParameter("status", ticket.getStatus().name())
-                                    .setParameter("source", ticket.getSource().name())
-                                    .setParameter("assignedTeam", ticket.getAssignedTeam())
-                                    .setParameter("assignedTo", ticket.getAssignedTo())
-                                    .setParameter("urgencyFlag", ticket.getUrgencyFlag())
-                                    .setParameter("urgencyScore", ticket.getUrgencyScore())
-                                    .setParameter("aiConfidence", ticket.getAiConfidence())
-                                    .setParameter("rollbackAllowed", ticket.getRollbackAllowed())
-                                    .setParameter("aiPayloadJson", ticket.getAiPayloadJson())
-                                    .setParameter("incomingRequestId", ticket.getIncomingRequestId())
-                                    .executeUpdate();
-                        } else {
-                            ticketRepository.persist(ticket);
-                        }
-
-                        // Create comments if any
-                        @SuppressWarnings("unchecked")
-                        List<Map<String, Object>> comments = (List<Map<String, Object>>) ticketData.get("comments");
-                        if (comments != null) {
-                            for (Map<String, Object> commentData : comments) {
-                                TicketComment comment = new TicketComment();
-                                comment.setTicketId(ticket.id);
-                                comment.setAuthorId((String) commentData.get("authorId"));
-                                comment.setBody((String) commentData.get("body"));
-                                commentRepository.persist(comment);
-                            }
-                        }
-                        fileTicketCount++;
-                    } catch (Exception e) {
-                        fileErrorCount++;
-                        System.err.println("  ⚠ Skipping ticket in " + filePath + ": " + e.getMessage());
+                    if (dto.id() != null && dto.id() > 0) {
+                        ticket.setId(dto.id());
+                    } else {
+                        ticket.setId(ticketRepository.findMaxId() + 1);
                     }
+
+                    ticketRepository.persist(ticket);
+
+
+                    if (dto.comments() != null) {
+                        dto.comments().stream()
+                                .map(cd -> {
+                                    TicketComment c = new TicketComment();
+                                    c.setTicket(ticket);
+                                    c.setAuthorId(cd.authorId());
+                                    c.setBody(cd.body());
+                                    return c;
+                                })
+                                .forEach(commentRepository::persist);
+                    }
+
+                    fileTicketCount++;
                 }
 
                 totalTickets += fileTicketCount;
-                if (fileTicketCount > 0) {
-                    filesLoaded++;
-                    if (fileErrorCount > 0) {
-                        System.out.println("  → Loaded " + fileTicketCount + " tickets from " + filePath + " (" + fileErrorCount + " errors)");
-                    } else {
-                        System.out.println("  → Loaded " + fileTicketCount + " tickets from " + filePath);
-                    }
-                } else if (fileErrorCount > 0) {
-                    System.err.println("  ⚠ Failed to load any tickets from " + filePath + " (" + fileErrorCount + " errors)");
-                }
+
                 is.close();
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "⚠ Error loading " + filePath + ": ", e);
             }
         }
 
-        if (filesLoaded == 0) {
-            LOGGER.warning("⚠ Warning: No demo data files found in resources/demo-data/");
-        }
 
         return totalTickets;
     }
 
-    private Ticket createTicketFromMap(Map<String, Object> data) {
-        Ticket ticket = new Ticket();
-        ticket.setUserId((String) data.get("userId"));
-        ticket.setOriginalRequest((String) data.get("originalRequest"));
-
-        // Parse ticketType
-        String ticketTypeStr = (String) data.get("ticketType");
-        ticket.setTicketType(TicketType.valueOf(ticketTypeStr));
-
-        // Parse status (default to FROM_DISPATCH if not specified)
-        // Map common status names to valid enum values
-        String statusStr = (String) data.get("status");
-        ticket.setStatus(mapStatusString(statusStr));
-
-        // Parse source (default to MANUAL if not specified)
-        String sourceStr = (String) data.get("source");
-        ticket.setSource(sourceStr != null ? TicketSource.valueOf(sourceStr) : TicketSource.MANUAL);
-
-        // Assign team based on ticket type
-        ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).name());
-
-        // Assign to user (use provided or default for team)
-        String assignedTo = (String) data.get("assignedTo");
-        ticket.setAssignedTo(assignedTo != null ? assignedTo : context.getDefaultUserIdForTeam(ticket.getAssignedTeam()));
-
-        // Urgency fields
-        ticket.setUrgencyFlag(data.get("urgencyFlag") != null ? (Boolean) data.get("urgencyFlag") : false);
-        if (data.get("urgencyScore") != null) {
-            ticket.setUrgencyScore(((Number) data.get("urgencyScore")).doubleValue());
-        }
-
-        // AI fields
-        if (data.get("aiConfidence") != null) {
-            ticket.setAiConfidence(((Number) data.get("aiConfidence")).doubleValue());
-        }
-        ticket.setAiPayloadJson((String) data.get("aiPayloadJson"));
-        ticket.setRollbackAllowed(ticket.getSource().equals(TicketSource.AI) && ticket.getStatus().equals(TicketStatus.FROM_AI));
-
-        return ticket;
-    }
-
     private void seedDefaultIncomingRequests() {
-        createRequest("u-alex",
-                "I tried to cancel my appointment but it says it's too late, even though it's still 36 hours away.");
-        createRequest("u-samira",
-                "I was charged for an appointment that the doctor cancelled. Can I get a refund?");
-        createRequest("u-jonas",
-                "The reschedule button is disabled on my appointment and I can't change the time.");
-        createRequest("u-lea",
-                "I get an error when uploading my insurance card: 'Upload failed (E102)'.");
-        createRequest("u-pascal",
-                "Urgent: I need to cancel today's appointment in 2 hours. I'm sick.");
+        incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto("u-alex",
+                "web", "I tried to cancel my appointment but it says it's too late, even though it's still 36 hours away."));
+        incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto("u-samira",
+                "web", "I was charged for an appointment that the doctor cancelled. Can I get a refund?"));
+        incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto("u-jonas",
+                "web", "The reschedule button is disabled on my appointment and I can't change the time."));
+        incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto("u-lea",
+                "web", "I get an error when uploading my insurance card: 'Upload failed (E102)'."));
+        incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto("u-pascal",
+                "web", "Urgent: I need to cancel today's appointment in 2 hours. I'm sick."));
     }
 
     private TicketStatus mapStatusString(String statusStr) {
@@ -264,12 +181,5 @@ public class DataSeeder {
         };
     }
 
-    private void createRequest(String userId, String rawText) {
-        IncomingRequest request = new IncomingRequest();
-        request.setUserId(userId);
-        request.setChannel("web");
-        request.setRawText(rawText);
-        request.setStatus(RequestStatus.NEW);
-        request.persist();
-    }
+
 }

@@ -1,4 +1,4 @@
-import { get } from './http.js';
+import {get} from './http.js';
 
 export async function getRecentEvents(since, limit) {
     const params = new URLSearchParams();

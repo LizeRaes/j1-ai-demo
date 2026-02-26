@@ -9,13 +9,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class EventService {
+
     @Inject
     EventLogRepository eventLogRepository;
 
@@ -43,7 +43,7 @@ public class EventService {
             events = eventLogRepository.findRecent(limit);
         }
         return events.stream()
-                .map(e -> new EventDto(e.id, e.getTicketId(), e.getIncomingRequestId(), e.getEventType(), e.getSeverity(), e.getSource(), e.getMessage(), e.getPayloadJson(), e.getCreatedAt()))
+                .map(e -> new EventDto(e.getId(), e.getTicketId(), e.getIncomingRequestId(), e.getEventType(), e.getSeverity(), e.getSource(), e.getMessage(), e.getPayloadJson(), e.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 }
