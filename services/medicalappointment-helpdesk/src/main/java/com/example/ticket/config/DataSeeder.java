@@ -7,7 +7,9 @@ import com.example.ticket.dto.TicketDto;
 import com.example.ticket.mapper.TicketMapper;
 import com.example.ticket.persistence.CommentRepository;
 import com.example.ticket.persistence.TicketRepository;
+import com.example.ticket.service.adapter.CommentService;
 import com.example.ticket.service.adapter.IncomingRequestService;
+import com.example.ticket.service.adapter.TicketStateService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.runtime.StartupEvent;
@@ -39,10 +41,10 @@ public class DataSeeder {
     String directory;
 
     @Inject
-    TicketRepository ticketStateService;
+    TicketStateService ticketStateService;
 
     @Inject
-    CommentRepository commentService;
+    CommentService commentService;
 
     @Inject
     IncomingRequestService incomingRequestService;

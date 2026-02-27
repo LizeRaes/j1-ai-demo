@@ -43,4 +43,9 @@ public class TicketStateService {
     public Long findMaxId() {
         return ticketRepository.findMaxId();
     }
+
+    @Transactional
+    public void deleteAll() {
+        ticketRepository.deleteAll();
+    }
 }

@@ -23,4 +23,9 @@ public class CommentService {
     public void persist(Comment comment) {
         commentRepository.persist(comment);
     }
+
+    @Transactional
+    public void deleteAll() {
+        commentRepository.deleteAll();
+    }
 }
