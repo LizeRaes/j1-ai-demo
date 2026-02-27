@@ -71,7 +71,7 @@ public class Ticket {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TicketComment> comments;
+    private List<Comment> comments;
 
     public Long getId() {
         return id;
@@ -185,11 +185,11 @@ public class Ticket {
         this.incomingRequestId = incomingRequestId;
     }
 
-    public List<TicketComment> getComments() {
+    public List<Comment> getComments() {
         return comments;
     }
 
-    public void setComments(List<TicketComment> comments) {
+    public void setComments(List<Comment> comments) {
         this.comments = comments;
     }
 

@@ -6,8 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ticket_comments")
-public class TicketComment {
+@Table(name = "comments")
+public class Comment {
 
     @Id
     @GeneratedValue

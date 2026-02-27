@@ -1,7 +1,7 @@
 package com.example.ticket.resource;
 
 import com.example.ticket.dto.EventDto;
-import com.example.ticket.service.EventService;
+import com.example.ticket.service.adapter.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 @Path("/api/events")
 @Produces(MediaType.APPLICATION_JSON)
 public class EventResource {
-    private static final Logger LOGGER = Logger.getLogger(EventResource.class.getName());
 
     @Inject
     EventService eventService;

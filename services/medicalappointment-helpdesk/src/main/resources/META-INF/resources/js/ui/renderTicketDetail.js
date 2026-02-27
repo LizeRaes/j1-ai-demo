@@ -176,7 +176,7 @@ export function renderTicketDetail(ticket) {
         const updateBtn = createElement('button', 'btn btn-primary', 'Update Status');
         updateBtn.addEventListener('click', async () => {
             try {
-                await updateTicketStatus(ticket.id, {status: statusSelect.value});
+                await updateTicketStatus(ticket.id, statusSelect.value);
                 alert('Status updated!');
                 await loadTicketDetail(ticket.id);
             } catch (error) {

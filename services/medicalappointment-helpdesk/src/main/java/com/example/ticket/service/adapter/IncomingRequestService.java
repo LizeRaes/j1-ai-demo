@@ -1,4 +1,4 @@
-package com.example.ticket.service;
+package com.example.ticket.service.adapter;
 
 import com.example.ticket.domain.constants.RequestStatus;
 import com.example.ticket.domain.model.IncomingRequest;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
-public class IncomingRequestStateService {
+public class IncomingRequestService {
 
     @Inject
     IncomingRequestRepository incomingRequestRepository;
@@ -29,6 +29,7 @@ public class IncomingRequestStateService {
         return toDto(request);
     }
 
+    @Transactional
     public List<IncomingRequestDto> getIncomingRequests(RequestStatus status) {
         List<IncomingRequest> requests;
         if (status != null) {
@@ -42,6 +43,7 @@ public class IncomingRequestStateService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public List<IncomingRequestDto> getDispatcherInboxRequests() {
         List<IncomingRequest> failedRequests = incomingRequestRepository.findByStatus(RequestStatus.AI_TRIAGE_FAILED);
         List<IncomingRequest> returnedRequests = incomingRequestRepository.findByStatus(RequestStatus.RETURNED_FROM_AI);
@@ -53,6 +55,7 @@ public class IncomingRequestStateService {
         return allRequests.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Transactional
     public IncomingRequestDto getIncomingRequest(Long id) {
         IncomingRequest request = incomingRequestRepository.findById(id);
         if (request == null) {
@@ -88,10 +91,12 @@ public class IncomingRequestStateService {
         }
     }
 
+    @Transactional
     public void deleteAll() {
         incomingRequestRepository.deleteAll();
     }
 
+    @Transactional
     public long count() {
         return incomingRequestRepository.count();
     }

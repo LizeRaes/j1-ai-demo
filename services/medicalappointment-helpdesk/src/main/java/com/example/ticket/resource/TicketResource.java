@@ -19,15 +19,15 @@ public class TicketResource {
 
     @POST
     @Path("/manual")
-    public Response createTicketManual(CreateTicketManualDto dto) {
-        TicketDto ticket = ticketService.createTicketManual(dto);
+    public Response createTicketManual(ManualTicketDto dto) {
+        TicketDto ticket = ticketService.manualSubmit(dto);
         return Response.status(Response.Status.CREATED).entity(ticket).build();
     }
 
     @POST
     @Path("/from-ai")
-    public Response createTicketFromAi(CreateTicketFromAIDto dto) {
-        TicketDto ticket = ticketService.createTicketFromAi(dto);
+    public Response createTicketFromAi(AITicketDto dto) {
+        TicketDto ticket = ticketService.aiSubmit(dto);
         return Response.status(Response.Status.CREATED).entity(ticket).build();
     }
 
@@ -71,8 +71,8 @@ public class TicketResource {
 
     @POST
     @Path("/{id}/status")
-    public Response updateTicketStatus(@PathParam("id") Long id, TicketStatus status) {
-        TicketDto ticket = ticketService.updateTicketStatus(id, status);
+    public Response updateTicketStatus(@PathParam("id") Long id, UpdateTicketStatusDto dto) {
+        TicketDto ticket = ticketService.updateTicketStatus(id, dto.status());
         if (ticket == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -107,7 +107,7 @@ public class TicketResource {
     @Path("/{id}/rollback-to-request")
     public Response rollbackToRequest(@PathParam("id") Long id) {
         try {
-            TicketDto ticket = ticketService.rollbackToRequest(id);
+            TicketDto ticket = ticketService.rollbackTicket(id);
             if (ticket == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

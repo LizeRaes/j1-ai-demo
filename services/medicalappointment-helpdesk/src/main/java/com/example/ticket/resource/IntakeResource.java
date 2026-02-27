@@ -3,7 +3,7 @@ package com.example.ticket.resource;
 import com.example.ticket.dto.CreateIncomingRequestDto;
 import com.example.ticket.dto.IncomingRequestDto;
 import com.example.ticket.dto.IntakeRequestDto;
-import com.example.ticket.service.IncomingRequestService;
+import com.example.ticket.service.TriageWorkerService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -17,7 +17,7 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 public class IntakeResource {
     @Inject
-    IncomingRequestService incomingRequestService;
+    TriageWorkerService triageWorkerService;
 
     @POST
     @Path("/incoming-request")
@@ -35,7 +35,7 @@ public class IntakeResource {
         // Forward to existing incoming request service
         CreateIncomingRequestDto dto = new CreateIncomingRequestDto(intakeDto.userId().trim(), "intake-ui", intakeDto.message().trim());
 
-        IncomingRequestDto created = incomingRequestService.createIncomingRequest(dto);
+        IncomingRequestDto created = triageWorkerService.createIncomingRequest(dto);
 
         return Response.status(Response.Status.CREATED).entity(created).build();
     }
