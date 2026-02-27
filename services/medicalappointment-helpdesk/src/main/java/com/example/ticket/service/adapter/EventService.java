@@ -1,4 +1,4 @@
-package com.example.ticket.service;
+package com.example.ticket.service.adapter;
 
 import com.example.ticket.domain.constants.EventSeverity;
 import com.example.ticket.domain.constants.EventType;
@@ -32,6 +32,7 @@ public class EventService {
         eventLogRepository.persist(event);
     }
 
+    @Transactional
     public List<EventDto> getRecentEvents(LocalDateTime since, int limit) {
         List<EventLog> events;
         if (since != null) {

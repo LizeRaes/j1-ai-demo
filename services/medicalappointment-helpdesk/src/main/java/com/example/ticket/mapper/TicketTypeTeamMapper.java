@@ -31,13 +31,13 @@ public class TicketTypeTeamMapper {
         }
 
         return switch (ticketType.name()) {
-            case String type when type.startsWith("BILLING_") -> Team.billing;
-            case String type when type.startsWith("SCHEDULING_") -> Team.reschedule;
-            case String type when type.startsWith("ACCOUNT_") -> Team.dispatch;
-            case String type when type.startsWith("SUPPORT_OTHER") -> Team.dispatch;
-            case String type when type.startsWith("BUG_") -> Team.engineering;
-            case String type when type.startsWith("ENGINEERING_") -> Team.engineering;
-            case String type when type.equals("OTHER") -> Team.dispatch;
+            case String type when type.startsWith("BILLING_") -> Team.BILLING;
+            case String type when type.startsWith("SCHEDULING_") -> Team.RESCHEDULE;
+            case String type when type.startsWith("ACCOUNT_") -> Team.DISPATCH;
+            case String type when type.startsWith("SUPPORT_OTHER") -> Team.DISPATCH;
+            case String type when type.startsWith("BUG_") -> Team.ENGINEERING;
+            case String type when type.startsWith("ENGINEERING_") -> Team.ENGINEERING;
+            case String type when type.equals("OTHER") -> Team.DISPATCH;
             case String t -> throw new IllegalArgumentException("Unknown TicketType: " + t);
         };
 

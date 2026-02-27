@@ -3,19 +3,18 @@ package com.example.ticket.service;
 import com.example.ticket.domain.constants.EventSeverity;
 import com.example.ticket.domain.constants.EventType;
 import com.example.ticket.domain.constants.RequestStatus;
-import com.example.ticket.domain.constants.TicketType;
 import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.dto.CreateTicketFromAIDto;
-import com.example.ticket.dto.IncomingRequestDto;
-import com.example.ticket.dto.TriageRequestDto;
-import com.example.ticket.dto.TriageResponseDto;
+import com.example.ticket.dto.*;
 import com.example.ticket.external.TriageClient;
+import com.example.ticket.service.adapter.EventService;
+import com.example.ticket.service.adapter.IncomingRequestService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logmanager.Level;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,18 +41,38 @@ public class TriageWorkerService {
     @RestClient
     TriageClient triageClient;
 
-    @Inject
-    ObjectMapper objectMapper;
+    public IncomingRequestDto createIncomingRequest(CreateIncomingRequestDto dto) {
+        IncomingRequestDto request = incomingRequestService.createIncomingRequest(dto);
 
-    // Self-injection to ensure @Transactional works in async contexts
-    @Inject
-    TriageWorkerService self;
+        String eventSource = dto.channel() != null && !dto.channel().isEmpty()
+                ? dto.channel()
+                : "ticketing-api";
+
+        eventService.logEvent(
+                EventType.INCOMING_REQUEST_RECEIVED,
+                EventSeverity.INFO,
+                eventSource,
+                "Incoming request #" + request.id() + " received from user " + dto.userId(),
+                null,
+                request.id(),
+                null
+        );
+
+        try {
+            processRequest(request);
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error in triage worker: ", e);
+        }
+
+        return request;
+    }
 
     /**
      * Process a single incoming request asynchronously.
      * Called when a new request is created via the intake endpoint.
      * This method returns immediately - triage happens in background.
      */
+    @Transactional
     public void processRequest(IncomingRequestDto request) {
         // Only process NEW requests
         if (request.status() != RequestStatus.NEW) {
@@ -63,7 +82,7 @@ public class TriageWorkerService {
         // Mark as IN_PROGRESS immediately to prevent duplicate processing
         // This must be done synchronously in a transaction
         try {
-            markRequestInProgress(request.id());
+            incomingRequestService.markAsAiTriageInProgress(request.id());
         } catch (Exception e) {
             LOGGER.log(Level.ERROR, "Error marking request as IN_PROGRESS: ", e);
             return;
@@ -72,7 +91,7 @@ public class TriageWorkerService {
         // Create placeholder ticket first (triage service requires ticketId)
         Ticket placeholderTicket;
         try {
-            placeholderTicket = self.createPlaceholderTicketForTriage(request.userId(), request.rawText(), request.id());
+            placeholderTicket = createPlaceholderTicketForTriage(request.userId(), request.rawText(), request.id());
         } catch (Exception e) {
             LOGGER.log(Level.ERROR, "Error creating placeholder ticket for request " + request.id() + ": ", e);
             return;
@@ -90,20 +109,7 @@ public class TriageWorkerService {
         );
 
         // Build triage request
-        List<TriageRequestDto.AllowedTicketType> types = new ArrayList<>();
-
-        types.add(new TriageRequestDto.AllowedTicketType("BILLING_REFUND", "User is asking for a refund or billing reimbursement"));
-        types.add(new TriageRequestDto.AllowedTicketType("BILLING_OTHER", "Other billing-related issue requiring human review"));
-        types.add(new TriageRequestDto.AllowedTicketType("SCHEDULING_CANCELLATION", "User wants to cancel or reschedule an appointment"));
-        types.add(new TriageRequestDto.AllowedTicketType("SCHEDULING_OTHER", "Scheduling-related issue that does not clearly fit cancellation or rescheduling"));
-        types.add(new TriageRequestDto.AllowedTicketType("ACCOUNT_ACCESS", "Problems logging in, password reset, or account access"));
-        types.add(new TriageRequestDto.AllowedTicketType("SUPPORT_OTHER", "General support question not clearly related to billing or scheduling"));
-        types.add(new TriageRequestDto.AllowedTicketType("BUG_APP", "Bug or error in the user-facing application or UI"));
-        types.add(new TriageRequestDto.AllowedTicketType("BUG_BACKEND", "Bug or error in backend systems, APIs, or data processing"));
-        types.add(new TriageRequestDto.AllowedTicketType("ENGINEERING_OTHER", "Engineering-related issue that does not clearly fit a known bug category"));
-        types.add(new TriageRequestDto.AllowedTicketType("OTHER", "AI cannot confidently classify this request and a human dispatcher must decide"));
-
-        TriageRequestDto triageRequest = new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.getId(), types);
+        TriageRequestDto triageRequest = getTriageRequestDto(request, placeholderTicket);
 
         // Store ticketId in final variable for use in async callbacks
         final Long ticketId = placeholderTicket.getId();
@@ -117,25 +123,37 @@ public class TriageWorkerService {
                     return CompletableFuture.runAsync(() -> {
                         try {
                             // Call through self-injected proxy to ensure @Transactional works
-                            self.handleTriageResponse(request, response, ticketId);
+                            handleTriageResponse(request, response, ticketId);
                         } catch (Exception e) {
                             LOGGER.log(Level.ERROR, "Error handling triage response for request " + request.id() + ": ", e);
                             // Fallback: update ticket with OTHER type
-                            self.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
+                            ticketService.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
                         }
                     });
                 })
                 .exceptionally(throwable -> {
                     // Handle any exception in the async chain
                     LOGGER.log(Level.ERROR, "Error in triage async chain for request " + request.id() + ": ", throwable);
-                    self.updateTicketAsFallback(ticketId, request, "Triage service exception: " + throwable.getMessage());
+                    ticketService.updateTicketAsFallback(ticketId, request, "Triage service exception: " + throwable.getMessage());
                     return null;
                 });
     }
 
-    @Transactional
-    public void markRequestInProgress(Long requestId) {
-        incomingRequestService.markAsAiTriageInProgress(requestId);
+    private static @NonNull TriageRequestDto getTriageRequestDto(IncomingRequestDto request, Ticket placeholderTicket) {
+        List<TriageRequestDto.AllowedTicketType> types = new ArrayList<>();
+
+        types.add(new TriageRequestDto.AllowedTicketType("BILLING_REFUND", "User is asking for a refund or billing reimbursement"));
+        types.add(new TriageRequestDto.AllowedTicketType("BILLING_OTHER", "Other billing-related issue requiring human review"));
+        types.add(new TriageRequestDto.AllowedTicketType("SCHEDULING_CANCELLATION", "User wants to cancel or reschedule an appointment"));
+        types.add(new TriageRequestDto.AllowedTicketType("SCHEDULING_OTHER", "Scheduling-related issue that does not clearly fit cancellation or rescheduling"));
+        types.add(new TriageRequestDto.AllowedTicketType("ACCOUNT_ACCESS", "Problems logging in, password reset, or account access"));
+        types.add(new TriageRequestDto.AllowedTicketType("SUPPORT_OTHER", "General support question not clearly related to billing or scheduling"));
+        types.add(new TriageRequestDto.AllowedTicketType("BUG_APP", "Bug or error in the user-facing application or UI"));
+        types.add(new TriageRequestDto.AllowedTicketType("BUG_BACKEND", "Bug or error in backend systems, APIs, or data processing"));
+        types.add(new TriageRequestDto.AllowedTicketType("ENGINEERING_OTHER", "Engineering-related issue that does not clearly fit a known bug category"));
+        types.add(new TriageRequestDto.AllowedTicketType("OTHER", "AI cannot confidently classify this request and a human dispatcher must decide"));
+
+        return new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.getId(), types);
     }
 
     @Transactional
@@ -162,6 +180,7 @@ public class TriageWorkerService {
             aiPayload.put("policyCitations", response.policyCitations() != null ? response.policyCitations() : List.of());
             String aiPayloadJson;
             try {
+                ObjectMapper objectMapper = new ObjectMapper();
                 aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
             } catch (Exception e) {
                 aiPayloadJson = "{}";
@@ -194,83 +213,11 @@ public class TriageWorkerService {
             );
         } else {
             // Failed - update ticket as fallback
-            updateTicketAsFallback(ticketId, request, response.failReason() != null ? response.failReason() : "AI triage service returned FAILED status");
+            ticketService.updateTicketAsFallback(ticketId, request, response.failReason() != null ? response.failReason() : "AI triage service returned FAILED status");
         }
     }
 
-    @Transactional
-    public void updateTicketAsFallback(Long ticketId, IncomingRequestDto request, String failReason) {
-        // Update placeholder ticket with OTHER type for dispatcher review
-        ticketService.updateTicketWithTriageResults(
-                ticketId,
-                TicketType.OTHER.name(), // Maps to DISPATCH team
-                5.0,
-                0.0, // Zero confidence for fallback
-                List.of(),
-                List.of()
-        );
 
-        // Store failure reason in AI payload
-        Map<String, Object> aiPayload = new HashMap<>();
-        aiPayload.put("failReason", failReason);
-        aiPayload.put("relatedTicketIds", List.of());
-        aiPayload.put("policyCitations", List.of());
-        String aiPayloadJson;
-        try {
-            aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
-        } catch (Exception e) {
-            aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
-        }
-
-        // Update ticket's AI payload with failure reason
-        // Note: This is a simplified approach - in a real system you might want to update the ticket's aiPayloadJson field
-        // For now, the failure reason is logged in the event
-
-        // Emit AI_TRIAGE_FAILED event
-        eventService.logEvent(
-                EventType.AI_TRIAGE_FAILED,
-                EventSeverity.ERROR,
-                "ai-triage-worker",
-                "AI triage failed for request #" + request.id() + " (ticket #" + ticketId + "): " + failReason,
-                ticketId,
-                request.id(),
-                aiPayloadJson
-        );
-    }
-
-    @Transactional
-    public void createFallbackTicket(IncomingRequestDto request, String failReason) {
-        // Legacy method - kept for backward compatibility
-        // This should not be called in the new flow, but kept for safety
-
-        // Store failure reason in AI payload
-        Map<String, Object> aiPayload = new HashMap<>();
-        aiPayload.put("failReason", failReason);
-        aiPayload.put("relatedTicketIds", List.of());
-        aiPayload.put("policyCitations", List.of());
-        String aiPayloadJson;
-        try {
-            aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
-        } catch (Exception e) {
-            aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
-        }
-
-        CreateTicketFromAIDto aiDto = new CreateTicketFromAIDto(request.userId(), request.rawText(), TicketType.OTHER,
-                5.0, false, 0.0,
-                aiPayloadJson, request.id());
-        ticketService.createTicketFromAi(aiDto);
-
-        // Emit AI_TRIAGE_FAILED event
-        eventService.logEvent(
-                EventType.AI_TRIAGE_FAILED,
-                EventSeverity.ERROR,
-                "ai-triage-worker",
-                "AI triage failed for request #" + request.id() + ": " + failReason,
-                null,
-                request.id(),
-                aiDto.aiPayloadJson()
-        );
-    }
 
     /**
      * Process all NEW requests (for manual trigger via API endpoint).

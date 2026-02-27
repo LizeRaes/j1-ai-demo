@@ -3,7 +3,8 @@ package com.example.ticket.resource;
 import com.example.ticket.domain.constants.RequestStatus;
 import com.example.ticket.dto.CreateIncomingRequestDto;
 import com.example.ticket.dto.IncomingRequestDto;
-import com.example.ticket.service.IncomingRequestService;
+import com.example.ticket.service.TriageWorkerService;
+import com.example.ticket.service.adapter.IncomingRequestService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -16,11 +17,14 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class IncomingRequestResource {
     @Inject
+    TriageWorkerService triageWorkerService;
+
+    @Inject
     IncomingRequestService incomingRequestService;
 
     @POST
     public Response createIncomingRequest(CreateIncomingRequestDto dto) {
-        IncomingRequestDto created = incomingRequestService.createIncomingRequest(dto);
+        IncomingRequestDto created = triageWorkerService.createIncomingRequest(dto);
         return Response.status(Response.Status.CREATED).entity(created).build();
     }
 

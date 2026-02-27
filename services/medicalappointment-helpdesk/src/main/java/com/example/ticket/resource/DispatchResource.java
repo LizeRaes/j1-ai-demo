@@ -1,8 +1,8 @@
 package com.example.ticket.resource;
 
-import com.example.ticket.dto.DispatchCreateTicketDto;
+import com.example.ticket.dto.DispatchedTicketDto;
 import com.example.ticket.dto.TicketDto;
-import com.example.ticket.service.DispatchService;
+import com.example.ticket.service.TicketService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -16,13 +16,13 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 public class DispatchResource {
     @Inject
-    DispatchService dispatchService;
+    TicketService ticketService;
 
     @POST
     @Path("/submit-ticket")
-    public Response submitTicket(DispatchCreateTicketDto dto) {
+    public Response submitTicket(DispatchedTicketDto dto) {
         try {
-            TicketDto ticket = dispatchService.submitTicket(dto);
+            TicketDto ticket = ticketService.submit(dto);
             return Response.status(Response.Status.CREATED).entity(ticket).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();

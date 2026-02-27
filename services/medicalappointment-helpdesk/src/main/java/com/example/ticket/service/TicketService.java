@@ -1,14 +1,16 @@
 package com.example.ticket.service;
 
-import com.example.ticket.config.ActorContext;
 import com.example.ticket.domain.constants.*;
 import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.domain.model.TicketComment;
+import com.example.ticket.domain.model.Comment;
 import com.example.ticket.dto.*;
 import com.example.ticket.external.SimilarityClient;
+import com.example.ticket.mapper.TicketMapper;
 import com.example.ticket.mapper.TicketTypeTeamMapper;
-import com.example.ticket.persistence.CommentRepository;
-import com.example.ticket.persistence.TicketRepository;
+import com.example.ticket.service.adapter.CommentService;
+import com.example.ticket.service.adapter.EventService;
+import com.example.ticket.service.adapter.IncomingRequestService;
+import com.example.ticket.service.adapter.TicketStateService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -16,6 +18,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.HashMap;
@@ -26,16 +30,16 @@ import java.util.Map;
 public class TicketService {
 
     @Inject
-    TicketRepository ticketRepository;
+    TicketStateService ticketStateService;
 
     @Inject
-    CommentRepository commentRepository;
+    CommentService commentService;
 
     @Inject
     EventService eventService;
 
-    @Inject
-    ActorContext actorContext;
+    @Context
+    ContainerRequestContext requestContext;
 
     @Inject
     @RestClient
@@ -45,28 +49,23 @@ public class TicketService {
     IncomingRequestService incomingRequestService;
 
     @Transactional
-    public TicketDto createTicketFromDispatch(DispatchCreateTicketDto dto, String originalRequest, String requestUserId) {
+    public TicketDto submit(DispatchedTicketDto dto) {
+        // Get the original request text
+        var incomingRequest = incomingRequestService.getIncomingRequest(dto.incomingRequestId());
+        if (incomingRequest == null) {
+            throw new IllegalArgumentException("Incoming request not found: " + dto.incomingRequestId());
+        }
+
         // Validate ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null");
         }
 
-        Ticket ticket = new Ticket();
-        ticket.setUserId(requestUserId); // Get from incoming request
-        ticket.setOriginalRequest(originalRequest);
-        ticket.setTicketType(dto.ticketType());
-        ticket.setStatus(TicketStatus.FROM_DISPATCH);
-        ticket.setSource(TicketSource.MANUAL);
         // TicketType defines intent; AssignedTeam is a derived consequence.
-        TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
-        ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
-        // Auto-assign to default user for the team
-        ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
-        ticket.setUrgencyFlag(dto.urgencyFlag() != null ? dto.urgencyFlag() : false);
-        ticket.setUrgencyScore(dto.urgencyScore());
-        ticket.setRollbackAllowed(false);
-        ticket.setIncomingRequestId(dto.incomingRequestId());
-        ticketRepository.persist(ticket);
+        Long nextId = ticketStateService.findMaxId() + 1;
+        TicketMapper ticketMapper = new TicketMapper();
+        Ticket ticket = ticketMapper.toDispatchTicket(dto, incomingRequest, nextId);
+        ticketStateService.persist(ticket);
 
         eventService.logEvent(
                 EventType.DISPATCH_SUBMITTED,
@@ -91,37 +90,25 @@ public class TicketService {
         // Send to similarity service (async, non-blocking)
         sendTicketToSimilarityService(ticket);
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        TicketDto ticketDto = ticketMapper.toTicketDto(ticket);
+
+        // Mark incoming request as converted
+        incomingRequestService.markAsConvertedToTicket(dto.incomingRequestId());
+
+        return ticketDto;
     }
 
     @Transactional
-    public TicketDto createTicketManual(CreateTicketManualDto dto) {
+    public TicketDto manualSubmit(ManualTicketDto dto) {
         // Validate ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null");
         }
 
-        Ticket ticket = new Ticket();
-        ticket.setUserId(dto.userId());
-        ticket.setOriginalRequest(dto.originalRequest());
-        ticket.setTicketType(dto.ticketType());
-        ticket.setStatus(dto.status() != null ? dto.status() : TicketStatus.FROM_DISPATCH);
-        ticket.setSource(TicketSource.MANUAL);
-        // TicketType defines intent; AssignedTeam is a derived consequence.
-        TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
-        Team assignedTeam = ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType());
-        ticket.setAssignedTeam(assignedTeam.name());
-        // Auto-assign to default user if not specified
-        ticket.setAssignedTo(dto.assignedTo() != null ? dto.assignedTo() : mapUserIdForTeam(ticket.getAssignedTeam()));
-        ticket.setUrgencyFlag(dto.urgencyFlag() != null ? dto.urgencyFlag() : false);
-        ticket.setUrgencyScore(dto.urgencyScore());
-        ticket.setRollbackAllowed(false);
-        ticketRepository.persist(ticket);
+        TicketMapper ticketMapper =  new TicketMapper();
+        Long nextId = ticketStateService.findMaxId() + 1;
+        Ticket ticket = ticketMapper.toManualTicket(dto, nextId);
+        ticketStateService.persist(ticket);
 
         eventService.logEvent(
                 EventType.TICKET_CREATED,
@@ -136,40 +123,21 @@ public class TicketService {
         // Send to similarity service (async, non-blocking)
         sendTicketToSimilarityService(ticket);
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return ticketMapper.toTicketDto(ticket);
     }
 
     @Transactional
-    public TicketDto createTicketFromAi(CreateTicketFromAIDto dto) {
+    public TicketDto aiSubmit(AITicketDto dto) {
         // Validate ticketType - AI can only suggest ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null. AI must provide a valid ticketType.");
         }
 
-        Ticket ticket = new Ticket();
-        ticket.setId(ticketRepository.findMaxId() + 1);
-        ticket.setUserId(dto.userId());
-        ticket.setOriginalRequest(dto.originalRequest());
-        ticket.setTicketType(dto.ticketType());
-        ticket.setStatus(TicketStatus.FROM_AI);
-        ticket.setSource(TicketSource.AI);
         // TicketType defines intent; AssignedTeam is a derived consequence.
-        TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
-        ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
-        // Auto-assign to default user for the team
-        ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
-        ticket.setUrgencyFlag(dto.urgencyFlag());
-        ticket.setUrgencyScore(dto.urgencyScore());
-        ticket.setAiConfidence(dto.aiConfidence());
-        ticket.setRollbackAllowed(true);
-        ticket.setAiPayloadJson(dto.aiPayloadJson());
-        ticket.setIncomingRequestId(dto.incomingRequestId());
-        ticketRepository.persist(ticket);
+        TicketMapper ticketMapper = new TicketMapper();
+        Long nextId = ticketStateService.findMaxId() + 1;
+        Ticket ticket = ticketMapper.toAiTicket(dto, nextId);
+        ticketStateService.persist(ticket);
 
         // If this ticket was created from an incoming request, mark it as converted
         if (dto.incomingRequestId() != null) {
@@ -189,19 +157,14 @@ public class TicketService {
         // Send to similarity service (async, non-blocking)
         sendTicketToSimilarityService(ticket);
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return ticketMapper.toTicketDto(ticket);
     }
 
     public List<TicketDto> findTickets(String view, String team, String user) {
         List<Ticket> tickets = switch (view) {
-            case "team" -> ticketRepository.findByAssignedTeam(team);
-            case String v when (user != null && v.equals("mine")) -> ticketRepository.findByAssignedTo(user);
-            case String _ -> ticketRepository.listAll();
+            case "team" -> ticketStateService.findByAssignedTeam(team);
+            case String v when (user != null && v.equals("mine")) -> ticketStateService.findByAssignedTo(user);
+            case String _ -> ticketStateService.listAll();
         };
 
         // Filter out ROLLED_BACK tickets from normal views
@@ -219,11 +182,11 @@ public class TicketService {
     }
 
     public TicketDto findTicket(Long id) {
-        Ticket ticket = ticketRepository.findById(id);
+        Ticket ticket = ticketStateService.findById(id);
         if (ticket == null) {
             return null;
         }
-        List<TicketComment> comments = commentRepository.findByTicketId(id);
+        List<Comment> comments = commentService.findByTicketId(id);
         return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
                 ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
                 ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
@@ -236,13 +199,13 @@ public class TicketService {
 
     @Transactional
     public TicketDto acceptTicket(Long id, String userId) {
-        Ticket ticket = ticketRepository.findById(id);
+        Ticket ticket = ticketStateService.findById(id);
         if (ticket == null) {
             return null;
         }
         ticket.setStatus(TicketStatus.TRIAGED);
         ticket.setAssignedTo(userId);
-        ticketRepository.persist(ticket);
+        ticketStateService.persist(ticket);
 
         eventService.logEvent(
                 EventType.TICKET_ACCEPTED,
@@ -254,24 +217,19 @@ public class TicketService {
                 null
         );
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return new TicketMapper().toTicketDto(ticket);
     }
 
     @Transactional
     public TicketDto rejectAndReturnToDispatch(Long id) {
-        Ticket ticket = ticketRepository.findById(id);
+        Ticket ticket = ticketStateService.findById(id);
         if (ticket == null) {
             return null;
         }
         ticket.setStatus(TicketStatus.RETURNED_TO_DISPATCH);
         ticket.setAssignedTeam("DISPATCH");
         ticket.setAssignedTo(null);
-        ticketRepository.persist(ticket);
+        ticketStateService.persist(ticket);
 
         eventService.logEvent(
                 EventType.RETURNED_TO_DISPATCH,
@@ -283,22 +241,17 @@ public class TicketService {
                 null
         );
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return new TicketMapper().toTicketDto(ticket);
     }
 
     @Transactional
     public TicketDto updateTicketStatus(Long id, TicketStatus status) {
-        Ticket ticket = ticketRepository.findById(id);
+        Ticket ticket = ticketStateService.findById(id);
         if (ticket == null) {
             return null;
         }
         ticket.setStatus(status);
-        ticketRepository.persist(ticket);
+        ticketStateService.persist(ticket);
 
         eventService.logEvent(
                 EventType.TICKET_STATUS_CHANGED,
@@ -310,12 +263,7 @@ public class TicketService {
                 null
         );
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return new TicketMapper().toTicketDto(ticket);
     }
 
     /**
@@ -328,27 +276,29 @@ public class TicketService {
      */
     @Transactional
     public TicketDto updateTicketType(Long id, UpdateTicketTypeDto dto) {
-        Ticket ticket = ticketRepository.findById(id);
-        if (ticket == null) {
-            return null;
-        }
-
         // Validate ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null");
+        }
+
+        Ticket ticket = ticketStateService.findById(id);
+        if (ticket == null) {
+            return null;
         }
 
         TicketType oldType = ticket.getTicketType();
         ticket.setTicketType(dto.ticketType());
         // TicketType defines intent; AssignedTeam is a derived consequence.
         // Changing ticketType always recomputes assignedTeam.
+        TicketMapper ticketMapper = new TicketMapper();
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
         // Re-assign to default user for the new team if not already assigned
         if (ticket.getAssignedTo() == null) {
-            ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
+            String assignedTo = ticketMapper.mapUserIdForTeam(ticket.getAssignedTeam());
+            ticket.setAssignedTo(assignedTo);
         }
-        ticketRepository.persist(ticket);
+        ticketStateService.persist(ticket);
 
         eventService.logEvent(
                 EventType.TICKET_TYPE_CHANGED,
@@ -360,25 +310,20 @@ public class TicketService {
                 null
         );
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return ticketMapper.toTicketDto(ticket);
     }
 
     @Transactional
     public CommentDto addComment(Long ticketId, AddCommentDto dto) {
-        Ticket ticket = ticketRepository.findById(ticketId);
+        Ticket ticket = ticketStateService.findById(ticketId);
         if (ticket == null) {
             return null;
         }
-        TicketComment comment = new TicketComment();
+        Comment comment = new Comment();
         comment.setTicket(ticket);
         comment.setAuthorId(dto.authorId());
         comment.setBody(dto.body());
-        commentRepository.persist(comment);
+        commentService.persist(comment);
 
         eventService.logEvent(
                 EventType.TICKET_COMMENT_ADDED,
@@ -394,8 +339,8 @@ public class TicketService {
     }
 
     @Transactional
-    public TicketDto rollbackToRequest(Long ticketId) {
-        Ticket ticket = ticketRepository.findById(ticketId);
+    public TicketDto rollbackTicket(Long ticketId) {
+        Ticket ticket = ticketStateService.findById(ticketId);
 
         if (ticket == null) {
             return null;
@@ -412,7 +357,7 @@ public class TicketService {
 
         // Mark ticket as rolled back
         ticket.setStatus(TicketStatus.ROLLED_BACK);
-        ticketRepository.persist(ticket);
+        ticketStateService.persist(ticket);
 
         // Mark incoming request as returned from AI
         incomingRequestService.markAsReturnedFromAi(ticket.getIncomingRequestId());
@@ -428,12 +373,7 @@ public class TicketService {
                 null
         );
 
-        return new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
-                ticket.getTicketType(), ticket.getStatus(), ticket.getSource(),
-                ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
-                ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
-                ticket.getAiPayloadJson(), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), List.of());
+        return new TicketMapper().toTicketDto(ticket);
     }
 
     /**
@@ -442,18 +382,9 @@ public class TicketService {
      */
     @Transactional
     public Ticket createPlaceholderTicketForTriage(String userId, String originalRequest, Long incomingRequestId) {
-        Ticket ticket = new Ticket();
-        ticket.setUserId(userId);
-        ticket.setOriginalRequest(originalRequest);
-        ticket.setTicketType(TicketType.OTHER); // Placeholder - will be updated by triage
-        ticket.setStatus(TicketStatus.FROM_AI); // Will be updated after triage
-        ticket.setSource(TicketSource.AI);
-        ticket.setAssignedTeam("DISPATCH"); // Default team until triage completes
-        ticket.setUrgencyFlag(false);
-        ticket.setRollbackAllowed(true);
-        ticket.setAiPayloadJson("{}");
-        ticket.setIncomingRequestId(incomingRequestId);
-        ticketRepository.persist(ticket);
+        TicketMapper ticketMapper = new TicketMapper();
+        Ticket ticket = ticketMapper.toPlaceholderTicket(userId, originalRequest, incomingRequestId);
+        ticketStateService.persist(ticket);
 
         // Send to similarity service when ticket is created (text is final and won't change)
         // The ticketType will be updated later, but the embedding is based on the text, not the type
@@ -472,12 +403,14 @@ public class TicketService {
         }
         String actorTeam;
         try {
-            actorTeam = actorContext.getActorTeam();
+            if (requestContext == null) return "DISPATCHER";
+            String team = requestContext.getHeaderString("X-Actor-Team");
+            actorTeam = (team != null) ? team : "DISPATCHER";
         } catch (Exception e) {
             // If no request context is active, fall back to unfiltered payload
             return aiPayloadJson;
         }
-        if (actorTeam == null || actorTeam.isBlank()) {
+        if (actorTeam.isBlank()) {
             return aiPayloadJson;
         }
 
@@ -526,7 +459,7 @@ public class TicketService {
     @Transactional
     public void updateTicketWithTriageResults(Long ticketId, String ticketType, Double urgencyScore, Double aiConfidence,
                                               List<Long> relatedTicketIds, List<TriageResponseDto.PolicyCitation> policyCitations) {
-        Ticket ticket = ticketRepository.findById(ticketId);
+        Ticket ticket = ticketStateService.findById(ticketId);
         if (ticket == null) {
             throw new IllegalArgumentException("Ticket not found: " + ticketId);
         }
@@ -539,7 +472,9 @@ public class TicketService {
         // Update assigned team based on new ticket type
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).name());
-        ticket.setAssignedTo(mapUserIdForTeam(ticket.getAssignedTeam()));
+        TicketMapper ticketMapper = new TicketMapper();
+        String assignedTo = ticketMapper.mapUserIdForTeam(ticket.getAssignedTeam());
+        ticket.setAssignedTo(assignedTo);
 
         // Store relatedTicketIds and policyCitations in aiPayloadJson
         Map<String, Object> aiPayload = new HashMap<>();
@@ -553,7 +488,7 @@ public class TicketService {
             ticket.setAiPayloadJson("{}");
         }
 
-        ticketRepository.persist(ticket);
+        ticketStateService.persist(ticket);
 
         // Mark incoming request as converted if it exists
         if (ticket.getIncomingRequestId() != null) {
@@ -604,16 +539,45 @@ public class TicketService {
                 });
     }
 
-    private static String mapUserIdForTeam(String team) {
-        if (team == null) return "demo-user";
+    @Transactional
+    public void updateTicketAsFallback(Long ticketId, IncomingRequestDto request, String failReason) {
+        // Update placeholder ticket with OTHER type for dispatcher review
+        updateTicketWithTriageResults(
+                ticketId,
+                TicketType.OTHER.name(), // Maps to DISPATCH team
+                5.0,
+                0.0, // Zero confidence for fallback
+                List.of(),
+                List.of()
+        );
 
-        String teamLower = team.toLowerCase();
-        return switch (teamLower) {
-            case "dispatch" -> "dispatch-user1";
-            case "billing" -> "billing-user1";
-            case "reschedule" -> "reschedule-user1";
-            case "engineering" -> "engineering-user1";
-            case String _ -> teamLower + "-user1";
-        };
+        // Store failure reason in AI payload
+        Map<String, Object> aiPayload = new HashMap<>();
+        aiPayload.put("failReason", failReason);
+        aiPayload.put("relatedTicketIds", List.of());
+        aiPayload.put("policyCitations", List.of());
+        String aiPayloadJson;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            aiPayloadJson = objectMapper.writeValueAsString(aiPayload);
+        } catch (Exception e) {
+            aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
+        }
+
+        // Update ticket's AI payload with failure reason
+        // Note: This is a simplified approach - in a real system you might want to update the ticket's aiPayloadJson field
+        // For now, the failure reason is logged in the event
+
+        // Emit AI_TRIAGE_FAILED event
+        eventService.logEvent(
+                EventType.AI_TRIAGE_FAILED,
+                EventSeverity.ERROR,
+                "ai-triage-worker",
+                "AI triage failed for request #" + request.id() + " (ticket #" + ticketId + "): " + failReason,
+                ticketId,
+                request.id(),
+                aiPayloadJson
+        );
     }
+
 }
