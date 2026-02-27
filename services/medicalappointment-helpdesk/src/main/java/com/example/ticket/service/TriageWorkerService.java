@@ -30,7 +30,7 @@ public class TriageWorkerService {
     private static final Logger LOGGER = Logger.getLogger(TriageWorkerService.class.getName());
 
     @Inject
-    IncomingRequestService incomingRequestService;
+    IncomingRequestStateService incomingRequestStateService;
 
     @Inject
     TicketService ticketService;
@@ -45,15 +45,12 @@ public class TriageWorkerService {
     @Inject
     ObjectMapper objectMapper;
 
-    // Self-injection to ensure @Transactional works in async contexts
-    @Inject
-    TriageWorkerService self;
-
     /**
      * Process a single incoming request asynchronously.
      * Called when a new request is created via the intake endpoint.
      * This method returns immediately - triage happens in background.
      */
+    @Transactional
     public void processRequest(IncomingRequestDto request) {
         // Only process NEW requests
         if (request.status() != RequestStatus.NEW) {
@@ -63,7 +60,7 @@ public class TriageWorkerService {
         // Mark as IN_PROGRESS immediately to prevent duplicate processing
         // This must be done synchronously in a transaction
         try {
-            markRequestInProgress(request.id());
+            incomingRequestStateService.markAsAiTriageInProgress(request.id());
         } catch (Exception e) {
             LOGGER.log(Level.ERROR, "Error marking request as IN_PROGRESS: ", e);
             return;
@@ -72,7 +69,7 @@ public class TriageWorkerService {
         // Create placeholder ticket first (triage service requires ticketId)
         Ticket placeholderTicket;
         try {
-            placeholderTicket = self.createPlaceholderTicketForTriage(request.userId(), request.rawText(), request.id());
+            placeholderTicket = createPlaceholderTicketForTriage(request.userId(), request.rawText(), request.id());
         } catch (Exception e) {
             LOGGER.log(Level.ERROR, "Error creating placeholder ticket for request " + request.id() + ": ", e);
             return;
@@ -117,25 +114,20 @@ public class TriageWorkerService {
                     return CompletableFuture.runAsync(() -> {
                         try {
                             // Call through self-injected proxy to ensure @Transactional works
-                            self.handleTriageResponse(request, response, ticketId);
+                            handleTriageResponse(request, response, ticketId);
                         } catch (Exception e) {
                             LOGGER.log(Level.ERROR, "Error handling triage response for request " + request.id() + ": ", e);
                             // Fallback: update ticket with OTHER type
-                            self.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
+                            updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
                         }
                     });
                 })
                 .exceptionally(throwable -> {
                     // Handle any exception in the async chain
                     LOGGER.log(Level.ERROR, "Error in triage async chain for request " + request.id() + ": ", throwable);
-                    self.updateTicketAsFallback(ticketId, request, "Triage service exception: " + throwable.getMessage());
+                    updateTicketAsFallback(ticketId, request, "Triage service exception: " + throwable.getMessage());
                     return null;
                 });
-    }
-
-    @Transactional
-    public void markRequestInProgress(Long requestId) {
-        incomingRequestService.markAsAiTriageInProgress(requestId);
     }
 
     @Transactional
@@ -279,7 +271,7 @@ public class TriageWorkerService {
      */
     public void processNewRequests() {
         // Fetch only NEW requests (AI_TRIAGE_IN_PROGRESS are being processed, skip those)
-        List<IncomingRequestDto> newRequests = incomingRequestService.getIncomingRequests(RequestStatus.NEW);
+        List<IncomingRequestDto> newRequests = incomingRequestStateService.getIncomingRequests(RequestStatus.NEW);
 
         for (IncomingRequestDto request : newRequests) {
             // Process each request asynchronously (non-blocking)
