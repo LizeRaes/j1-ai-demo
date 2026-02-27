@@ -1,8 +1,8 @@
 package com.example.ticket.domain.constants;
 
 public enum Team {
-    dispatch,
-    billing,
-    reschedule,
-    engineering
+    DISPATCH,
+    BILLING,
+    RESCHEDULE,
+    ENGINEERING
 }

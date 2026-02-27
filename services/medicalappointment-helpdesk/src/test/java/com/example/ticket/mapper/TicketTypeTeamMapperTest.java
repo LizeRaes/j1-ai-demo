@@ -15,28 +15,28 @@ class TicketTypeTeamMapperTest {
 
     @Test
     void deriveTeamFromTicketTypeBilling() {
-        assertEquals(Team.billing, mapper.deriveTeamFromTicketType(TicketType.BILLING_REFUND));
-        assertEquals(Team.billing, mapper.deriveTeamFromTicketType(TicketType.BILLING_OTHER));
+        assertEquals(Team.BILLING, mapper.deriveTeamFromTicketType(TicketType.BILLING_REFUND));
+        assertEquals(Team.BILLING, mapper.deriveTeamFromTicketType(TicketType.BILLING_OTHER));
     }
 
     @Test
     void deriveTeamFromTicketTypeScheduling() {
-        assertEquals(Team.reschedule, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_CANCELLATION));
-        assertEquals(Team.reschedule, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_OTHER));
+        assertEquals(Team.RESCHEDULE, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_CANCELLATION));
+        assertEquals(Team.RESCHEDULE, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_OTHER));
     }
 
     @Test
     void deriveTeamFromTicketType() {
-        assertEquals(Team.dispatch, mapper.deriveTeamFromTicketType(TicketType.ACCOUNT_ACCESS));
-        assertEquals(Team.dispatch, mapper.deriveTeamFromTicketType(TicketType.SUPPORT_OTHER));
-        assertEquals(Team.dispatch, mapper.deriveTeamFromTicketType(TicketType.OTHER));
+        assertEquals(Team.DISPATCH, mapper.deriveTeamFromTicketType(TicketType.ACCOUNT_ACCESS));
+        assertEquals(Team.DISPATCH, mapper.deriveTeamFromTicketType(TicketType.SUPPORT_OTHER));
+        assertEquals(Team.DISPATCH, mapper.deriveTeamFromTicketType(TicketType.OTHER));
     }
 
     @Test
     void deriveTeamFromTicketTypeToEngineeringTeam() {
-        assertEquals(Team.engineering, mapper.deriveTeamFromTicketType(TicketType.BUG_APP));
-        assertEquals(Team.engineering, mapper.deriveTeamFromTicketType(TicketType.BUG_BACKEND));
-        assertEquals(Team.engineering, mapper.deriveTeamFromTicketType(TicketType.ENGINEERING_OTHER));
+        assertEquals(Team.ENGINEERING, mapper.deriveTeamFromTicketType(TicketType.BUG_APP));
+        assertEquals(Team.ENGINEERING, mapper.deriveTeamFromTicketType(TicketType.BUG_BACKEND));
+        assertEquals(Team.ENGINEERING, mapper.deriveTeamFromTicketType(TicketType.ENGINEERING_OTHER));
     }
 
     @Test
