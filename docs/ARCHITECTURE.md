@@ -32,12 +32,12 @@ All AI-powered services require an OpenAI API key.
 
 ### Start Order
 
-1. [medicalappointment-user-facing](../services/medicalappointment-user-facing/)  
+1. [medicapt-user-facing](../services/medicapt-user-facing/)  
    ```bash
    mvn quarkus:dev
    ```
 
-2. [medicalappointment-helpdesk](../services/medicalappointment-helpdesk/)  
+2. [helpdesk](../services/helpdesk/)  
    ```bash
    docker-compose up -d
    mvn quarkus:dev -DDemoData=true
@@ -45,21 +45,21 @@ All AI-powered services require an OpenAI API key.
    # mvn quarkus:dev -DKeepData=true
    ```
 
-3. [medicalappointment-ai-triage](../services/medicalappointment-ai-triage/)  
+3. [ai-triage](../services/ai-triage/)  
    ```bash
    mvn quarkus:dev
    ```
 
-4. [medicalappointment-similar-tickets](../services/medicalappointment-similar-tickets/)  
+4. [similar-tickets](../services/similar-tickets/)  
    ```bash
    docker-compose up -d
    mvn clean verify && java -jar target/similar-tickets.jar
    ```
 
-5. [medicalappointment-company-rag](../services/medicalappointment-company-rag/)  
+5. [company-rag](../services/company-rag/)  
    ```bash
    docker-compose up -d
-   mvn quarkus:dev -DDemoData=true
+   mvn quarkus:dev -Ddemo.data.load=true
    ```
 ---
 
@@ -68,7 +68,7 @@ All AI-powered services require an OpenAI API key.
 Purpose  
 Simulated medical scheduling application where users book appointments and submit help requests.
 
-Path: [services/medicalappointment-user-facing](../services/medicalappointment-user-facing/)
+Path: [services/medicapt-user-facing](../services/medicapt-user-facing/)
 
 UI : http://localhost:8083
 
@@ -83,7 +83,7 @@ Startup
 Purpose  
 System of record for all tickets. Handles dispatching, lifecycle management, AI-created tickets, and RBAC-controlled document visibility.
 
-Path: [services/medicalappointment-helpdesk](../services/medicalappointment-helpdesk/)
+Path: [services/helpdesk](../services/helpdesk/)
 
 UI : http://localhost:8080
 
@@ -99,7 +99,7 @@ Startup
 Purpose  
 Classifies incoming requests using an LLM, assigns urgency, finds related tickets, and retrieves policy citations.
 
-Path: [services/medicalappointment-ai-triage](../services/medicalappointment-ai-triage/)
+Path: [services/ai-triage](../services/ai-triage/)
 
 UI : http://localhost:8081
 
@@ -114,7 +114,7 @@ Startup
 Purpose  
 Stores ticket embeddings and returns similar historical tickets using vector search.
 
-Path: [services/medicalappointment-similar-tickets](../services/medicalappointment-similar-tickets/)
+Path: [services/similar-tickets](../services/similar-tickets/)
 
 UI: http://localhost:8082
 
@@ -132,12 +132,12 @@ mvn clean verify && java -jar target/similar-tickets.jar
 Purpose  
 Stores internal company documents and returns relevant policy citations with RBAC controls.
 
-Path: [services/medicalappointment-company-rag](../services/medicalappointment-company-rag/)
+Path: [services/company-rag](../services/company-rag/)
 
 UI: http://localhost:8084
 
 Startup  
 ```bash
 docker-compose up -d
-mvn quarkus:dev -DDemoData=true
+mvn quarkus:dev -Ddemo.data.load=true
 ```

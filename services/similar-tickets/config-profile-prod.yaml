@@ -1,0 +1,10 @@
+sources:
+  - type: "environment-variables"
+  - type: "system-properties"
+  - type: "classpath"
+    properties:
+      resource: "application.yaml"
+  - type: "file"
+    properties:
+      path: "config/config-prod.yaml"
+      optional: true

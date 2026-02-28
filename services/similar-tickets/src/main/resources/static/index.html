@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Appointment Helpdesk Similar Ticket Service</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="service-name-banner">Medical Appointment Helpdesk Similar Ticket Service</div>
+    <div class="zoom-controls">
+        <button class="zoom-button" id="zoom-out" title="Zoom Out">−</button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button class="zoom-button" id="zoom-in" title="Zoom In">+</button>
+    </div>
+    <div class="container">
+        <div class="left-pane" id="left-pane">
+            <h2>
+                <span class="toggle-arrow" id="toggle-arrow">◀</span>
+                Activity Logs
+            </h2>
+            <div id="logs" class="logs-container"></div>
+        </div>
+        <button class="expand-button" id="expand-button" title="Show Activity Logs">▶</button>
+        <div class="right-pane" id="right-pane">
+            <h2>Stored Tickets</h2>
+            <div class="table-container">
+                <table id="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Type</th>
+                            <th>Original Text</th>
+                            <th>Vector (first 50 dims)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
