@@ -1,80 +1,57 @@
 package com.example.aicodingassistant.api;
 
 import com.example.aicodingassistant.dto.CallbackResultRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @ApplicationScoped
 public class CallbackClient {
-    @ConfigProperty(name = "app.callback.max-retries")
-    int maxRetries;
+    @ConfigProperty(name = "app.callback.auth-token")
+    String callbackAuthToken;
 
-    @ConfigProperty(name = "app.callback.retry-delay-millis")
-    long retryDelayMillis;
+    @ConfigProperty(name = "quarkus.rest-client.helpdesk-callback.url")
+    String callbackUrl;
 
-    private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
+    private HelpdeskCallbackApi callbackApi;
 
-    @Inject
-    public CallbackClient(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-        this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    @PostConstruct
+    void init() {
+        callbackApi = RestClientBuilder.newBuilder()
+                .baseUri(URI.create(callbackUrl))
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build(HelpdeskCallbackApi.class);
     }
 
-    public void postResult(String callbackUrl, String callbackAuthToken, CallbackResultRequest payload, Consumer<String> logger)
-            throws IOException, InterruptedException {
-        // callbackUrl is dynamic per request, so we keep a plain HTTP client instead of a fixed Quarkus REST client.
-        String body = objectMapper.writeValueAsString(payload);
+    public void postResult(CallbackResultRequest payload, Consumer<String> logger) {
         logger.accept("Callback target: " + callbackUrl);
-        logger.accept("Callback payload: " + body);
         String authHeader = callbackAuthToken.startsWith("Bearer ")
                 ? callbackAuthToken
                 : "Bearer " + callbackAuthToken;
+        callbackApi.postResult(payload, authHeader);
+        logger.accept("Callback delivered for ticket " + payload.ticketId());
+    }
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(callbackUrl))
-                .timeout(Duration.ofSeconds(30))
-                .header("Content-Type", "application/json")
-                .header("Authorization", authHeader)
-                .header("Idempotency-Key", payload.jobId())
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
-        Exception lastFailure = null;
-        for (int attempt = 1; attempt <= Math.max(1, maxRetries); attempt++) {
-            try {
-                HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-                int statusCode = response.statusCode();
-                if (statusCode >= 200 && statusCode < 300) {
-                    logger.accept("Callback delivered for job " + payload.jobId() + " with status " + statusCode);
-                    return;
-                }
-                throw new IllegalStateException("Callback failed with HTTP " + statusCode);
-            } catch (Exception e) {
-                lastFailure = e;
-                logger.accept("Callback attempt " + attempt + " failed: " + e.getMessage());
-                if (attempt < maxRetries) {
-                    Thread.sleep(retryDelayMillis);
-                }
-            }
-        }
-
-        if (lastFailure instanceof IOException ioException) {
-            throw ioException;
-        }
-        if (lastFailure instanceof InterruptedException interruptedException) {
-            throw interruptedException;
-        }
-        throw new IllegalStateException("Callback delivery failed after retries.", lastFailure);
+    @Path("/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    interface HelpdeskCallbackApi {
+        @POST
+        void postResult(
+                CallbackResultRequest payload,
+                @HeaderParam("Authorization") String authorization
+        );
     }
 }

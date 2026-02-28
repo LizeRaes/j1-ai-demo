@@ -25,12 +25,6 @@ public final class RequestValidation {
         if (request.confidenceThreshold() == null) {
             return bad("confidenceThreshold is required.");
         }
-        if (isBlank(request.callbackUrl())) {
-            return bad("callbackUrl is required.");
-        }
-        if (isBlank(request.callbackAuthToken())) {
-            return bad("callbackAuthToken is required.");
-        }
         if (request.confidenceThreshold() < 0 || request.confidenceThreshold() > 1) {
             return bad("confidenceThreshold must be between 0 and 1.");
         }

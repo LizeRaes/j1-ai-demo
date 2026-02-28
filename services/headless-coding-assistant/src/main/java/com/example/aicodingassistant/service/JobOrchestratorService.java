@@ -4,7 +4,6 @@ import com.example.aicodingassistant.api.CallbackClient;
 import com.example.aicodingassistant.domain.AnalysisResult;
 import com.example.aicodingassistant.domain.FixResult;
 import com.example.aicodingassistant.domain.JobContext;
-import com.example.aicodingassistant.domain.JobResultStatus;
 import com.example.aicodingassistant.domain.JobSubmissionStatus;
 import com.example.aicodingassistant.dto.CallbackResultRequest;
 import com.example.aicodingassistant.dto.SubmitJobRequest;
@@ -19,6 +18,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,6 +52,7 @@ public class JobOrchestratorService {
     JobLogService jobLogService;
 
     private final AtomicLong jobCounter = new AtomicLong(0);
+    private final ConcurrentHashMap<Long, String> activeJobsByTicketId = new ConcurrentHashMap<>();
     private ExecutorService executorService;
 
     @PostConstruct
@@ -60,7 +61,16 @@ public class JobOrchestratorService {
     }
 
     public SubmitJobResponse submit(SubmitJobRequest request) {
+        String existingJobId = activeJobsByTicketId.putIfAbsent(request.ticketId(), "PENDING");
+        if (existingJobId != null) {
+            return new SubmitJobResponse(
+                    "",
+                    JobSubmissionStatus.REJECTED,
+                    "A coding assistant job is already active for ticket " + request.ticketId() + ".");
+        }
+
         String jobId = String.valueOf(jobCounter.incrementAndGet());
+        activeJobsByTicketId.put(request.ticketId(), jobId);
         JobContext context = new JobContext(jobId, request);
         Consumer<String> logger = jobLogService.loggerForJob(jobId);
         logger.accept("Job accepted. ticketId=" + request.ticketId() + ", repoUrl=" + request.repoUrl());
@@ -77,14 +87,13 @@ public class JobOrchestratorService {
         AnalysisResult analyzeResult = null;
         String fixSummary = "";
         String model = configuredModelOrNull();
+        boolean callbackAttempted = false;
         Consumer<String> logger = jobLogService.loggerForJob(context.jobId());
         logger.accept("Job processing started.");
 
         try {
             SubmitJobRequest request = context.request();
             String repoUrl = request.repoUrl().trim();
-            String callbackUrl = request.callbackUrl().trim();
-            String callbackAuthToken = request.callbackAuthToken().trim();
             try (RepoManager.RepoSlot repoSlot = repoManager.acquire(repoUrl, Path.of(reposRoot), baseBranch, logger)) {
                 Path repoDir = repoSlot.path();
                 logger.accept("Repository ready at: " + repoDir);
@@ -132,21 +141,23 @@ public class JobOrchestratorService {
                         confidence,
                         logger);
                 logger.accept("PR created: " + prUrl);
-                callbackClient.postResult(callbackUrl, callbackAuthToken, new CallbackResultRequest(
-                        context.jobId(),
+                callbackAttempted = true;
+                callbackClient.postResult(new CallbackResultRequest(
                         request.ticketId(),
-                        JobResultStatus.PR_CREATED,
-                        confidence,
-                        prUrl,
-                        likelyCause + " | Fix summary: " + fixSummary,
-                        null
+                        prUrl
                 ), logger);
             }
             logger.accept("Job " + context.jobId() + " is done (SUCCESS).");
         } catch (Exception e) {
             logger.accept("Job failed with exception: " + e.getMessage());
-            logger.accept("No callback will be sent.");
+            if (callbackAttempted) {
+                logger.accept("Callback was attempted but delivery failed.");
+            } else {
+                logger.accept("No callback was attempted.");
+            }
             logger.accept("Job " + context.jobId() + " is done (FAILED).");
+        } finally {
+            activeJobsByTicketId.remove(context.request().ticketId(), context.jobId());
         }
     }
 

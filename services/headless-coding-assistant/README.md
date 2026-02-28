@@ -33,9 +33,7 @@ curl -X POST "http://localhost:8085/api/coding-assistant/jobs" \
     "ticketId": 123,
     "originalRequest": "When user goes to Book Appointment, fills out all fields and clicks Confirm Appointment, it takes them to an error page instead of booking. It happens every time.",
     "repoUrl": "https://github.com/LizeRaes/mediflow-user-facing",
-    "confidenceThreshold": 0.60,
-    "callbackUrl": "http://localhost:8080/api/coding-assistant/results",
-    "callbackAuthToken": "my-shared-token"
+    "confidenceThreshold": 0.60
   }'
 ```
 
@@ -53,29 +51,21 @@ Request example:
   "ticketId": 123,
   "originalRequest": "User sees no dark mode toggle",
   "repoUrl": "https://github.com/LizeRaes/mediflow-user-facing",
-  "confidenceThreshold": 0.60,
-  "callbackUrl": "http://localhost:8080/api/coding-assistant/results",
-  "callbackAuthToken": "my-shared-token"
+  "confidenceThreshold": 0.60
 }
 ```
 
 ### 2) Coding Assistant -> Helpdesk Callback
 
-- `POST` to the provided `callbackUrl`
-- Header: `Authorization: Bearer <callbackAuthToken>`
-- Header: `Idempotency-Key: <jobId>`
+- `POST` to configured callback URL (`quarkus.rest-client.helpdesk-callback.url`)
+- Header: `Authorization: Bearer <app.callback.auth-token>`
 
 Callback payload:
 
 ```json
 {
-  "jobId": "1",
   "ticketId": 123,
-  "status": "PR_CREATED",
-  "confidence": 0.82,
-  "prUrl": "https://github.com/org/repo/pull/123",
-  "likelyCause": "Likely missing null guard in theme settings retrieval (src/main/java/com/example/ThemeService.java lines 112-118).",
-  "errorMessage": null
+  "prUrl": "https://github.com/org/repo/pull/123"
 }
 ```
 
@@ -101,7 +91,7 @@ Callback payload:
 
 ## Prerequisites
 
-- Java 17+
+- Java 25+
 - Maven
 - OpenAI `codex` CLI installed and authenticated
 - `git`
@@ -118,10 +108,10 @@ In `src/main/resources/application.properties`:
 - `app.base-branch=main`
 - `app.jobs.max-concurrency=3`
 - `app.ai-coding-assistant.model=` (optional)
-- `app.callback.max-retries=3`
-- `app.callback.retry-delay-millis=1500`
+- `app.callback.auth-token=...`
+- `quarkus.rest-client.helpdesk-callback.url=http://localhost:8080/api/coding-assistant`
 
-Request fields are mandatory in each job submission: `ticketId`, `originalRequest`, `repoUrl`, `confidenceThreshold`, `callbackUrl`, and `callbackAuthToken`.
+Request fields are mandatory in each job submission: `ticketId`, `originalRequest`, `repoUrl`, and `confidenceThreshold`.
 
 ## First-time setup notes
 

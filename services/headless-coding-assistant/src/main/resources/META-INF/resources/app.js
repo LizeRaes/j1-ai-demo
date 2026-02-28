@@ -35,18 +35,18 @@ function startSse() {
 }
 
 function renderLogs(logs) {
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  const previousScrollTop = scrollingElement.scrollTop;
+  const previousScrollHeight = scrollingElement.scrollHeight;
+  const shouldFollowLatest = previousScrollTop < 20;
+
   if (!Array.isArray(logs) || logs.length === 0) {
     logsEl.innerHTML = '<div class="log-row"><div class="msg">No logs yet.</div></div>';
-    return;
-  }
-
-  const jobNumbers = new Map();
-  let nextJobNumber = 1;
-  for (const log of logs) {
-    const jobId = log.jobId ?? "";
-    if (!jobNumbers.has(jobId)) {
-      jobNumbers.set(jobId, nextJobNumber++);
+    if (!shouldFollowLatest) {
+      const newScrollHeight = scrollingElement.scrollHeight;
+      scrollingElement.scrollTop = previousScrollTop + (newScrollHeight - previousScrollHeight);
     }
+    return;
   }
 
   logsEl.innerHTML = logs
@@ -55,15 +55,20 @@ function renderLogs(logs) {
       const jobId = escapeHtml(log.jobId ?? "");
       const rawMessage = log.message ?? "";
       const { cssClass, message } = formatMessage(rawMessage);
-      const jobNumber = jobNumbers.get(log.jobId ?? "") ?? "-";
       return `
         <article class="log-row ${cssClass}">
-          <div class="meta">${timestamp} | Job #${jobNumber} | ${jobId}</div>
+          <div class="meta">${timestamp} | Job ${jobId}</div>
           <div class="msg">${escapeHtml(message)}</div>
         </article>
       `;
     })
     .join("");
+
+  // Keep the user's reading position stable when new rows are prepended.
+  if (!shouldFollowLatest) {
+    const newScrollHeight = scrollingElement.scrollHeight;
+    scrollingElement.scrollTop = previousScrollTop + (newScrollHeight - previousScrollHeight);
+  }
 }
 
 function formatMessage(rawMessage) {

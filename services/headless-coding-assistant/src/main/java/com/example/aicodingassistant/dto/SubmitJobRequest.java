@@ -4,7 +4,5 @@ public record SubmitJobRequest(
         Long ticketId,
         String originalRequest,
         String repoUrl,
-        Double confidenceThreshold,
-        String callbackUrl,
-        String callbackAuthToken
+        Double confidenceThreshold
 ) {}
