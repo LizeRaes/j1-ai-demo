@@ -39,6 +39,7 @@ kill_tree() {
 
 stop_containers() {
   docker compose down --remove-orphans
+  docker compose -f "$ROOT/services/company-rag/docker-compose.yml" down --remove-orphans
 }
 
 wait_for_port() {
@@ -53,6 +54,39 @@ wait_for_port() {
     fi
   done
   echo "  [ready] $name (port $port)"
+}
+
+wait_for_oracle_sql() {
+  local name=$1 container=$2 timeout=${3:-240}
+  local elapsed=0 output=""
+  if ! docker container inspect "$container" >/dev/null 2>&1; then
+    echo "ERROR: Container '$container' not found while waiting for $name SQL readiness"
+    return 1
+  fi
+  while true; do
+    output=$(docker exec "$container" bash -lc "sqlplus -s vector/vector@localhost:1521/freepdb1 <<'SQL'
+set heading off
+set feedback off
+set pagesize 0
+set verify off
+set echo off
+select 'READY' from dual;
+exit;
+SQL" 2>/dev/null || true)
+    if [[ "$output" == *"READY"* ]]; then
+      echo "  [ready] $name (SQL READY)"
+      return 0
+    fi
+    sleep 2
+    elapsed=$((elapsed + 2))
+    if [ $((elapsed % 20)) -eq 0 ]; then
+      echo "  [wait] $name SQL not ready yet (${elapsed}s)"
+    fi
+    if [ "$elapsed" -ge "$timeout" ]; then
+      echo "ERROR: Timed out waiting for $name SQL readiness"
+      return 1
+    fi
+  done
 }
 
 wait_for_http() {
@@ -101,11 +135,15 @@ stop_containers
 
 # --- Start databases ---
 echo "=== Starting Docker containers ==="
-  docker compose up -d
-echo "=== Waiting for databases to be ready ==="
+docker compose up -d
+docker compose -f "$ROOT/services/company-rag/docker-compose.yml" up -d docling
+echo "=== Waiting for dependencies to be ready ==="
 wait_for_port "mysql" 3306 120
 wait_for_port "ticket oracle" 1521 120
 wait_for_port "company oracle" 1522 120
+wait_for_oracle_sql "ticket oracle" "ticket" 240
+wait_for_oracle_sql "company oracle" "company" 240
+wait_for_http "docling" "http://localhost:8086/openapi.json" 180
 
 # --- Start application services ---
 echo "=== Starting services ==="

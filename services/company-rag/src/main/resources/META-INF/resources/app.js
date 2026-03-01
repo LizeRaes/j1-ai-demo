@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8084/api';
+const API_BASE = '/api';
 
 let logs = [];
 let documents = [];

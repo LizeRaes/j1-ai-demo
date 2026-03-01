@@ -13,7 +13,6 @@ import {getActorContext} from './actorContext.js';
 import {
     fetchDocumentContent,
     getDocumentDownloadUrl,
-    getDocumentTypeLabel,
     isTextPreviewableDocument
 } from '../api/documentsApi.js';
 
@@ -301,11 +300,6 @@ export function renderTicketDetail(ticket) {
                 });
 
                 relatedItem.appendChild(docLink);
-
-                const typeLabel = createElement('span', 'related-score');
-                typeLabel.style.marginLeft = '8px';
-                typeLabel.textContent = `[type: ${getDocumentTypeLabel(citation.documentLink || citation.documentName)}]`;
-                relatedItem.appendChild(typeLabel);
             } else if (citation.documentName) {
                 // User doesn't have access - show document name but not as link
                 const docName = createElement('span', 'related-link');
@@ -558,7 +552,7 @@ async function showDocument(documentName, documentLink) {
         console.error('Error showing document:', error);
         // Show error in a visible alert with more details
         const errorMsg = error.message || 'Unknown error';
-        alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- API endpoint: http://localhost:8084/api/documents/content/' + encodeURIComponent(documentName));
+        alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- Documents service/proxy availability');
         throw error; // Re-throw so caller can handle it
     }
 }

@@ -26,8 +26,8 @@ public class UIResource {
     @ConfigProperty(name = "ai-triage.ui.default-zoom-percent", defaultValue = "100")
     Integer defaultZoomPercent;
 
-    @ConfigProperty(name = "ai-triage.documents.base-url", defaultValue = "http://localhost:8084")
-    String documentsBaseUrl;
+    @ConfigProperty(name = "ai-triage.helpdesk.base-url", defaultValue = "http://localhost:8080")
+    String helpdeskBaseUrl;
 
     @GET
     @Produces(MediaType.TEXT_HTML)
@@ -64,7 +64,8 @@ public class UIResource {
     public Map<String, Object> getConfig() {
         Map<String, Object> config = new HashMap<>();
         config.put("defaultZoomPercent", defaultZoomPercent);
-        config.put("documentsApiBase", documentsBaseUrl + "/api/documents");
+        config.put("documentsApiBase", "/api/ui/documents");
+        config.put("helpdeskAppBase", helpdeskBaseUrl);
         return config;
     }
 }

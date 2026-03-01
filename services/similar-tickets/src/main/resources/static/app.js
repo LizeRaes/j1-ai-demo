@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8082/api/similarity';
+const API_BASE = '/api/similarity';
 
 let logs = [];
 let tickets = [];
