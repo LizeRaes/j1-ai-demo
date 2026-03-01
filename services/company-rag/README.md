@@ -19,10 +19,13 @@ This RAG system allows you to:
 
 ## Setup
 
-1. **Start Qdrant database:**
+1. **Start OracleDB and Docling first (unless you use this services without Docling, see later):**
    ```bash
    docker-compose up -d
    ```
+   This starts:
+   - Oracle on `localhost:1522`
+   - Docling Serve on `localhost:8086`
 
 2. **Set your OpenAI API key:**
    ```bash
@@ -38,22 +41,34 @@ The application will run on port **8084**.
 
 ### Run with Docling preprocessing
 
-If you want PDF/DOCX/PPTX/XLSX preprocessing (including table/figure transcription) before chunking:
+If you want PDF/DOCX/PPTX/XLSX preprocessing (including table/figure transcription) before chunking, keep Docling up from step 1 and run:
 
-1. **Start Docling Serve on port 8086:**
-   ```bash
-   docker run -p 8086:8080 ghcr.io/docling-project/docling-serve:1.13.0
-   ```
-2. **Set preprocessing mode when starting company-rag:**
+1. **Set preprocessing mode when starting company-rag:**
    ```bash
    mvn quarkus:dev -Ddocument.preprocessing.mode=docling
    ```
-3. **(Optional) Override Docling URL if needed:**
+2. **(Optional) Override Docling URL if needed:**
    ```bash
    mvn quarkus:dev \
      -Ddocument.preprocessing.mode=docling \
      -Ddocument.preprocessing.docling.base-url=http://localhost:8086
    ```
+
+### Docling preview CLI (standalone observer)
+
+If you want to inspect what Docling produces for a specific file in `company-documents/` without starting the full app flow, run:
+
+```bash
+mvn -q -DskipTests compile exec:java \
+  -Dexec.mainClass=com.example.document.tool.DoclingPreviewCli \
+  -Dexec.args="Billing_Payment_Reliability_Report_2026.pdf --max-chars=6000"
+```
+
+Optional flags and properties:
+- `--keep-image-blobs`: keep inline `data:image/...;base64,...` markdown image payloads in output (default is to remove them for readability).
+- `--max-chars=<N>`: truncate console output to `N` characters.
+- `-Ddocling.base-url=http://localhost:8086`: override Docling URL.
+- `-Ddocuments.dir=company-documents`: override source folder.
 
 **Important:** 
 - Make sure the Oracle database is running before starting the application, otherwise you'll get connection errors.
@@ -112,7 +127,7 @@ document.preprocessing.docling.base-url=http://localhost:8086
 
 `document.preprocessing.mode` options:
 - `pure-text` (default): ingest only `.txt` and `.md` files as plain text; skip other extensions
-- `docling`: attempt Docling for `.pdf`, `.docx`, `.pptx`, `.xlsx`, and `.txt`; skip unsupported extensions
+- `docling`: attempt Docling for `.pdf`, `.docx`, `.pptx`, `.xlsx`; `.txt` stays plain-text; skip unsupported extensions
 
 
 Storage and sync behavior:
@@ -474,9 +489,9 @@ Document_Name.txt:
 - Check application logs for loading errors
 
 **Docling Connection Errors:**
-- Ensure Docling Serve is running: `docker run -p 8086:8080 ghcr.io/docling-project/docling-serve:1.13.0`
+- Ensure Docling Serve is running: `docker-compose up -d docling`
 - Verify `document.preprocessing.docling.base-url` points to the correct host/port
-- If running with `document.preprocessing.mode=docling`, `.txt` files fall back to plain-text when Docling is unavailable; other docling-targeted formats are skipped and logged
+- If running with `document.preprocessing.mode=docling`, `.txt` files are always parsed as plain text; docling-targeted formats are skipped and logged when conversion fails
 
 **RBAC Issues:**
 - Verify `document_access_policy.yaml` is in `src/main/resources/config/`

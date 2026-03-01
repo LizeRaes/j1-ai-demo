@@ -7,7 +7,7 @@ default:
   chunk-size: 300
 
 documents:
-  Approved_Response_Templates.txt:
+  Approved_Response_Templates.md:
     strategy: approved-response-splitter
     # Splits on "Template: " markers, keeping entire templates as chunks
   

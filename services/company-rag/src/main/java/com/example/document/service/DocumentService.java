@@ -24,6 +24,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -43,6 +45,10 @@ import static java.util.stream.Collectors.toList;
 public class DocumentService {
 
     private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
+    private static final Pattern INLINE_IMAGE_DATA_URI_PATTERN = Pattern.compile(
+            "!\\[[^\\]]*]\\(data:image/[^;\\)]+;base64,[^\\)]*\\)",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
 
     @Inject
     DataSource dataSource;
@@ -198,7 +204,11 @@ public class DocumentService {
             );
         }
 
-        if (!isDoclingCandidate(path)) {
+        if (isTxtFile(path)) {
+            return Files.readString(path);
+        }
+
+        if (!isDoclingFriendlyExtension(path)) {
             throw new SkipDocumentException(
                     "Skipped " + path.getFileName() + " (unsupported extension for docling mode).",
                     null
@@ -218,21 +228,37 @@ public class DocumentService {
             if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
                 throw new IOException("Docling returned no markdown content for " + path);
             }
-            return response.getDocument().getMarkdownContent();
+            return stripInlineImageDataBlobs(response.getDocument().getMarkdownContent(), path.getFileName().toString());
         } catch (RuntimeException | IOException e) {
             String fileName = path.getFileName().toString();
-            if (isTxtFile(path)) {
-                String message = "Docling failed for " + fileName + ", falling back to plain text";
-                LOGGER.warning(message);
-                addActivityLog(message, "warn");
-                return Files.readString(path);
-            }
-
             throw new SkipDocumentException(
                     "Docling failed for " + fileName + "; skipped (non-txt file). Reason: " + e.getMessage(),
                     e
             );
         }
+    }
+
+    String stripInlineImageDataBlobs(String markdown, String documentName) {
+        if (markdown == null || markdown.isEmpty()) {
+            return markdown;
+        }
+
+        Matcher matcher = INLINE_IMAGE_DATA_URI_PATTERN.matcher(markdown);
+        StringBuffer sanitized = new StringBuffer();
+        int removed = 0;
+        while (matcher.find()) {
+            removed++;
+            matcher.appendReplacement(sanitized, "");
+        }
+        matcher.appendTail(sanitized);
+
+        if (removed > 0) {
+            String message = "Removed " + removed + " inline image blob(s) from Docling markdown for " + documentName;
+            LOGGER.info(message);
+            addActivityLog(message, "ingest");
+        }
+
+        return sanitized.toString();
     }
 
     private DoclingServeApi getDocling() {
@@ -249,10 +275,6 @@ public class DocumentService {
                 || hasExtension(path, ".docx")
                 || hasExtension(path, ".pptx")
                 || hasExtension(path, ".xlsx");
-    }
-
-    private boolean isDoclingCandidate(Path path) {
-        return isDoclingFriendlyExtension(path) || isTxtFile(path);
     }
 
     private boolean isTxtFile(Path path) {

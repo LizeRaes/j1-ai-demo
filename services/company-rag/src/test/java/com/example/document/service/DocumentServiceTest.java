@@ -197,8 +197,8 @@ class DocumentServiceTest {
     }
 
     @Test
-    void extractContentForChunkingDoclingFailureFallsBackForTxt() throws Exception {
-        Path tmp = Files.createTempFile("docling-fallback", ".txt");
+    void extractContentForChunkingDoclingModeKeepsTxtAsPlainText() throws Exception {
+        Path tmp = Files.createTempFile("docling-txt", ".txt");
         String literal = "literal txt content";
         Files.writeString(tmp, literal);
         try {
@@ -208,7 +208,7 @@ class DocumentServiceTest {
             String extracted = service.extractContentForChunking(tmp);
 
             assertEquals(literal, extracted);
-            verify(logService).addLog(contains("falling back to plain text"), eq("warn"));
+            verify(logService, never()).addLog(contains("falling back to plain text"), anyString());
         } finally {
             Files.deleteIfExists(tmp);
         }
@@ -276,6 +276,25 @@ class DocumentServiceTest {
             Files.deleteIfExists(pdf);
             Files.deleteIfExists(dir);
         }
+    }
+
+    @Test
+    void stripInlineImageDataBlobsRemovesOnlyDataUriImages() {
+        String markdown = """
+                ## Demo
+                Intro text.
+                ![Image](data:image/png;base64,AAAABBBBCCCC)
+                Keep this line.
+                ![Diagram](https://example.com/diagram.png)
+                ![Photo](data:image/jpeg;base64,DDDDEEEEFFFF)
+                """;
+
+        String sanitized = service.stripInlineImageDataBlobs(markdown, "Demo.pdf");
+
+        assertFalse(sanitized.contains("data:image/png;base64"));
+        assertFalse(sanitized.contains("data:image/jpeg;base64"));
+        assertTrue(sanitized.contains("https://example.com/diagram.png"));
+        verify(logService).addLog(contains("Removed 2 inline image blob(s)"), eq("ingest"));
     }
 
     @AfterEach
