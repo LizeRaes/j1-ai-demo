@@ -83,6 +83,12 @@ public class DocumentService {
     @ConfigProperty(name = "document.preprocessing.docling.base-url", defaultValue = "http://localhost:8086")
     String doclingBaseUrl;
 
+    @ConfigProperty(name = "document.preprocessing.docling.retry.max-attempts", defaultValue = "3")
+    int doclingRetryMaxAttempts;
+
+    @ConfigProperty(name = "document.preprocessing.docling.retry.initial-delay-ms", defaultValue = "250")
+    long doclingRetryInitialDelayMs;
+
     private EmbeddingStore<TextSegment> embeddingStore;
 
     private String embeddingTable;
@@ -223,18 +229,53 @@ public class DocumentService {
                         .build())
                 .build();
 
+        String fileName = path.getFileName().toString();
         try {
-            ConvertDocumentResponse response = getDocling().convertSource(request);
-            if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
-                throw new IOException("Docling returned no markdown content for " + path);
-            }
-            return stripInlineImageDataBlobs(response.getDocument().getMarkdownContent(), path.getFileName().toString());
+            String markdown = convertWithRetry(request, fileName);
+            return stripInlineImageDataBlobs(markdown, fileName);
         } catch (RuntimeException | IOException e) {
-            String fileName = path.getFileName().toString();
             throw new SkipDocumentException(
-                    "Docling failed for " + fileName + "; skipped (non-txt file). Reason: " + e.getMessage(),
+                    "Docling failed for " + fileName + " after retries; skipped (non-txt file). Reason: " + e.getMessage(),
                     e
             );
+        }
+    }
+
+    private String convertWithRetry(ConvertDocumentRequest request, String fileName) throws IOException {
+        int maxAttempts = Math.max(1, doclingRetryMaxAttempts);
+        long delayMs = Math.max(0L, doclingRetryInitialDelayMs);
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                ConvertDocumentResponse response = getDocling().convertSource(request);
+                if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
+                    throw new IOException("Docling returned no markdown content for " + fileName);
+                }
+                return response.getDocument().getMarkdownContent();
+            } catch (RuntimeException | IOException e) {
+                if (attempt == maxAttempts) {
+                    throw e;
+                }
+                String message = "Docling attempt " + attempt + "/" + maxAttempts + " failed for " + fileName
+                        + "; retrying in " + delayMs + "ms. Reason: " + e.getMessage();
+                LOGGER.warning(message);
+                addActivityLog(message, "warn");
+                sleepBeforeRetry(delayMs, fileName);
+                delayMs = Math.min(2000L, Math.max(1L, delayMs * 2));
+            }
+        }
+        throw new IOException("Docling conversion exhausted retries for " + fileName);
+    }
+
+    private void sleepBeforeRetry(long delayMs, String fileName) throws IOException {
+        if (delayMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while waiting to retry Docling for " + fileName, e);
         }
     }
 
@@ -274,7 +315,8 @@ public class DocumentService {
         return hasExtension(path, ".pdf")
                 || hasExtension(path, ".docx")
                 || hasExtension(path, ".pptx")
-                || hasExtension(path, ".xlsx");
+                || hasExtension(path, ".xlsx")
+                || isMdFile(path);
     }
 
     private boolean isTxtFile(Path path) {

@@ -32,10 +32,20 @@ This RAG system allows you to:
    export OPENAI_API_KEY=your-api-key-here
    ```
 
-3. **Build and run the application in dev mode:**
+3. **Run the application:**
+   - Dev mode:
    ```bash
-   mvn quarkus:dev
+   mvn quarkus:dev -Dsync-demo-data=true
    ```
+   - Normal mode:
+   ```bash
+   mvn package
+   java -Dsync-demo-data=true -jar target/quarkus-app/quarkus-run.jar
+   ```
+   This sync flag embeds documents from `company-documents/` on startup. For the bundled demo docs this is typically under $0.01 in embedding API cost.
+   If you do **not** want startup embedding sync:
+   - Dev mode: `mvn quarkus:dev`
+   - Normal mode: `mvn package && java -jar target/quarkus-app/quarkus-run.jar`
 
 The application will run on port **8084**.
 
@@ -44,14 +54,31 @@ The application will run on port **8084**.
 If you want PDF/DOCX/PPTX/XLSX preprocessing (including table/figure transcription) before chunking, keep Docling up from step 1 and run:
 
 1. **Set preprocessing mode when starting company-rag:**
+   - Dev mode:
    ```bash
-   mvn quarkus:dev -Ddocument.preprocessing.mode=docling
+   mvn quarkus:dev -Dsync-demo-data=true -Ddocument.preprocessing.mode=docling
+   ```
+   - Normal mode:
+   ```bash
+   mvn package
+   java -Dsync-demo-data=true -Ddocument.preprocessing.mode=docling -jar target/quarkus-app/quarkus-run.jar
    ```
 2. **(Optional) Override Docling URL if needed:**
+   - Dev mode:
    ```bash
    mvn quarkus:dev \
+     -Dsync-demo-data=true \
      -Ddocument.preprocessing.mode=docling \
      -Ddocument.preprocessing.docling.base-url=http://localhost:8086
+   ```
+   - Normal mode:
+   ```bash
+   mvn package
+   java \
+     -Dsync-demo-data=true \
+     -Ddocument.preprocessing.mode=docling \
+     -Ddocument.preprocessing.docling.base-url=http://localhost:8086 \
+     -jar target/quarkus-app/quarkus-run.jar
    ```
 
 ### Docling preview CLI (standalone observer)
@@ -72,8 +99,9 @@ Optional flags and properties:
 
 **Important:** 
 - Make sure the Oracle database is running before starting the application, otherwise you'll get connection errors.
-- **By default**, the application preserves existing data in the database and does NOT reload documents on startup.
-- **To wipe the database and reload all documents** from `company-documents/`, use the `demo.data.load` system property:
+- Startup embedding sync is opt-in via `-Dsync-demo-data=true`. Without it, startup does not embed folder documents.
+- Embedding sync calls the embedding provider API and incurs cost.
+- To wipe the database first and then sync/embed all documents from `company-documents/`, use:
   ```bash
   mvn quarkus:dev -Ddemo.data.load=true
   ```
@@ -127,7 +155,7 @@ document.preprocessing.docling.base-url=http://localhost:8086
 
 `document.preprocessing.mode` options:
 - `pure-text` (default): ingest only `.txt` and `.md` files as plain text; skip other extensions
-- `docling`: attempt Docling for `.pdf`, `.docx`, `.pptx`, `.xlsx`; `.txt` stays plain-text; skip unsupported extensions
+- `docling`: attempt Docling for `.pdf`, `.docx`, `.pptx`, `.xlsx`, and `.md`; `.txt` stays plain-text; skip unsupported extensions
 
 
 Storage and sync behavior:
@@ -460,8 +488,9 @@ quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-3-large
 - **RBAC**: Document access is controlled via YAML configuration file
 - **Idempotency**: All operations (upsert, delete, RBAC update) are idempotent - safe to retry
 - **Startup Behavior**:
-  - **Default**: Preserves existing database, does NOT reload documents
-  - **With `-Ddemo.data.load=true`**: Wipes the database and reloads all documents from `company-documents/`
+  - **Default**: Preserves existing database and does NOT sync/embed folder documents on startup
+  - **With `-Dsync-demo-data=true`**: Syncs and embeds all documents from `company-documents/`
+  - **With `-Ddemo.data.load=true`**: Wipes the database first, then syncs/embeds all documents
 
 ## Document Structure
 
@@ -491,7 +520,7 @@ Document_Name.txt:
 **Docling Connection Errors:**
 - Ensure Docling Serve is running: `docker-compose up -d docling`
 - Verify `document.preprocessing.docling.base-url` points to the correct host/port
-- If running with `document.preprocessing.mode=docling`, `.txt` files are always parsed as plain text; docling-targeted formats are skipped and logged when conversion fails
+- If running with `document.preprocessing.mode=docling`, `.txt` files are always parsed as plain text; `.md` and other docling-targeted formats are sent to Docling and skipped/logged on conversion failure
 
 **RBAC Issues:**
 - Verify `document_access_policy.yaml` is in `src/main/resources/config/`

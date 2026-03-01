@@ -67,6 +67,8 @@ class DocumentServiceTest {
         service.defaultStrategy = "recursive";
         service.preprocessingMode = "pure-text";
         service.doclingBaseUrl = "http://localhost:8086";
+        service.doclingRetryMaxAttempts = 1;
+        service.doclingRetryInitialDelayMs = 0L;
 
         when(vectorDatabaseConfig.getEmbeddingStore()).thenReturn(embeddingStore);
         when(vectorDatabaseConfig.getEmbeddingTable()).thenReturn("document");
@@ -209,6 +211,25 @@ class DocumentServiceTest {
 
             assertEquals(literal, extracted);
             verify(logService, never()).addLog(contains("falling back to plain text"), anyString());
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    @Test
+    void extractContentForChunkingDoclingModeSendsMdToDocling() throws Exception {
+        Path tmp = Files.createTempFile("docling-md", ".md");
+        String literal = "# Heading\n- bullet";
+        Files.writeString(tmp, literal);
+        try {
+            service.preprocessingMode = "docling";
+            service.doclingBaseUrl = "http://localhost:1";
+
+            DocumentService.SkipDocumentException exception = assertThrows(
+                    DocumentService.SkipDocumentException.class,
+                    () -> service.extractContentForChunking(tmp)
+            );
+            assertTrue(exception.getMessage().contains("Docling failed for"));
         } finally {
             Files.deleteIfExists(tmp);
         }
