@@ -480,6 +480,8 @@
 
     <script>
         const API_BASE = '/api/ui';
+        let DOCUMENT_API_BASE = '';
+        let HELPDESK_APP_BASE = '';
         const ZOOM_STEP = 10; // Zoom step in percentage
         const MIN_ZOOM = 50;  // Minimum zoom percentage
         const MAX_ZOOM = 200; // Maximum zoom percentage
@@ -495,8 +497,12 @@
                 const response = await fetch('/api/ui/config');
                 const config = await response.json();
                 defaultZoom = config.defaultZoomPercent || 100;
+                DOCUMENT_API_BASE = config.documentsApiBase || '';
+                HELPDESK_APP_BASE = (config.helpdeskAppBase || '').replace(/\/$/, '');
             } catch (error) {
                 console.error('Error loading config:', error);
+                DOCUMENT_API_BASE = '';
+                HELPDESK_APP_BASE = '';
             }
 
             // Check localStorage for saved zoom, otherwise use default
@@ -567,6 +573,85 @@
             return 'urgency-low';
         }
 
+        function extractDocumentName(documentLinkOrName) {
+            if (!documentLinkOrName) return '';
+            if (!documentLinkOrName.includes('/')) return documentLinkOrName;
+            const parts = documentLinkOrName.split('/');
+            return parts[parts.length - 1] || '';
+        }
+
+        function isTextPreviewableDocument(documentLinkOrName) {
+            const name = extractDocumentName(documentLinkOrName).toLowerCase();
+            return name.endsWith('.txt') || name.endsWith('.md');
+        }
+
+        function getDocumentTypeLabel(documentLinkOrName) {
+            const name = extractDocumentName(documentLinkOrName);
+            const idx = name.lastIndexOf('.');
+            return idx >= 0 && idx < name.length - 1 ? name.substring(idx + 1).toLowerCase() : 'unknown';
+        }
+
+        async function openDocument(documentName, documentLinkOrName) {
+            if (!DOCUMENT_API_BASE) {
+                throw new Error('Document API base URL is not configured');
+            }
+            const normalizedName = extractDocumentName(documentLinkOrName || documentName);
+            if (!normalizedName) return;
+
+            if (!isTextPreviewableDocument(normalizedName)) {
+                window.open(`${DOCUMENT_API_BASE}/download/${encodeURIComponent(normalizedName)}`, '_blank');
+                return;
+            }
+
+            const response = await fetch(`${DOCUMENT_API_BASE}/content/${encodeURIComponent(normalizedName)}`);
+            if (!response.ok) {
+                throw new Error(`Could not load ${normalizedName}`);
+            }
+            const payload = await response.json();
+            showDocumentPreviewModal(normalizedName, payload.content || '');
+        }
+
+        function showDocumentPreviewModal(documentName, content) {
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.65)';
+            overlay.style.zIndex = '3000';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+
+            const modal = document.createElement('div');
+            modal.style.backgroundColor = '#fff';
+            modal.style.maxWidth = '70%';
+            modal.style.maxHeight = '80%';
+            modal.style.overflow = 'auto';
+            modal.style.borderRadius = '8px';
+            modal.style.padding = '16px';
+            modal.style.boxShadow = '0 4px 18px rgba(0,0,0,0.25)';
+
+            modal.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <strong>${escapeHtml(documentName)}</strong>
+                    <button id="doc-preview-close" style="cursor:pointer;">Close</button>
+                </div>
+                <pre style="white-space:pre-wrap;word-wrap:break-word;line-height:1.5;">${escapeHtml(content)}</pre>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+            modal.querySelector('#doc-preview-close').addEventListener('click', () => overlay.remove());
+        }
+
         function renderEvent(event) {
             const time = formatTimestamp(event.timestamp);
             const ticketIdPart = event.ticketId ? `<span class="event-ticket-id">[Ticket #${event.ticketId}]</span> ` : '';
@@ -609,7 +694,7 @@
                         <div class="related-tickets-label">Similar Tickets:</div>
                         <div class="related-ticket-ids">
                             ${ticket.relatedTicketIds.map(id => `
-                                <a class="related-ticket-id" href="http://localhost:8080/?tab=inbox&ticketId=${id}">#${id}</a>
+                                <a class="related-ticket-id" href="${getHelpdeskTicketUrl(id)}">#${id}</a>
                             `).join('')}
                         </div>
                     </div>
@@ -623,16 +708,19 @@
                         <div class="policy-citations-label">Policy Citations:</div>
                         ${ticket.policyCitations.map(citation => {
                             const docName = citation.documentName || 'Unknown Document';
-                            const docLink = citation.documentLink || '#';
+                            const docLink = citation.documentLink || docName;
                             const citationText = citation.citation || '';
                             const score = citation.score ? ` (Score: ${(citation.score * 100).toFixed(1)}%)` : '';
                             const teams = citation.rbacTeams && citation.rbacTeams.length > 0 
                                 ? ` [Teams: ${citation.rbacTeams.join(', ')}]` : '';
+                            const fileType = getDocumentTypeLabel(docLink);
+                            const actionLabel = isTextPreviewableDocument(docLink) ? 'Preview' : 'Download';
                             
                             return `
                                 <div class="policy-citation">
                                     <div class="policy-citation-header">
-                                        <strong>${escapeHtml(docName)}</strong>${score}${teams}
+                                        <strong>${escapeHtml(docName)}</strong> [${escapeHtml(fileType)}] ${score}${teams}
+                                        <a href="#" class="doc-action-link" data-doc-name="${escapeHtml(docName)}" data-doc-link="${escapeHtml(docLink)}" style="margin-left:8px;">${actionLabel}</a>
                                     </div>
                                     <div class="policy-citation-text">${escapeHtml(citationText)}</div>
                                 </div>
@@ -679,6 +767,11 @@
             return element.scrollTop <= threshold;
         }
 
+        function getHelpdeskTicketUrl(ticketId) {
+            const base = HELPDESK_APP_BASE || '';
+            return `${base}/?tab=inbox&ticketId=${encodeURIComponent(ticketId)}`;
+        }
+
         function loadEvents() {
             fetch(`${API_BASE}/events`)
                 .then(response => response.json())
@@ -716,6 +809,7 @@
                         content.innerHTML = '<div class="empty-state">No tickets yet</div>';
                     } else {
                         content.innerHTML = tickets.map(renderTicket).join('');
+                        wireDocumentActions(content);
                         if (shouldFollowTicketList || isNearTop(content)) {
                             // Follow newest tickets while user is at the top.
                             content.scrollTop = 0;
@@ -729,6 +823,21 @@
                 .catch(error => {
                     console.error('Error loading tickets:', error);
                 });
+        }
+
+        function wireDocumentActions(root) {
+            root.querySelectorAll('.doc-action-link').forEach((link) => {
+                link.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const documentName = e.currentTarget.getAttribute('data-doc-name');
+                    const documentLink = e.currentTarget.getAttribute('data-doc-link');
+                    try {
+                        await openDocument(documentName, documentLink);
+                    } catch (error) {
+                        console.error('Error opening document:', error);
+                    }
+                });
+            });
         }
 
         // Initialize zoom on page load

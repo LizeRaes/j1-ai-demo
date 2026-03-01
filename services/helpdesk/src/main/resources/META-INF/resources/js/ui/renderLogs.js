@@ -12,6 +12,7 @@ let logsZoomLevel = 100; // Default zoom level
 let mainZoomLevel = 100; // Default zoom level for main content
 let currentFilter = 'all'; // Current event filter: 'all', 'info', 'warning', 'error'
 let allEvents = []; // Store all events for filtering
+let consecutiveLoadFailures = 0;
 
 export function startEventPolling() {
     // Clear initial loading message
@@ -252,6 +253,7 @@ function refreshSelectedTicketDetailIfNeeded(changedTicketIds) {
 async function loadEvents() {
     try {
         const events = await getRecentEvents(lastEventTime, 200);
+        consecutiveLoadFailures = 0;
         const container = $('#logs-content');
         if (!container) return;
 
@@ -325,9 +327,23 @@ async function loadEvents() {
     } catch (error) {
         console.error('Error loading events:', error);
         const container = $('#logs-content');
-        if (container) {
-            container.innerHTML = '<div class="log-entry" style="color: #f44336;">Error loading events</div>';
+        consecutiveLoadFailures += 1;
+        if (!container) return;
+
+        // On first-load/transient startup failures, keep UX calm and let polling recover.
+        if (allEvents.length === 0 && consecutiveLoadFailures <= 3) {
+            container.innerHTML = '';
+            const emptyMsg = createElement('div', 'log-entry', 'No events yet');
+            emptyMsg.dataset.empty = 'true';
+            emptyMsg.style.color = '#888';
+            emptyMsg.style.fontStyle = 'italic';
+            emptyMsg.style.padding = '1rem';
+            emptyMsg.style.textAlign = 'center';
+            container.appendChild(emptyMsg);
+            return;
         }
+
+        container.innerHTML = '<div class="log-entry" style="color: #f44336;">Error loading events</div>';
     }
 }
 

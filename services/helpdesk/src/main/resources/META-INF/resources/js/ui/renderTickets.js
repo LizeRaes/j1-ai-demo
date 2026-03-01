@@ -31,6 +31,9 @@ export async function renderTickets(view) {
         // Invert order: prepend items so newest appear at top
         tickets.forEach(ticket => {
             const item = createTicketListItem(ticket);
+            if (state.selectedTicketId && Number(state.selectedTicketId) === Number(ticket.id)) {
+                item.classList.add('selected');
+            }
             container.insertBefore(item, container.firstChild);
         });
     } catch (error) {
@@ -72,6 +75,7 @@ function createTicketListItem(ticket) {
         });
         item.classList.add('selected');
         state.selectedTicketId = ticket.id;
+        updateTicketDeepLink(state.currentTab, ticket.id);
 
         // Add to navigation history
         state.addTicketToHistory(ticket.id);
@@ -84,4 +88,17 @@ function createTicketListItem(ticket) {
     });
 
     return item;
+}
+
+function updateTicketDeepLink(tab, ticketId) {
+    const url = new URL(window.location.href);
+    if (tab) {
+        url.searchParams.set('tab', tab);
+    }
+    if (ticketId) {
+        url.searchParams.set('ticketId', String(ticketId));
+    } else {
+        url.searchParams.delete('ticketId');
+    }
+    window.history.replaceState({}, '', `${url.pathname}?${url.searchParams.toString()}`);
 }

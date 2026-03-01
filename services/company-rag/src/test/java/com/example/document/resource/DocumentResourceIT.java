@@ -3,6 +3,7 @@ package com.example.document.resource;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -12,7 +13,7 @@ class DocumentResourceIT {
     @Test
     void upsert() {
         var body = """
-                  {"documentName":"DocA","content":"hello","rbacTeams":["team1","team2"]}
+                  {"documentName":"DocA.txt","content":"hello","rbacTeams":["team1","team2"]}
                 """;
 
         given()
@@ -48,7 +49,7 @@ class DocumentResourceIT {
     void deleteByName() {
         given()
                 .when()
-                .delete("/api/documents/{documentName}", "DocA")
+                .delete("/api/documents/{documentName}", "DocA.txt")
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("OK"));
@@ -85,6 +86,17 @@ class DocumentResourceIT {
 
     @Test
     void getDocumentContent() {
+        var upsertBody = """
+                  {"documentName":"Payment_System_Payment_Flow.txt","content":"sample content for retrieval","rbacTeams":[]}
+                """;
+        given()
+                .contentType("application/json")
+                .body(upsertBody)
+                .when()
+                .post("/api/documents/upsert")
+                .then()
+                .statusCode(200);
+
         given()
                 .when()
                 .get("/api/documents/content/{documentName}", "Payment_System_Payment_Flow.txt")
@@ -99,7 +111,20 @@ class DocumentResourceIT {
                 .when()
                 .get("/api/documents/content/{documentName}", "__does_not_exist__.txt")
                 .then()
-                .statusCode(500);
+                .statusCode(404);
+    }
+
+    @Test
+    void upload() {
+        given()
+                .multiPart("documentName", "UploadDoc.txt")
+                .multiPart("rbacTeams", "team1,team2")
+                .multiPart("file", "UploadDoc.txt", "uploaded content".getBytes(UTF_8), "text/plain")
+                .when()
+                .post("/api/documents/upload")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("OK"));
     }
 
     @Test
@@ -118,7 +143,7 @@ class DocumentResourceIT {
     @Test
     void updateWithTeams() {
         var body = """
-                    {"documentName":"DocA","rbacTeams":["team1","team2"]}
+                    {"documentName":"DocA.txt","rbacTeams":["team1","team2"]}
                 """;
 
         given()
@@ -135,7 +160,7 @@ class DocumentResourceIT {
     @Test
     void updateWithoutTeams() {
         var body = """
-                    {"documentName":"DocB"}
+                    {"documentName":"DocB.txt"}
                 """;
 
         given()

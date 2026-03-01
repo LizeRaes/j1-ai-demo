@@ -42,12 +42,19 @@
             </div>
             <div class="bottom-section">
                 <h2>Company Documents</h2>
+                <div class="upload-controls">
+                    <input type="file" id="upload-file" />
+                    <input type="text" id="upload-rbac" placeholder="RBAC teams (comma-separated, optional)" />
+                    <button id="upload-button">Upload / Update</button>
+                </div>
                 <div class="table-container">
                     <table id="documents-table">
                         <thead>
                             <tr>
                                 <th>Document Name</th>
+                                <th>Type</th>
                                 <th>RBAC Teams</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="documents-body">

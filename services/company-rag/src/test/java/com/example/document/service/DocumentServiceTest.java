@@ -19,6 +19,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
@@ -28,6 +29,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentServiceTest {
+
+    private Path tempDocumentsDir;
 
     @Mock
     VectorDatabaseConfig vectorDatabaseConfig;
@@ -44,6 +47,9 @@ class DocumentServiceTest {
     DocumentAccessPolicyService accessPolicyService;
 
     @Mock
+    LogService logService;
+
+    @Mock
     EmbeddingStore<TextSegment> embeddingStore;
 
     @InjectMocks
@@ -51,9 +57,18 @@ class DocumentServiceTest {
 
     @BeforeEach
     void setUp() {
-        service.documentsDir = "classpath:/documents";
+        try {
+            tempDocumentsDir = Files.createTempDirectory("company-rag-docs");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        service.documentsDir = tempDocumentsDir.toString();
         service.splitConfigLocation = "classpath:/config/document_splitting_rule.yaml";
         service.defaultStrategy = "recursive";
+        service.preprocessingMode = "pure-text";
+        service.doclingBaseUrl = "http://localhost:8086";
+        service.doclingRetryMaxAttempts = 1;
+        service.doclingRetryInitialDelayMs = 0L;
 
         when(vectorDatabaseConfig.getEmbeddingStore()).thenReturn(embeddingStore);
         when(vectorDatabaseConfig.getEmbeddingTable()).thenReturn("document");
@@ -66,23 +81,41 @@ class DocumentServiceTest {
     void upsertDocument() {
         TextSegment s1 = TextSegment.from("seg1");
         TextSegment s2 = TextSegment.from("seg2");
-        when(chunkingService.chunkDocument(any(Document.class), eq("TestDoc"), anyString()))
+        when(chunkingService.chunkDocument(any(Document.class), eq("TestDoc.txt"), anyString()))
                 .thenReturn(List.of(s1, s2));
 
         Response<Embedding> resp = mock(Response.class);
         when(resp.content()).thenReturn(Embedding.from(new float[]{0.1f, 0.2f}));
         when(embeddingModel.embed(anyString())).thenReturn(resp);
 
-        service.upsertDocument("TestDoc", "content here", List.of("teamX"));
+        service.upsertDocumentFile("TestDoc.txt", "content here".getBytes(StandardCharsets.UTF_8), List.of("teamX"));
 
-        verify(accessPolicyService).updateDocumentAccess("TestDoc", List.of("teamX"));
+        verify(accessPolicyService).updateDocumentAccess("TestDoc.txt", List.of("teamX"));
         verify(embeddingStore).removeAll(any(Filter.class));
-        verify(accessPolicyService, never()).removeDocument("TestDoc");
+        verify(accessPolicyService, never()).removeDocument("TestDoc.txt");
         verify(embeddingStore, times(2)).add(any(Embedding.class), any(TextSegment.class));
 
         ArgumentCaptor<String> strategyCap = ArgumentCaptor.forClass(String.class);
-        verify(chunkingService).chunkDocument(any(Document.class), eq("TestDoc"), strategyCap.capture());
+        verify(chunkingService).chunkDocument(any(Document.class), eq("TestDoc.txt"), strategyCap.capture());
         assertEquals("recursive", strategyCap.getValue()); // default from setUp
+        assertTrue(Files.exists(tempDocumentsDir.resolve("TestDoc.txt")));
+    }
+
+    @Test
+    void upsertUnsupportedDoclingFileStoresButSkipsEmbedding() {
+        service.preprocessingMode = "docling";
+
+        assertDoesNotThrow(() -> service.upsertDocumentFile(
+                "fake-seizure.annotations.json",
+                "{\"label\":\"demo\"}".getBytes(StandardCharsets.UTF_8),
+                List.of("teamX")
+        ));
+
+        assertTrue(Files.exists(tempDocumentsDir.resolve("fake-seizure.annotations.json")));
+        verify(accessPolicyService).updateDocumentAccess("fake-seizure.annotations.json", List.of("teamX"));
+        verify(embeddingStore).removeAll(any(Filter.class));
+        verify(chunkingService, never()).chunkDocument(any(Document.class), eq("fake-seizure.annotations.json"), anyString());
+        verify(logService).addLog(contains("stored but not embedded"), eq("warn"));
     }
 
     @Test
@@ -156,12 +189,170 @@ class DocumentServiceTest {
         verify(embeddingStore).removeAll(any(Filter.class));
     }
 
+    @Test
+    void deleteDocumentRemovesFileAndEmbeddings() throws Exception {
+        Path docPath = tempDocumentsDir.resolve("DeleteMe.txt");
+        Files.writeString(docPath, "content");
+
+        service.deleteDocument("DeleteMe.txt");
+
+        assertFalse(Files.exists(docPath));
+        verify(embeddingStore).removeAll(any(Filter.class));
+        verify(accessPolicyService).removeDocument("DeleteMe.txt");
+    }
+
+    @Test
+    void extractContentForChunkingPureTextReturnsLiteralContent() throws Exception {
+        Path tmp = Files.createTempFile("doc", ".txt");
+        String literal = "Line 1\nTable|Cell";
+        Files.writeString(tmp, literal);
+        try {
+            service.preprocessingMode = "pure-text";
+            String extracted = service.extractContentForChunking(tmp);
+            assertEquals(literal, extracted);
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    @Test
+    void extractContentForChunkingDoclingModeKeepsTxtAsPlainText() throws Exception {
+        Path tmp = Files.createTempFile("docling-txt", ".txt");
+        String literal = "literal txt content";
+        Files.writeString(tmp, literal);
+        try {
+            service.preprocessingMode = "docling";
+            service.doclingBaseUrl = "http://localhost:1";
+
+            String extracted = service.extractContentForChunking(tmp);
+
+            assertEquals(literal, extracted);
+            verify(logService, never()).addLog(contains("falling back to plain text"), anyString());
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    @Test
+    void extractContentForChunkingDoclingModeSendsMdToDocling() throws Exception {
+        Path tmp = Files.createTempFile("docling-md", ".md");
+        String literal = "# Heading\n- bullet";
+        Files.writeString(tmp, literal);
+        try {
+            service.preprocessingMode = "docling";
+            service.doclingBaseUrl = "http://localhost:1";
+
+            DocumentService.SkipDocumentException exception = assertThrows(
+                    DocumentService.SkipDocumentException.class,
+                    () -> service.extractContentForChunking(tmp)
+            );
+            assertTrue(exception.getMessage().contains("Docling failed for"));
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    @Test
+    void embedLocalDocumentsSkipsNonTxtWhenDoclingFails() throws Exception {
+        Path dir = Files.createTempDirectory("docling-skip");
+        Path txt = dir.resolve("ok.txt");
+        Path pdf = dir.resolve("skip.pdf");
+        Files.writeString(txt, "txt content");
+        Files.writeString(pdf, "fake pdf bytes");
+
+        try {
+            service.documentsDir = dir.toString();
+            service.preprocessingMode = "docling";
+            service.doclingBaseUrl = "http://localhost:1";
+
+            when(chunkingService.chunkDocument(any(Document.class), eq("ok.txt"), anyString()))
+                    .thenReturn(List.of(TextSegment.from("txt content")));
+            Response<Embedding> r = mock(Response.class);
+            when(r.content()).thenReturn(Embedding.from(new float[]{0.5f}));
+            when(embeddingModel.embed(anyString())).thenReturn(r);
+
+            service.embedLocalDocuments();
+
+            verify(embeddingStore, times(1)).add(any(Embedding.class), any(TextSegment.class));
+            verify(logService, atLeastOnce()).addLog(contains("skipped (non-txt file)"), eq("warn"));
+        } finally {
+            Files.deleteIfExists(txt);
+            Files.deleteIfExists(pdf);
+            Files.deleteIfExists(dir);
+        }
+    }
+
+    @Test
+    void embedLocalDocumentsPureTextModeLoadsOnlyTxtAndMd() throws Exception {
+        Path dir = Files.createTempDirectory("puretext-only");
+        Path txt = dir.resolve("ok.txt");
+        Path md = dir.resolve("notes.md");
+        Path pdf = dir.resolve("skip.pdf");
+        Files.writeString(txt, "txt content");
+        Files.writeString(md, "md content");
+        Files.writeString(pdf, "fake pdf bytes");
+
+        try {
+            service.documentsDir = dir.toString();
+            service.preprocessingMode = "pure-text";
+
+            when(chunkingService.chunkDocument(any(Document.class), eq("ok.txt"), anyString()))
+                    .thenReturn(List.of(TextSegment.from("txt content")));
+            when(chunkingService.chunkDocument(any(Document.class), eq("notes.md"), anyString()))
+                    .thenReturn(List.of(TextSegment.from("md content")));
+            Response<Embedding> r = mock(Response.class);
+            when(r.content()).thenReturn(Embedding.from(new float[]{0.5f}));
+            when(embeddingModel.embed(anyString())).thenReturn(r);
+
+            service.embedLocalDocuments();
+
+            verify(embeddingStore, times(2)).add(any(Embedding.class), any(TextSegment.class));
+            verify(logService, atLeastOnce()).addLog(contains("non-text file in pure-text mode"), eq("warn"));
+        } finally {
+            Files.deleteIfExists(txt);
+            Files.deleteIfExists(md);
+            Files.deleteIfExists(pdf);
+            Files.deleteIfExists(dir);
+        }
+    }
+
+    @Test
+    void stripInlineImageDataBlobsRemovesOnlyDataUriImages() {
+        String markdown = """
+                ## Demo
+                Intro text.
+                ![Image](data:image/png;base64,AAAABBBBCCCC)
+                Keep this line.
+                ![Diagram](https://example.com/diagram.png)
+                ![Photo](data:image/jpeg;base64,DDDDEEEEFFFF)
+                """;
+
+        String sanitized = service.stripInlineImageDataBlobs(markdown, "Demo.pdf");
+
+        assertFalse(sanitized.contains("data:image/png;base64"));
+        assertFalse(sanitized.contains("data:image/jpeg;base64"));
+        assertTrue(sanitized.contains("https://example.com/diagram.png"));
+        verify(logService).addLog(contains("Removed 2 inline image blob(s)"), eq("ingest"));
+    }
+
     @AfterEach
     void tearDown() {
+        if (tempDocumentsDir != null) {
+            try (var paths = Files.walk(tempDocumentsDir)) {
+                paths.sorted(Comparator.reverseOrder()).forEach(p -> {
+                    try {
+                        Files.deleteIfExists(p);
+                    } catch (Exception ignored) {
+                    }
+                });
+            } catch (Exception ignored) {
+            }
+        }
         vectorDatabaseConfig = null;
         dataSource = null;
         chunkingService = null;
         accessPolicyService = null;
+        logService = null;
         embeddingStore = null;
         service = null;
     }

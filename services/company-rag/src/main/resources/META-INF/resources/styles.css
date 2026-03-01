@@ -296,11 +296,25 @@ th {
 
 /* Documents table */
 #documents-table th:nth-child(1) { /* Document Name */
-    width: 50%;
+    width: 40%;
 }
 
-#documents-table th:nth-child(2) { /* RBAC Teams */
-    width: 50%;
+#documents-table th:nth-child(2) { /* Type */
+    width: 15%;
+}
+
+#documents-table th:nth-child(3) { /* RBAC Teams */
+    width: 35%;
+}
+
+#documents-table th:nth-child(4) { /* Actions */
+    width: 10%;
+}
+
+.doc-type {
+    font-family: 'Courier New', monospace;
+    color: #666;
+    text-transform: lowercase;
 }
 
 /* Chunks table */
@@ -490,6 +504,25 @@ tbody tr:last-child td {
     font-weight: 600;
 }
 
+.doc-actions {
+    text-align: center;
+}
+
+.delete-doc-btn {
+    border: 1px solid #f0b2b2;
+    background: #fff6f6;
+    color: #c62828;
+    border-radius: 6px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: calc(14px * var(--font-zoom) / 100);
+    line-height: 1.2;
+}
+
+.delete-doc-btn:hover {
+    background: #ffeaea;
+}
+
 .no-results {
     text-align: center;
     color: #999;
@@ -605,4 +638,22 @@ tbody tr:last-child td {
 
 .table-container::-webkit-scrollbar-thumb:hover {
     background: #aaa;
+}
+
+.upload-controls {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px 0 20px;
+    align-items: center;
+}
+
+.upload-controls input[type="text"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 6px 8px;
+}
+
+.upload-controls button {
+    padding: 7px 12px;
+    cursor: pointer;
 }

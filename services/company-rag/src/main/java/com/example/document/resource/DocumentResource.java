@@ -8,8 +8,15 @@ import com.example.document.service.LogService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
-import java.io.InputStream;
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -79,14 +86,13 @@ public class DocumentResource {
         logService.addLog("Upsert document: " + request.documentName(), "upsert");
 
         try {
-            // If RBAC teams are omitted on upsert, preserve existing policy.
-            List<String> rbacTeams = request.rbacTeams() != null ?
-                    request.rbacTeams() :
-                    accessPolicyService.getAccessTeams(request.documentName());
+            List<String> rbacTeams = request.rbacTeams() != null
+                    ? request.rbacTeams()
+                    : resolveDefaultRbacTeams(request.documentName());
 
-            documentService.upsertDocument(
+            documentService.upsertDocumentFile(
                     request.documentName(),
-                    request.content(),
+                    request.content().getBytes(StandardCharsets.UTF_8),
                     rbacTeams
             );
 
@@ -98,6 +104,37 @@ public class DocumentResource {
         }
     }
 
+    @POST
+    @Path("/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public StatusResponse upload(
+            @RestForm("documentName") String documentName,
+            @RestForm("rbacTeams") String rbacTeamsCsv,
+            @RestForm("file") FileUpload fileUpload) {
+        byte[] fileBytes = readMultipartBytes(fileUpload);
+        String effectiveDocumentName = (documentName != null && !documentName.isBlank())
+                ? documentName
+                : (fileUpload != null ? fileUpload.fileName() : null);
+
+        if (effectiveDocumentName == null || effectiveDocumentName.isBlank() || fileBytes == null || fileBytes.length == 0) {
+            throw new IllegalArgumentException("documentName and file are required");
+        }
+
+        logService.addLog("Upload document: " + effectiveDocumentName, "upsert");
+        List<String> rbacTeams = (rbacTeamsCsv != null && !rbacTeamsCsv.isBlank())
+                ? parseRbacTeamsCsv(rbacTeamsCsv)
+                : resolveDefaultRbacTeams(effectiveDocumentName);
+
+        try {
+            documentService.upsertDocumentFile(effectiveDocumentName, fileBytes, rbacTeams);
+            logService.addLog("Successfully uploaded document: " + effectiveDocumentName, "upsert");
+            return new StatusResponse("OK");
+        } catch (Exception e) {
+            logService.addLog("Error uploading document " + effectiveDocumentName + ": " + e.getMessage(), "error");
+            throw new RuntimeException("Failed to upload document: " + e.getMessage(), e);
+        }
+    }
+
     @DELETE
     @Path("/{documentName}")
     public StatusResponse deleteByName(@PathParam("documentName") String documentName) {
@@ -105,7 +142,7 @@ public class DocumentResource {
             throw new IllegalArgumentException("documentName is required");
         }
         logService.addLog("Delete document: " + documentName, "delete");
-        documentService.deleteDocumentEmbeddings(documentName);
+        documentService.deleteDocument(documentName);
         logService.addLog("Successfully deleted document: " + documentName, "delete");
         return new StatusResponse("OK");
     }
@@ -138,19 +175,48 @@ public class DocumentResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, String> getDocumentContent(@PathParam("documentName") String documentName) {
         try {
-            InputStream docStream = getClass().getClassLoader()
-                    .getResourceAsStream("documents/" + documentName);
-
-            if (docStream == null) {
-                throw new NotFoundException("Document not found: " + documentName);
-            }
-
-            String content = new String(docStream.readAllBytes());
-            docStream.close();
-
+            String content = documentService.readDocumentContent(documentName);
             return Map.of("content", content);
+        } catch (NoSuchFileException e) {
+            logService.addLog("Document content not found: " + documentName, "warn");
+            throw new NotFoundException("Document not found: " + documentName);
+        } catch (IllegalArgumentException e) {
+            logService.addLog("Invalid documentName for content fetch: " + documentName, "warn");
+            throw new BadRequestException("Invalid documentName");
         } catch (Exception e) {
+            logService.addLog("Error reading document content " + documentName + ": " + e.getMessage(), "error");
             throw new InternalServerErrorException("Error reading document: " + e.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/file/{documentName}")
+    public Response getDocumentFile(@PathParam("documentName") String documentName) {
+        return buildDocumentDownloadResponse(documentName);
+    }
+
+    @GET
+    @Path("/download/{documentName}")
+    public Response downloadDocument(@PathParam("documentName") String documentName) {
+        return buildDocumentDownloadResponse(documentName);
+    }
+
+    private Response buildDocumentDownloadResponse(String documentName) {
+        try {
+            byte[] fileBytes = documentService.readDocumentFile(documentName);
+            String contentType = documentService.detectContentType(documentName);
+            return Response.ok(fileBytes, contentType)
+                    .header("Content-Disposition", "attachment; filename=\"" + documentName + "\"")
+                    .build();
+        } catch (NoSuchFileException e) {
+            logService.addLog("Document download not found: " + documentName, "warn");
+            throw new NotFoundException("Document not found: " + documentName);
+        } catch (IllegalArgumentException e) {
+            logService.addLog("Invalid documentName for download: " + documentName, "warn");
+            throw new BadRequestException("Invalid documentName");
+        } catch (Exception e) {
+            logService.addLog("Error reading document file " + documentName + ": " + e.getMessage(), "error");
+            throw new InternalServerErrorException("Error reading document file: " + e.getMessage());
         }
     }
 
@@ -188,5 +254,30 @@ public class DocumentResource {
 
         logService.addLog("Successfully updated RBAC for document: " + request.documentName(), "rbac");
         return new StatusResponse("OK");
+    }
+
+    private List<String> parseRbacTeamsCsv(String csv) {
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private List<String> resolveDefaultRbacTeams(String documentName) {
+        return documentService.documentExists(documentName)
+                ? accessPolicyService.getAccessTeams(documentName)
+                : List.of();
+    }
+
+    private byte[] readMultipartBytes(FileUpload fileUpload) {
+        if (fileUpload == null || fileUpload.uploadedFile() == null) {
+            return null;
+        }
+        try {
+            return Files.readAllBytes(fileUpload.uploadedFile());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read uploaded file bytes", e);
+        }
     }
 }

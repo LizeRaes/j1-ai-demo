@@ -10,7 +10,11 @@ import {formatDateTime} from '../util/format.js';
 import {$, clearElement, createElement} from '../util/dom.js';
 import {renderTickets} from './renderTickets.js';
 import {getActorContext} from './actorContext.js';
-import {fetchDocumentContent} from '../api/documentsApi.js';
+import {
+    fetchDocumentContent,
+    getDocumentDownloadUrl,
+    isTextPreviewableDocument
+} from '../api/documentsApi.js';
 
 export function renderTicketDetail(ticket) {
     const container = $('#detail-pane');
@@ -284,7 +288,11 @@ export function renderTicketDetail(ticket) {
                 docLink.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        await showDocument(citation.documentName, citation.documentLink);
+                        if (isTextPreviewableDocument(citation.documentLink || citation.documentName)) {
+                            await showDocument(citation.documentName, citation.documentLink);
+                        } else {
+                            downloadDocument(citation.documentName, citation.documentLink);
+                        }
                     } catch (error) {
                         console.error('Error opening document:', error);
                         alert('Error loading document: ' + error.message);
@@ -544,7 +552,17 @@ async function showDocument(documentName, documentLink) {
         console.error('Error showing document:', error);
         // Show error in a visible alert with more details
         const errorMsg = error.message || 'Unknown error';
-        alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- API endpoint: http://localhost:8084/api/documents/content/' + encodeURIComponent(documentName));
+        alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- Documents service/proxy availability');
         throw error; // Re-throw so caller can handle it
     }
+}
+
+function downloadDocument(documentName, documentLink) {
+    const url = getDocumentDownloadUrl(documentLink || documentName);
+    const a = createElement('a');
+    a.href = url;
+    a.download = documentName || '';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 }

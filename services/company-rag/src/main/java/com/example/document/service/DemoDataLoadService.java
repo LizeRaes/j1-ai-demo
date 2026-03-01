@@ -23,14 +23,20 @@ public class DemoDataLoadService {
     @ConfigProperty(name = "demo.data.load")
     boolean loadDemoData;
 
+    @ConfigProperty(name = "sync-demo-data", defaultValue = "false")
+    boolean syncDemoData;
+
     void onStart(@Observes @Priority(Interceptor.Priority.APPLICATION + 100) StartupEvent ev) {
         if (loadDemoData) {
-            LOGGER.info("demo.data.load=true: Wiping database and loading/embedding all documents...");
+            LOGGER.info("demo.data.load=true: Wiping database, then syncing/embedding folder documents...");
             documentService.wipeAllEmbeddings();
+        }
+        if (loadDemoData || syncDemoData) {
+            LOGGER.info("Startup sync enabled: Loading/embedding all documents from folder...");
             documentService.embedLocalDocuments();
-            LOGGER.info("Startup complete - database wiped and all documents loaded and embedded.");
+            LOGGER.info("Startup complete - folder documents embedded.");
         } else {
-            LOGGER.info("Starting up - preserving existing database (use -Ddemo.data.load=true to wipe and reload)");
+            LOGGER.info("Starting up - preserving existing database and skipping startup sync (use -Dsync-demo-data=true to embed folder documents).");
         }
     }
 }

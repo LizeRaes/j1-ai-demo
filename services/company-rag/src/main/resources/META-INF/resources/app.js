@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8084/api';
+const API_BASE = '/api';
 
 let logs = [];
 let documents = [];
@@ -49,7 +49,7 @@ function renderLogs() {
 function renderDocuments() {
     const tbody = document.getElementById('documents-body');
     if (documents.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="no-results">No documents loaded yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="no-results">No documents loaded yet.</td></tr>';
         return;
     }
     
@@ -57,12 +57,18 @@ function renderDocuments() {
         const teams = doc.rbacTeams && doc.rbacTeams.length > 0 
             ? doc.rbacTeams.join(', ') 
             : '<span class="company-wide">Company-wide</span>';
+        const fileType = getFileTypeLabel(doc.documentName);
+        const previewMode = isTextPreviewable(doc.documentName) ? 'preview' : 'download';
         return `
             <tr>
                 <td class="document-name">
-                    <a href="#" class="doc-link" data-doc-name="${escapeHtml(doc.documentName)}">${escapeHtml(doc.documentName)}</a>
+                    <a href="#" class="doc-link" data-doc-name="${escapeHtml(doc.documentName)}" data-open-mode="${previewMode}">${escapeHtml(doc.documentName)}</a>
                 </td>
+                <td class="doc-type">${escapeHtml(fileType)}</td>
                 <td class="rbac-teams">${teams}</td>
+                <td class="doc-actions">
+                    <button class="delete-doc-btn" data-doc-name="${escapeHtml(doc.documentName)}" title="Delete document and embeddings">🗑</button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -72,7 +78,16 @@ function renderDocuments() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const docName = e.target.getAttribute('data-doc-name');
-            showDocument(docName);
+            const openMode = e.target.getAttribute('data-open-mode');
+            showDocument(docName, openMode);
+        });
+    });
+
+    // Add click handlers for delete actions
+    tbody.querySelectorAll('.delete-doc-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const docName = e.target.getAttribute('data-doc-name');
+            await deleteDocumentByName(docName);
         });
     });
 }
@@ -168,12 +183,18 @@ function renderChunks() {
             : 'N/A';
         const fullText = chunk.text || 'N/A';
         const chunkNum = chunk.chunkIndex != null ? chunk.chunkIndex : 'N/A';
+        const documentName = chunk.documentName || 'N/A';
+        const isClickableDocument = documentName !== 'N/A';
+        const documentOpenMode = isTextPreviewable(documentName) ? 'preview' : 'download';
+        const documentCell = isClickableDocument
+            ? `<a href="#" class="chunk-doc-link" data-doc-name="${escapeHtml(documentName)}" data-open-mode="${documentOpenMode}">${escapeHtml(documentName)}</a>`
+            : 'N/A';
         // Truncate text for display, show full on click
         const displayText = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
         const isTruncated = fullText.length > 100;
         return `
             <tr>
-                <td class="document-name">${escapeHtml(chunk.documentName || 'N/A')}</td>
+                <td class="document-name">${documentCell}</td>
                 <td class="chunk-index">${chunkNum}</td>
                 <td class="chunk-text ${isTruncated ? 'chunk-text-clickable' : ''}" 
                     data-full-text="${escapeHtml(fullText)}" 
@@ -184,6 +205,16 @@ function renderChunks() {
             </tr>
         `;
     }).join('');
+
+    // Add click handlers for chunk document links
+    tbody.querySelectorAll('.chunk-doc-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const docName = e.target.getAttribute('data-doc-name');
+            const openMode = e.target.getAttribute('data-open-mode');
+            showDocument(docName, openMode);
+        });
+    });
     
     // Add click handlers for truncated chunk text
     tbody.querySelectorAll('.chunk-text-clickable').forEach(element => {
@@ -318,7 +349,13 @@ async function loadDefaultZoom() {
 }
 
 // Show document content
-async function showDocument(documentName) {
+async function showDocument(documentName, openMode = null) {
+    const mode = openMode || (isTextPreviewable(documentName) ? 'preview' : 'download');
+    if (mode !== 'preview') {
+        downloadDocument(documentName);
+        return;
+    }
+
     try {
         const response = await fetch(`${API_BASE}/documents/content/${encodeURIComponent(documentName)}`);
         if (response.ok) {
@@ -371,6 +408,90 @@ function showDocumentModal(documentName, content) {
     modal.style.display = 'flex';
 }
 
+function isTextPreviewable(documentName) {
+    const lower = (documentName || '').toLowerCase();
+    return lower.endsWith('.txt') || lower.endsWith('.md');
+}
+
+function getFileTypeLabel(documentName) {
+    const name = documentName || '';
+    const idx = name.lastIndexOf('.');
+    if (idx === -1 || idx === name.length - 1) return 'unknown';
+    return name.substring(idx + 1).toLowerCase();
+}
+
+function downloadDocument(documentName) {
+    const a = document.createElement('a');
+    a.href = `${API_BASE}/documents/download/${encodeURIComponent(documentName)}`;
+    a.download = documentName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+async function uploadDocumentFile() {
+    const fileInput = document.getElementById('upload-file');
+    const teamsInput = document.getElementById('upload-rbac');
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) {
+        alert('Select a file first.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('documentName', file.name);
+    formData.append('file', file);
+    if (teamsInput.value && teamsInput.value.trim()) {
+        formData.append('rbacTeams', teamsInput.value.trim());
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/documents/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        addLog(`Uploaded document: ${file.name}`, 'upsert');
+        fileInput.value = '';
+        teamsInput.value = '';
+        fetchDocuments();
+        fetchChunks();
+    } catch (error) {
+        console.error('Upload failed:', error);
+        addLog(`Upload failed: ${file.name}`, 'error');
+        alert(`Upload failed for ${file.name}`);
+    }
+}
+
+async function deleteDocumentByName(documentName) {
+    if (!documentName) return;
+    const confirmed = window.confirm(`Delete "${documentName}" and its embeddings?`);
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/documents/${encodeURIComponent(documentName)}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            // Keep UI resilient even if backend returns non-OK.
+            addLog(`Delete request completed with status ${response.status} for ${documentName}`, 'warn');
+        } else {
+            addLog(`Deleted document: ${documentName}`, 'delete');
+        }
+    } catch (error) {
+        console.error('Delete failed:', error);
+        addLog(`Delete request failed for ${documentName}: ${error.message}`, 'warn');
+    } finally {
+        // Refresh tables regardless, so UI never gets stuck.
+        fetchDocuments();
+        fetchChunks();
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     addLog('Dashboard initialized', 'info');
@@ -386,6 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up zoom handlers
     document.getElementById('zoom-in').addEventListener('click', zoomIn);
     document.getElementById('zoom-out').addEventListener('click', zoomOut);
+    document.getElementById('upload-button').addEventListener('click', uploadDocumentFile);
     
     // Load default zoom from config
     loadDefaultZoom();

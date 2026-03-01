@@ -73,6 +73,16 @@
             <version>2.2</version>
         </dependency>
         <dependency>
+            <groupId>ai.docling</groupId>
+            <artifactId>docling-serve-api</artifactId>
+            <version>0.4.7</version>
+        </dependency>
+        <dependency>
+            <groupId>ai.docling</groupId>
+            <artifactId>docling-serve-client</artifactId>
+            <version>0.4.7</version>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
@@ -105,6 +115,11 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.1</version>
             </plugin>
         </plugins>
     </build>

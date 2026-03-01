@@ -1,10 +1,10 @@
-  Approved_Response_Templates.txt:
+  Approved_Response_Templates.md:
     read:
       - dispatching
       - billing
       - scheduling
 
-  Billing_Refund_Policy.txt:
+  Billing_Refund_Policy.md:
     read:
       - billing
       - dispatching
@@ -15,7 +15,7 @@
       - billing
       - scheduling
 
-  Known_Bugs_Limitations.txt:
+  Known_Bugs_Limitations.md:
     read:
       - dispatching
       - engineering
@@ -28,6 +28,16 @@
     read:
       - billing
 
-  Security_Escalation_Policy.txt:
+  Security_Escalation_Policy.md:
     read:
+      - dispatching
+
+  Billing_Payment_Reliability_Report_26.pdf:
+    read:
+      - billing
+      - dispatching
+
+  Account_Security_Incident_Report_26.pdf:
+    read:
+      - engineering
       - dispatching

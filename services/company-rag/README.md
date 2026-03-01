@@ -19,27 +19,89 @@ This RAG system allows you to:
 
 ## Setup
 
-1. **Start Qdrant database:**
+1. **Start OracleDB and Docling first (unless you use this services without Docling, see later):**
    ```bash
    docker-compose up -d
    ```
+   This starts:
+   - Oracle on `localhost:1522`
+   - Docling Serve on `localhost:8086`
 
 2. **Set your OpenAI API key:**
    ```bash
    export OPENAI_API_KEY=your-api-key-here
    ```
 
-3. **Build and run the application in dev mode:**
+3. **Run the application:**
+   - Dev mode:
    ```bash
-   mvn quarkus:dev
+   mvn quarkus:dev -Dsync-demo-data=true
    ```
+   - Normal mode:
+   ```bash
+   mvn package
+   java -Dsync-demo-data=true -jar target/quarkus-app/quarkus-run.jar
+   ```
+   This sync flag embeds documents from `company-documents/` on startup. For the bundled demo docs this is typically under $0.01 in embedding API cost.
+   If you do **not** want startup embedding sync:
+   - Dev mode: `mvn quarkus:dev`
+   - Normal mode: `mvn package && java -jar target/quarkus-app/quarkus-run.jar`
 
 The application will run on port **8084**.
 
+### Run with Docling preprocessing
+
+If you want PDF/DOCX/PPTX/XLSX preprocessing (including table/figure transcription) before chunking, keep Docling up from step 1 and run:
+
+1. **Set preprocessing mode when starting company-rag:**
+   - Dev mode:
+   ```bash
+   mvn quarkus:dev -Dsync-demo-data=true -Ddocument.preprocessing.mode=docling
+   ```
+   - Normal mode:
+   ```bash
+   mvn package
+   java -Dsync-demo-data=true -Ddocument.preprocessing.mode=docling -jar target/quarkus-app/quarkus-run.jar
+   ```
+2. **(Optional) Override Docling URL if needed:**
+   - Dev mode:
+   ```bash
+   mvn quarkus:dev \
+     -Dsync-demo-data=true \
+     -Ddocument.preprocessing.mode=docling \
+     -Ddocument.preprocessing.docling.base-url=http://localhost:8086
+   ```
+   - Normal mode:
+   ```bash
+   mvn package
+   java \
+     -Dsync-demo-data=true \
+     -Ddocument.preprocessing.mode=docling \
+     -Ddocument.preprocessing.docling.base-url=http://localhost:8086 \
+     -jar target/quarkus-app/quarkus-run.jar
+   ```
+
+### Docling preview CLI (standalone observer)
+
+If you want to inspect what Docling produces for a specific file in `company-documents/` without starting the full app flow, run:
+
+```bash
+mvn -q -DskipTests compile exec:java \
+  -Dexec.mainClass=com.example.document.tool.DoclingPreviewCli \
+  -Dexec.args="Billing_Payment_Reliability_Report_2026.pdf --max-chars=6000"
+```
+
+Optional flags and properties:
+- `--keep-image-blobs`: keep inline `data:image/...;base64,...` markdown image payloads in output (default is to remove them for readability).
+- `--max-chars=<N>`: truncate console output to `N` characters.
+- `-Ddocling.base-url=http://localhost:8086`: override Docling URL.
+- `-Ddocuments.dir=company-documents`: override source folder.
+
 **Important:** 
 - Make sure the Oracle database is running before starting the application, otherwise you'll get connection errors.
-- **By default**, the application preserves existing data in the database and does NOT reload documents on startup.
-- **To wipe the database and reload all documents** from `src/main/resources/documents/`, use the `demo.data.load` system property:
+- Startup embedding sync is opt-in via `-Dsync-demo-data=true`. Without it, startup does not embed folder documents.
+- Embedding sync calls the embedding provider API and incurs cost.
+- To wipe the database first and then sync/embed all documents from `company-documents/`, use:
   ```bash
   mvn quarkus:dev -Ddemo.data.load=true
   ```
@@ -87,7 +149,25 @@ Edit `src/main/resources/application.properties` to configure default chunking:
 ```properties
 document.chunking.default.strategy=recursive
 document.chunking.default.chunk-size=300
+document.preprocessing.mode=pure-text
+document.preprocessing.docling.base-url=http://localhost:8086
 ```
+
+`document.preprocessing.mode` options:
+- `pure-text` (default): ingest only `.txt` and `.md` files as plain text; skip other extensions
+- `docling`: attempt Docling for `.pdf`, `.docx`, `.pptx`, `.xlsx`, and `.md`; `.txt` stays plain-text; skip unsupported extensions
+
+
+Storage and sync behavior:
+- `demo.dir.location` points to a writable filesystem folder (default: `company-documents`).
+- Startup embedding loads files from that folder only.
+- `upsert` writes/overwrites the file in that folder and then re-embeds by `documentName`.
+- `upload` (`multipart/form-data`) writes/overwrites the uploaded file in that folder and re-embeds it.
+- `DELETE /api/documents/{documentName}` removes both file and embeddings.
+- `GET /api/documents/content/{documentName}` reads the file from that folder.
+- `GET /api/documents/download/{documentName}` returns the raw stored file bytes for any document type.
+- UI previews only `.txt` and `.md`; other file types are shown with their extension and downloaded on click.
+
 
 ## Document Access Policy
 
@@ -158,19 +238,25 @@ Creates or updates a document with its content and RBAC teams.
 **Fields:**
 - `documentName` (required): Unique document identifier
 - `content` (required): Document content
-- `rbacTeams` (optional): List of teams with access. If not specified, document is company-wide.
+- `rbacTeams` (optional): List of teams with access. If omitted and the file already exists, existing RBAC is preserved; if omitted for a new file, it is company-wide.
 
-### 3. Delete Document
-**POST** `/api/documents/delete`
+### 3. Upload Document File
+**POST** `/api/documents/upload` (multipart/form-data)
+
+Uploads a new or updated document file, stores it in `company-documents/`, and (re)embeds it.
+
+**Form fields:**
+- `documentName` (required): File name to store and index
+- `file` (required): Raw file bytes
+- `rbacTeams` (optional): Comma-separated list of teams. If omitted and the file already exists, existing RBAC is preserved; if omitted for a new file, it is company-wide.
+
+### 4. Delete Document
+**DELETE** `/api/documents/{documentName}`
 
 Deletes a document and all its embeddings (idempotent).
 
-**Request:**
-```json
-{
-  "documentName": "Old_Policy.txt"
-}
-```
+**Path Parameters:**
+- `documentName` (required)
 
 **Response:**
 ```json
@@ -179,7 +265,7 @@ Deletes a document and all its embeddings (idempotent).
 }
 ```
 
-### 4. Update RBAC
+### 5. Update RBAC
 **POST** `/api/documents/rbac/update`
 
 Updates the RBAC teams for an existing document.
@@ -199,7 +285,7 @@ Updates the RBAC teams for an existing document.
 }
 ```
 
-### 5. Get All Documents
+### 6. Get All Documents
 **GET** `/api/documents/all`
 
 Retrieves all stored documents with their RBAC teams.
@@ -217,7 +303,7 @@ Retrieves all stored documents with their RBAC teams.
 }
 ```
 
-### 6. Get Activity Logs
+### 7. Get Activity Logs
 **GET** `/api/documents/logs`
 
 Retrieves activity logs for the dashboard.
@@ -235,7 +321,7 @@ Retrieves activity logs for the dashboard.
 }
 ```
 
-### 7. Get Document Content
+### 8. Get Document Content
 **GET** `/api/documents/content/{documentName}`
 
 Retrieves the full content of a document by its name.
@@ -250,7 +336,12 @@ Retrieves the full content of a document by its name.
 }
 ```
 
-### 8. Get Config
+### 9. Download Raw Document File
+**GET** `/api/documents/download/{documentName}`
+
+Returns the original stored file bytes (for example PDF/DOCX/PPTX/XLSX).
+
+### 10. Get Config
 **GET** `/api/documents/config`
 
 Retrieves UI configuration.
@@ -304,23 +395,34 @@ curl -X POST http://localhost:8084/api/documents/rbac/update \
 ### 4. Delete a Document
 
 ```bash
-curl -X POST http://localhost:8084/api/documents/delete \
-  -H "Content-Type: application/json" \
-  -d '{
-    "documentName": "Test_Document.txt"
-  }'
+curl -X DELETE http://localhost:8084/api/documents/Test_Document.txt
 ```
 
-### 5. Get All Documents
+### 5. Upload a Document File (multipart)
+
+```bash
+curl -X POST http://localhost:8084/api/documents/upload \
+  -F "documentName=Quarterly_Report.pdf" \
+  -F "rbacTeams=finance,leadership" \
+  -F "file=@/absolute/path/to/Quarterly_Report.pdf"
+```
+
+### 6. Get All Documents
 
 ```bash
 curl http://localhost:8084/api/documents/all
 ```
 
-### 6. Get Document Content
+### 7. Get Document Content (txt/md preview)
 
 ```bash
 curl http://localhost:8084/api/documents/content/Approved_Response_Templates.txt
+```
+
+### 8. Get Raw Document File
+
+```bash
+curl -OJ http://localhost:8084/api/documents/download/Quarterly_Report.pdf
 ```
 
 **Expected Response:**
@@ -335,7 +437,7 @@ curl http://localhost:8084/api/documents/content/Approved_Response_Templates.txt
 - **Embeddings are stored in Qdrant** and persist across application restarts
 - **Document metadata** (document name, chunk index) is stored in Qdrant payload
 - **Document access policy** is stored in `src/main/resources/config/document_access_policy.yaml`
-- Documents are automatically re-embedded on startup from `src/main/resources/documents/`
+- Documents are automatically re-embedded on startup from `company-documents/`
 
 ## Configuration
 
@@ -344,6 +446,7 @@ Edit `src/main/resources/application.properties` to configure:
 - Collection name (default: document-embeddings)
 - OpenAI API key (required for embeddings)
 - Default chunking strategy and chunk size
+- Documents storage folder (`demo.dir.location`, default `company-documents`)
 
 ## Technology Stack
 
@@ -385,12 +488,13 @@ quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-3-large
 - **RBAC**: Document access is controlled via YAML configuration file
 - **Idempotency**: All operations (upsert, delete, RBAC update) are idempotent - safe to retry
 - **Startup Behavior**:
-  - **Default**: Preserves existing database, does NOT reload documents
-  - **With `-DDemoData=true`**: Wipes the database and reloads all documents from `src/main/resources/documents/`
+  - **Default**: Preserves existing database and does NOT sync/embed folder documents on startup
+  - **With `-Dsync-demo-data=true`**: Syncs and embeds all documents from `company-documents/`
+  - **With `-Ddemo.data.load=true`**: Wipes the database first, then syncs/embeds all documents
 
 ## Document Structure
 
-Documents are stored in `src/main/resources/documents/` as `.txt` files. The document name (filename) serves as the unique document ID.
+Documents are stored in a writable local folder configured by `demo.dir.location` (default: `company-documents`). The document name (filename) serves as the unique document ID.
 
 The document access policy is stored in `src/main/resources/config/document_access_policy.yaml` with the following format:
 
@@ -409,9 +513,14 @@ Document_Name.txt:
 - Ensure network can reach OpenAI API
 
 **Documents Not Loading:**
-- Check that documents exist in `src/main/resources/documents/`
+- Check that documents exist in your `demo.dir.location` folder (default: `company-documents/`)
 - Verify document filenames match the expected format (`.txt` extension)
 - Check application logs for loading errors
+
+**Docling Connection Errors:**
+- Ensure Docling Serve is running: `docker-compose up -d docling`
+- Verify `document.preprocessing.docling.base-url` points to the correct host/port
+- If running with `document.preprocessing.mode=docling`, `.txt` files are always parsed as plain text; `.md` and other docling-targeted formats are sent to Docling and skipped/logged on conversion failure
 
 **RBAC Issues:**
 - Verify `document_access_policy.yaml` is in `src/main/resources/config/`
