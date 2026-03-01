@@ -438,6 +438,12 @@ public class DocumentService {
         accessPolicyService.updateDocumentAccess(documentName, rbacTeams);
         try {
             embedLoadedDocument(path);
+        } catch (SkipDocumentException e) {
+            // Keep the uploaded file/RBAC in storage, but avoid stale vectors for unsupported files.
+            deleteDocumentEmbeddings(documentName, false);
+            String message = "Uploaded document '" + documentName + "' stored but not embedded: " + e.getMessage();
+            LOGGER.warning(message);
+            addActivityLog(message, "warn");
         } catch (Exception e) {
             throw new RuntimeException("Failed to embed uploaded document '" + documentName + "'", e);
         }

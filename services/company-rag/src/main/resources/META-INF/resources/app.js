@@ -49,7 +49,7 @@ function renderLogs() {
 function renderDocuments() {
     const tbody = document.getElementById('documents-body');
     if (documents.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="no-results">No documents loaded yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="no-results">No documents loaded yet.</td></tr>';
         return;
     }
     
@@ -66,6 +66,9 @@ function renderDocuments() {
                 </td>
                 <td class="doc-type">${escapeHtml(fileType)}</td>
                 <td class="rbac-teams">${teams}</td>
+                <td class="doc-actions">
+                    <button class="delete-doc-btn" data-doc-name="${escapeHtml(doc.documentName)}" title="Delete document and embeddings">🗑</button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -77,6 +80,14 @@ function renderDocuments() {
             const docName = e.target.getAttribute('data-doc-name');
             const openMode = e.target.getAttribute('data-open-mode');
             showDocument(docName, openMode);
+        });
+    });
+
+    // Add click handlers for delete actions
+    tbody.querySelectorAll('.delete-doc-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const docName = e.target.getAttribute('data-doc-name');
+            await deleteDocumentByName(docName);
         });
     });
 }
@@ -172,12 +183,18 @@ function renderChunks() {
             : 'N/A';
         const fullText = chunk.text || 'N/A';
         const chunkNum = chunk.chunkIndex != null ? chunk.chunkIndex : 'N/A';
+        const documentName = chunk.documentName || 'N/A';
+        const isClickableDocument = documentName !== 'N/A';
+        const documentOpenMode = isTextPreviewable(documentName) ? 'preview' : 'download';
+        const documentCell = isClickableDocument
+            ? `<a href="#" class="chunk-doc-link" data-doc-name="${escapeHtml(documentName)}" data-open-mode="${documentOpenMode}">${escapeHtml(documentName)}</a>`
+            : 'N/A';
         // Truncate text for display, show full on click
         const displayText = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
         const isTruncated = fullText.length > 100;
         return `
             <tr>
-                <td class="document-name">${escapeHtml(chunk.documentName || 'N/A')}</td>
+                <td class="document-name">${documentCell}</td>
                 <td class="chunk-index">${chunkNum}</td>
                 <td class="chunk-text ${isTruncated ? 'chunk-text-clickable' : ''}" 
                     data-full-text="${escapeHtml(fullText)}" 
@@ -188,6 +205,16 @@ function renderChunks() {
             </tr>
         `;
     }).join('');
+
+    // Add click handlers for chunk document links
+    tbody.querySelectorAll('.chunk-doc-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const docName = e.target.getAttribute('data-doc-name');
+            const openMode = e.target.getAttribute('data-open-mode');
+            showDocument(docName, openMode);
+        });
+    });
     
     // Add click handlers for truncated chunk text
     tbody.querySelectorAll('.chunk-text-clickable').forEach(element => {
@@ -436,6 +463,32 @@ async function uploadDocumentFile() {
         console.error('Upload failed:', error);
         addLog(`Upload failed: ${file.name}`, 'error');
         alert(`Upload failed for ${file.name}`);
+    }
+}
+
+async function deleteDocumentByName(documentName) {
+    if (!documentName) return;
+    const confirmed = window.confirm(`Delete "${documentName}" and its embeddings?`);
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/documents/${encodeURIComponent(documentName)}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            // Keep UI resilient even if backend returns non-OK.
+            addLog(`Delete request completed with status ${response.status} for ${documentName}`, 'warn');
+        } else {
+            addLog(`Deleted document: ${documentName}`, 'delete');
+        }
+    } catch (error) {
+        console.error('Delete failed:', error);
+        addLog(`Delete request failed for ${documentName}: ${error.message}`, 'warn');
+    } finally {
+        // Refresh tables regardless, so UI never gets stuck.
+        fetchDocuments();
+        fetchChunks();
     }
 }
 

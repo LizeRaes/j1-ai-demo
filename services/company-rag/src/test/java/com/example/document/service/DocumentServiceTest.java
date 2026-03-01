@@ -102,6 +102,23 @@ class DocumentServiceTest {
     }
 
     @Test
+    void upsertUnsupportedDoclingFileStoresButSkipsEmbedding() {
+        service.preprocessingMode = "docling";
+
+        assertDoesNotThrow(() -> service.upsertDocumentFile(
+                "fake-seizure.annotations.json",
+                "{\"label\":\"demo\"}".getBytes(StandardCharsets.UTF_8),
+                List.of("teamX")
+        ));
+
+        assertTrue(Files.exists(tempDocumentsDir.resolve("fake-seizure.annotations.json")));
+        verify(accessPolicyService).updateDocumentAccess("fake-seizure.annotations.json", List.of("teamX"));
+        verify(embeddingStore).removeAll(any(Filter.class));
+        verify(chunkingService, never()).chunkDocument(any(Document.class), eq("fake-seizure.annotations.json"), anyString());
+        verify(logService).addLog(contains("stored but not embedded"), eq("warn"));
+    }
+
+    @Test
     void findAllDocuments() throws Exception {
         PreparedStatement ps = mock(PreparedStatement.class);
         ResultSet rs = mock(ResultSet.class);

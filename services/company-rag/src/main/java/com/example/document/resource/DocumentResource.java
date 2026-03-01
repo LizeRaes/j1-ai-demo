@@ -9,11 +9,13 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
+import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -108,22 +110,27 @@ public class DocumentResource {
     public StatusResponse upload(
             @RestForm("documentName") String documentName,
             @RestForm("rbacTeams") String rbacTeamsCsv,
-            @RestForm("file") @PartType(MediaType.APPLICATION_OCTET_STREAM) byte[] fileBytes) {
-        if (documentName == null || documentName.isBlank() || fileBytes == null || fileBytes.length == 0) {
+            @RestForm("file") FileUpload fileUpload) {
+        byte[] fileBytes = readMultipartBytes(fileUpload);
+        String effectiveDocumentName = (documentName != null && !documentName.isBlank())
+                ? documentName
+                : (fileUpload != null ? fileUpload.fileName() : null);
+
+        if (effectiveDocumentName == null || effectiveDocumentName.isBlank() || fileBytes == null || fileBytes.length == 0) {
             throw new IllegalArgumentException("documentName and file are required");
         }
 
-        logService.addLog("Upload document: " + documentName, "upsert");
+        logService.addLog("Upload document: " + effectiveDocumentName, "upsert");
         List<String> rbacTeams = (rbacTeamsCsv != null && !rbacTeamsCsv.isBlank())
                 ? parseRbacTeamsCsv(rbacTeamsCsv)
-                : resolveDefaultRbacTeams(documentName);
+                : resolveDefaultRbacTeams(effectiveDocumentName);
 
         try {
-            documentService.upsertDocumentFile(documentName, fileBytes, rbacTeams);
-            logService.addLog("Successfully uploaded document: " + documentName, "upsert");
+            documentService.upsertDocumentFile(effectiveDocumentName, fileBytes, rbacTeams);
+            logService.addLog("Successfully uploaded document: " + effectiveDocumentName, "upsert");
             return new StatusResponse("OK");
         } catch (Exception e) {
-            logService.addLog("Error uploading document " + documentName + ": " + e.getMessage(), "error");
+            logService.addLog("Error uploading document " + effectiveDocumentName + ": " + e.getMessage(), "error");
             throw new RuntimeException("Failed to upload document: " + e.getMessage(), e);
         }
     }
@@ -261,5 +268,16 @@ public class DocumentResource {
         return documentService.documentExists(documentName)
                 ? accessPolicyService.getAccessTeams(documentName)
                 : List.of();
+    }
+
+    private byte[] readMultipartBytes(FileUpload fileUpload) {
+        if (fileUpload == null || fileUpload.uploadedFile() == null) {
+            return null;
+        }
+        try {
+            return Files.readAllBytes(fileUpload.uploadedFile());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read uploaded file bytes", e);
+        }
     }
 }

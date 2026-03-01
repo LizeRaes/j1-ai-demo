@@ -296,7 +296,7 @@ th {
 
 /* Documents table */
 #documents-table th:nth-child(1) { /* Document Name */
-    width: 45%;
+    width: 40%;
 }
 
 #documents-table th:nth-child(2) { /* Type */
@@ -304,7 +304,11 @@ th {
 }
 
 #documents-table th:nth-child(3) { /* RBAC Teams */
-    width: 40%;
+    width: 35%;
+}
+
+#documents-table th:nth-child(4) { /* Actions */
+    width: 10%;
 }
 
 .doc-type {
@@ -498,6 +502,25 @@ tbody tr:last-child td {
 .company-wide {
     color: #4caf50;
     font-weight: 600;
+}
+
+.doc-actions {
+    text-align: center;
+}
+
+.delete-doc-btn {
+    border: 1px solid #f0b2b2;
+    background: #fff6f6;
+    color: #c62828;
+    border-radius: 6px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: calc(14px * var(--font-zoom) / 100);
+    line-height: 1.2;
+}
+
+.delete-doc-btn:hover {
+    background: #ffeaea;
 }
 
 .no-results {
