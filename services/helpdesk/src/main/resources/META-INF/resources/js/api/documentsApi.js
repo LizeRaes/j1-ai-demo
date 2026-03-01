@@ -86,3 +86,26 @@ export async function fetchDocumentContent(documentLinkOrName) {
         throw error;
     }
 }
+
+export function getDocumentName(documentLinkOrName) {
+    return extractDocumentName(documentLinkOrName);
+}
+
+export function isTextPreviewableDocument(documentLinkOrName) {
+    const name = (extractDocumentName(documentLinkOrName) || '').toLowerCase();
+    return name.endsWith('.txt') || name.endsWith('.md');
+}
+
+export function getDocumentTypeLabel(documentLinkOrName) {
+    const name = extractDocumentName(documentLinkOrName) || '';
+    const idx = name.lastIndexOf('.');
+    return idx >= 0 && idx < name.length - 1 ? name.substring(idx + 1).toLowerCase() : 'unknown';
+}
+
+export function getDocumentDownloadUrl(documentLinkOrName) {
+    const name = extractDocumentName(documentLinkOrName);
+    if (!name) {
+        throw new Error('Could not extract document name from: ' + documentLinkOrName);
+    }
+    return `${DOCUMENTS_API_BASE}/download/${encodeURIComponent(name)}`;
+}

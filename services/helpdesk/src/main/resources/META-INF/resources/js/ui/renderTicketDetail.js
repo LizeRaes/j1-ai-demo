@@ -10,7 +10,12 @@ import {formatDateTime} from '../util/format.js';
 import {$, clearElement, createElement} from '../util/dom.js';
 import {renderTickets} from './renderTickets.js';
 import {getActorContext} from './actorContext.js';
-import {fetchDocumentContent} from '../api/documentsApi.js';
+import {
+    fetchDocumentContent,
+    getDocumentDownloadUrl,
+    getDocumentTypeLabel,
+    isTextPreviewableDocument
+} from '../api/documentsApi.js';
 
 export function renderTicketDetail(ticket) {
     const container = $('#detail-pane');
@@ -284,7 +289,11 @@ export function renderTicketDetail(ticket) {
                 docLink.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        await showDocument(citation.documentName, citation.documentLink);
+                        if (isTextPreviewableDocument(citation.documentLink || citation.documentName)) {
+                            await showDocument(citation.documentName, citation.documentLink);
+                        } else {
+                            downloadDocument(citation.documentName, citation.documentLink);
+                        }
                     } catch (error) {
                         console.error('Error opening document:', error);
                         alert('Error loading document: ' + error.message);
@@ -292,6 +301,11 @@ export function renderTicketDetail(ticket) {
                 });
 
                 relatedItem.appendChild(docLink);
+
+                const typeLabel = createElement('span', 'related-score');
+                typeLabel.style.marginLeft = '8px';
+                typeLabel.textContent = `[type: ${getDocumentTypeLabel(citation.documentLink || citation.documentName)}]`;
+                relatedItem.appendChild(typeLabel);
             } else if (citation.documentName) {
                 // User doesn't have access - show document name but not as link
                 const docName = createElement('span', 'related-link');
@@ -547,4 +561,14 @@ async function showDocument(documentName, documentLink) {
         alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- API endpoint: http://localhost:8084/api/documents/content/' + encodeURIComponent(documentName));
         throw error; // Re-throw so caller can handle it
     }
+}
+
+function downloadDocument(documentName, documentLink) {
+    const url = getDocumentDownloadUrl(documentLink || documentName);
+    const a = createElement('a');
+    a.href = url;
+    a.download = documentName || '';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 }

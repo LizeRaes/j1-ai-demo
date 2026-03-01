@@ -1,6 +1,9 @@
 package com.example.ticket.resource;
 
+import com.example.ticket.domain.constants.EventSeverity;
+import com.example.ticket.domain.constants.EventType;
 import com.example.ticket.external.InternalDocumentClient;
+import com.example.ticket.service.adapter.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -19,20 +22,65 @@ public class DocumentResource {
     @RestClient
     InternalDocumentClient internalDocumentClient;
 
+    @Inject
+    EventService eventService;
+
 
     @GET
     @Path("/content/{documentName}")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getDocumentContent(@PathParam("documentName") String documentName) {
-        Map<String, String> internalDocumentContent = internalDocumentClient.getDocumentContent(documentName);
-        if (internalDocumentContent.containsKey("content")) {
-            return Response.ok(internalDocumentContent.get("content"))
-                    .type(MediaType.TEXT_PLAIN)
+        try {
+            Map<String, String> internalDocumentContent = internalDocumentClient.getDocumentContent(documentName);
+            if (internalDocumentContent.containsKey("content")) {
+                return Response.ok(internalDocumentContent.get("content"))
+                        .type(MediaType.TEXT_PLAIN)
+                        .build();
+            }
+            return Response.status(Response.Status.NO_CONTENT)
+                    .entity("Failed to fetch document: " + documentName)
+                    .build();
+        } catch (Exception e) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "documents-proxy",
+                    "Document content fetch failed for " + documentName + ": " + e.getMessage(),
+                    null,
+                    null,
+                    null
+            );
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                    .entity("Document could not be retrieved right now")
                     .build();
         }
+    }
 
-        return Response.status(Response.Status.NO_CONTENT)
-                .entity("Failed to fetch document: " + documentName)
-                .build();
+    @GET
+    @Path("/download/{documentName}")
+    public Response downloadDocument(@PathParam("documentName") String documentName) {
+        try {
+            Response upstream = internalDocumentClient.downloadDocument(documentName);
+            if (upstream.getStatus() >= 400) {
+                return Response.status(upstream.getStatus()).build();
+            }
+            return Response.ok(upstream.readEntity(byte[].class))
+                    .type(upstream.getMediaType())
+                    .header("Content-Disposition", upstream.getHeaderString("Content-Disposition"))
+                    .build();
+        } catch (Exception e) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "documents-proxy",
+                    "Document download failed for " + documentName + ": " + e.getMessage(),
+                    null,
+                    null,
+                    null
+            );
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                    .entity("Document could not be retrieved right now")
+                    .build();
+        }
     }
 }

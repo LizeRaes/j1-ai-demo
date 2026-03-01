@@ -1,5 +1,9 @@
 package com.example.document.service;
 
+import ai.docling.serve.api.DoclingServeApi;
+import ai.docling.serve.api.convert.request.ConvertDocumentRequest;
+import ai.docling.serve.api.convert.request.source.FileSource;
+import ai.docling.serve.api.convert.response.ConvertDocumentResponse;
 import com.example.document.config.VectorDatabaseConfig;
 import com.example.document.dto.DocumentsResponse;
 import dev.langchain4j.data.document.Document;
@@ -10,6 +14,7 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.InvalidPathException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -54,6 +59,9 @@ public class DocumentService {
     @Inject
     DocumentAccessPolicyService accessPolicyService;
 
+    @Inject
+    LogService logService;
+
     @ConfigProperty(name = "demo.dir.location")
     String documentsDir;
 
@@ -63,6 +71,12 @@ public class DocumentService {
     @ConfigProperty(name = "document.chunking.default.strategy")
     String defaultStrategy;
 
+    @ConfigProperty(name = "document.preprocessing.mode", defaultValue = "pure-text")
+    String preprocessingMode;
+
+    @ConfigProperty(name = "document.preprocessing.docling.base-url", defaultValue = "http://localhost:8086")
+    String doclingBaseUrl;
+
     private EmbeddingStore<TextSegment> embeddingStore;
 
     private String embeddingTable;
@@ -70,6 +84,8 @@ public class DocumentService {
     private String metadataColumn;
 
     private  Map<String, Object> splitConfig;
+
+    private DoclingServeApi docling;
 
 
     @PostConstruct
@@ -85,6 +101,8 @@ public class DocumentService {
         } catch (URISyntaxException | IOException e) {
             LOGGER.log(Level.SEVERE, "Error loading split configuration: ", e);
         }
+
+        ensureDocumentsDirectoryExists();
 
     }
 
@@ -108,14 +126,25 @@ public class DocumentService {
 
     public void embedLocalDocuments() {
         try {
-            for (Path pathTrail : scan(documentsDir)) {
+            for (Path pathTrail : scanDocumentsDirectory()) {
                 if (Files.exists(pathTrail)) {
-                    embedLoadedDocument(pathTrail);
-                    LOGGER.info("Loaded and embedded document: " + pathTrail);
+                    try {
+                        embedLoadedDocument(pathTrail);
+                        String message = "Loaded and embedded document: " + pathTrail.getFileName();
+                        LOGGER.info(message);
+                        addActivityLog(message, "ingest");
+                    } catch (SkipDocumentException e) {
+                        LOGGER.warning(e.getMessage());
+                        addActivityLog(e.getMessage(), "warn");
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Error loading document " + pathTrail + ": ", e);
+                        addActivityLog("Error loading document " + pathTrail.getFileName() + ": " + e.getMessage(), "error");
+                    }
                 }
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error loading documents: ", e);
+            addActivityLog("Error scanning documents directory: " + e.getMessage(), "error");
         }
     }
     public void wipeAllEmbeddings() {
@@ -139,10 +168,8 @@ public class DocumentService {
 
 
     public void embedLoadedDocument(Path path) throws Exception {
-        try (InputStream docStream = Files.newInputStream(path)) {
-            String content = new String(docStream.readAllBytes());
-            chunkAndEmbed(path.getFileName().toString(), content);
-        }
+        String content = extractContentForChunking(path);
+        chunkAndEmbed(path.getFileName().toString(), content);
     }
 
     private void chunkAndEmbed(String documentName, String content) {
@@ -160,7 +187,162 @@ public class DocumentService {
         }
     }
 
+    String extractContentForChunking(Path path) throws IOException {
+        if (!preprocessingMode.equals("docling")) {
+            if (isPlainTextFile(path)) {
+                return Files.readString(path);
+            }
+            throw new SkipDocumentException(
+                    "Skipped " + path.getFileName() + " (non-text file in pure-text mode).",
+                    null
+            );
+        }
+
+        if (!isDoclingCandidate(path)) {
+            throw new SkipDocumentException(
+                    "Skipped " + path.getFileName() + " (unsupported extension for docling mode).",
+                    null
+            );
+        }
+
+        String base64Source = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+        ConvertDocumentRequest request = ConvertDocumentRequest.builder()
+                .source(FileSource.builder()
+                        .base64String(base64Source)
+                        .filename(path.getFileName().toString())
+                        .build())
+                .build();
+
+        try {
+            ConvertDocumentResponse response = getDocling().convertSource(request);
+            if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
+                throw new IOException("Docling returned no markdown content for " + path);
+            }
+            return response.getDocument().getMarkdownContent();
+        } catch (RuntimeException | IOException e) {
+            String fileName = path.getFileName().toString();
+            if (isTxtFile(path)) {
+                String message = "Docling failed for " + fileName + ", falling back to plain text";
+                LOGGER.warning(message);
+                addActivityLog(message, "warn");
+                return Files.readString(path);
+            }
+
+            throw new SkipDocumentException(
+                    "Docling failed for " + fileName + "; skipped (non-txt file). Reason: " + e.getMessage(),
+                    e
+            );
+        }
+    }
+
+    private DoclingServeApi getDocling() {
+        if (docling == null) {
+            docling = DoclingServeApi.builder()
+                    .baseUrl(doclingBaseUrl)
+                    .build();
+        }
+        return docling;
+    }
+
+    private boolean isDoclingFriendlyExtension(Path path) {
+        return hasExtension(path, ".pdf")
+                || hasExtension(path, ".docx")
+                || hasExtension(path, ".pptx")
+                || hasExtension(path, ".xlsx");
+    }
+
+    private boolean isDoclingCandidate(Path path) {
+        return isDoclingFriendlyExtension(path) || isTxtFile(path);
+    }
+
+    private boolean isTxtFile(Path path) {
+        return hasExtension(path, ".txt");
+    }
+
+    private boolean isMdFile(Path path) {
+        return hasExtension(path, ".md");
+    }
+
+    private boolean isPlainTextFile(Path path) {
+        return isTxtFile(path) || isMdFile(path);
+    }
+
+    private void addActivityLog(String message, String type) {
+        if (logService != null) {
+            logService.addLog(message, type);
+        }
+    }
+
+    static class SkipDocumentException extends IOException {
+        SkipDocumentException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    private List<Path> scanDocumentsDirectory() throws IOException {
+        Path dirPath = getDocumentsDirectoryPath();
+        if (!Files.exists(dirPath)) {
+            return List.of();
+        }
+        try (Stream<Path> files = Files.walk(dirPath)) {
+            return files.filter(Files::isRegularFile).toList();
+        }
+    }
+
+    private void ensureDocumentsDirectoryExists() {
+        try {
+            Files.createDirectories(getDocumentsDirectoryPath());
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to create documents directory: " + documentsDir, e);
+        }
+    }
+
+    private Path getDocumentsDirectoryPath() throws IOException {
+        if (documentsDir.startsWith("classpath:/")) {
+            throw new IOException("demo.dir.location must be a filesystem path, not classpath.");
+        }
+        try {
+            return Path.of(documentsDir).toAbsolutePath().normalize();
+        } catch (InvalidPathException e) {
+            throw new IOException("Invalid document storage path: " + documentsDir, e);
+        }
+    }
+
+    private Path resolveDocumentPath(String documentName) throws IOException {
+        String safeName = sanitizeDocumentName(documentName);
+        Path base = getDocumentsDirectoryPath();
+        Path target = base.resolve(safeName).normalize();
+        if (!target.startsWith(base)) {
+            throw new IOException("Invalid document name/path traversal attempt: " + documentName);
+        }
+        return target;
+    }
+
+    private String sanitizeDocumentName(String documentName) {
+        if (documentName == null || documentName.isBlank()) {
+            throw new IllegalArgumentException("documentName is required");
+        }
+        String trimmed = documentName.trim();
+        if (trimmed.contains("/") || trimmed.contains("\\") || trimmed.contains("..")) {
+            throw new IllegalArgumentException("Invalid documentName: path separators are not allowed");
+        }
+        return trimmed;
+    }
+
+    private boolean hasExtension(Path path, String extension) {
+        String fileName = path.getFileName().toString();
+        int nameLength = fileName.length();
+        int extLength = extension.length();
+        return nameLength >= extLength
+                && fileName.regionMatches(true, nameLength - extLength, extension, 0, extLength);
+    }
+
     public void deleteDocumentEmbeddings(String documentName) {
+        deleteDocumentEmbeddings(documentName, true);
+    }
+
+    public void deleteDocument(String documentName) {
+        deleteDocumentFromStorage(documentName);
         deleteDocumentEmbeddings(documentName, true);
     }
 
@@ -187,16 +369,58 @@ public class DocumentService {
                 .orElse(defaultStrategy);
     }
 
-    public void upsertDocument(String documentName, String content, List<String> rbacTeams) {
-        saveDocumentToResources(documentName, content);
+    public void upsertDocumentFile(String documentName, byte[] content, List<String> rbacTeams) {
+        Path path = saveDocumentToStorage(documentName, content);
         accessPolicyService.updateDocumentAccess(documentName, rbacTeams);
-        chunkAndEmbed(documentName, content);
+        try {
+            embedLoadedDocument(path);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to embed uploaded document '" + documentName + "'", e);
+        }
     }
 
-    private void saveDocumentToResources(String documentName, String content) {
-        // TODO In a production system, you'd write to a writable directory
-        // For now, we'll just keep it in memory or use a different location
-        // This is a limitation of packaging static in JAR files
+    public String readDocumentContent(String documentName) throws IOException {
+        Path path = resolveDocumentPath(documentName);
+        return Files.readString(path);
+    }
+
+    public boolean documentExists(String documentName) {
+        try {
+            return Files.exists(resolveDocumentPath(documentName));
+        } catch (IOException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public byte[] readDocumentFile(String documentName) throws IOException {
+        Path path = resolveDocumentPath(documentName);
+        return Files.readAllBytes(path);
+    }
+
+    public String detectContentType(String documentName) throws IOException {
+        Path path = resolveDocumentPath(documentName);
+        String detected = Files.probeContentType(path);
+        return detected != null ? detected : "application/octet-stream";
+    }
+
+    private Path saveDocumentToStorage(String documentName, byte[] content) {
+        try {
+            ensureDocumentsDirectoryExists();
+            Path path = resolveDocumentPath(documentName);
+            Files.write(path, content);
+            return path;
+        } catch (IOException | IllegalArgumentException e) {
+            throw new RuntimeException("Failed to save document '" + documentName + "' to storage", e);
+        }
+    }
+
+    private void deleteDocumentFromStorage(String documentName) {
+        try {
+            Path path = resolveDocumentPath(documentName);
+            Files.deleteIfExists(path);
+        } catch (IOException | IllegalArgumentException e) {
+            throw new RuntimeException("Failed to delete document '" + documentName + "' from storage", e);
+        }
     }
 
 

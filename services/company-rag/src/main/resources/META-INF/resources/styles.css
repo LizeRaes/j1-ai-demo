@@ -296,11 +296,21 @@ th {
 
 /* Documents table */
 #documents-table th:nth-child(1) { /* Document Name */
-    width: 50%;
+    width: 45%;
 }
 
-#documents-table th:nth-child(2) { /* RBAC Teams */
-    width: 50%;
+#documents-table th:nth-child(2) { /* Type */
+    width: 15%;
+}
+
+#documents-table th:nth-child(3) { /* RBAC Teams */
+    width: 40%;
+}
+
+.doc-type {
+    font-family: 'Courier New', monospace;
+    color: #666;
+    text-transform: lowercase;
 }
 
 /* Chunks table */
@@ -605,4 +615,22 @@ tbody tr:last-child td {
 
 .table-container::-webkit-scrollbar-thumb:hover {
     background: #aaa;
+}
+
+.upload-controls {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px 0 20px;
+    align-items: center;
+}
+
+.upload-controls input[type="text"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 6px 8px;
+}
+
+.upload-controls button {
+    padding: 7px 12px;
+    cursor: pointer;
 }
