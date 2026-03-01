@@ -1,0 +1,54 @@
+server:
+  port: 8082
+  features:
+    static-content:
+      classpath:
+        - context: "/"
+          location: "/static"
+          welcome: "index.html"
+
+langchain4j:
+  oracle:
+    embedding-store:
+      data-source:
+        service-registry.named: "ora-ucp-ds"
+      enabled: true
+      vector-index-create-option: CREATE_IF_NOT_EXISTS
+      ivf-index:
+        - name: TICKET_EMBEDDINGS_IVF
+          create-option: CREATE_IF_NOT_EXISTS
+          neighbor-partitions: 2
+          sample-per-partition: 256
+          min-vectors-per-partition: 64
+          target-accuracy: 90
+          degree-of-parallelism: 2
+      embedding-table:
+        name: TICKET_EMBEDDINGS
+        id-column: ID
+        embedding-column: EMBEDDING
+        text-column: TEXT
+        metadata-column: METADATA
+        create-option: CREATE_IF_NOT_EXISTS
+
+
+openai:
+  api-key: ${OPENAI_API_KEY=}
+  embedding-model: "text-embedding-3-large"
+
+data:
+  sources:
+    sql:
+      - name: "ora-ucp-ds"
+        provider:
+          ucp:
+            username: "vector"
+            password: "vector"
+            url: "jdbc:oracle:thin:@localhost:1521/freepdb1"
+            connection-factory-class-name: "oracle.jdbc.pool.OracleDataSource"
+            properties:
+              oracle.jdbc.vectorDefaultGetObjectType: "FLOAT_ARRAY"
+
+ui:
+  font:
+    zoom:
+      default: 100

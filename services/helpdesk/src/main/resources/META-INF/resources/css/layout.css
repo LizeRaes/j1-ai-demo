@@ -1,0 +1,408 @@
+.service-name-banner {
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    background: #eef2f7;
+    border-bottom: 1px solid #d1d5db;
+}
+
+.app-container {
+    display: flex;
+    height: calc(100vh - 2.5rem);
+    overflow: hidden;
+}
+
+/* Left Pane: Event Logs */
+.logs-pane {
+    width: 33%;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    display: flex;
+    flex-direction: row;
+    border-right: 1px solid #333;
+    position: relative;
+    transition: width 0.3s ease;
+    min-width: 40px;
+}
+
+.logs-pane.collapsed {
+    width: 40px;
+}
+
+.logs-pane.collapsed .logs-pane-content {
+    display: none;
+}
+
+.logs-toggle-btn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    background: #252526;
+    border: none;
+    border-right: 1px solid #333;
+    color: #d4d4d4;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.2s;
+}
+
+.logs-toggle-btn:hover {
+    background: #3c3c3c;
+}
+
+.toggle-arrow {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.logs-pane-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-left: 40px;
+    overflow: hidden;
+}
+
+.logs-header {
+    padding: 1rem;
+    border-bottom: 1px solid #333;
+    background: #252526;
+}
+
+.logs-header h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: #fff;
+}
+
+.logs-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.zoom-btn {
+    width: 28px;
+    height: 28px;
+    background: #3c3c3c;
+    color: #d4d4d4;
+    border: 1px solid #555;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.zoom-btn:hover {
+    background: #4a4a4a;
+}
+
+.zoom-level {
+    min-width: 45px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #d4d4d4;
+}
+
+.log-filters {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.25rem 0.75rem;
+    background: #3c3c3c;
+    color: #d4d4d4;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+
+.filter-btn:hover {
+    background: #4a4a4a;
+}
+
+.filter-btn.active {
+    background: #007acc;
+    color: #fff;
+}
+
+.logs-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: #252526; /* Dark grey background similar to edge */
+}
+
+/* Main Pane */
+.main-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    position: relative;
+}
+
+.main-zoom-controls {
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8f8f8;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    z-index: 20;
+}
+
+.main-zoom-controls .zoom-btn {
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.main-zoom-controls .zoom-btn:hover {
+    background: #f0f0f0;
+}
+
+.main-zoom-controls .zoom-level {
+    min-width: 40px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Actor Context Bar */
+.actor-context-bar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.5rem 1rem;
+    background: #f8f8f8;
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    z-index: 10;
+    font-size: 0.85rem;
+    /* Actor context will inherit font-size from main-pane zoom */
+}
+
+.actor-context-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.actor-label {
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+}
+
+.actor-select,
+.actor-input {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.85rem;
+}
+
+.actor-select {
+    min-width: 150px;
+}
+
+.actor-input {
+    min-width: 120px;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    background: #f8f8f8;
+    padding-top: 2.5rem; /* Space for actor context bar */
+    align-items: center;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.tab-with-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ticket-nav-controls {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.nav-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: #f0f0f0;
+    border-color: #2196f3;
+    color: #2196f3;
+}
+
+.nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.nav-btn span {
+    display: block;
+    line-height: 1;
+}
+
+.tab-btn:hover {
+    background: #eee;
+    color: #333;
+}
+
+.tab-btn.active {
+    color: #007acc;
+    border-bottom-color: #007acc;
+    background: #fff;
+}
+
+.content-area {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.list-pane {
+    width: 40%;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.list-header {
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    background: #f8f8f8;
+}
+
+.list-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.list-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.detail-pane {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.detail-placeholder {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: #666;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.modal-close:hover {
+    background: #f0f0f0;
+}

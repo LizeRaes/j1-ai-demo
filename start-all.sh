@@ -3,8 +3,27 @@
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 if [ -z "$OPENAI_API_KEY" ]; then
-  echo "ERROR: OPENAI_API_KEY is not set"
-  exit 1
+  echo "WARN: OPENAI_API_KEY is not set; similar-tickets will use services/similar-tickets/config/config-prod.yaml if present"
+fi
+
+# Demo-data toggles (override via env vars when needed)
+HELPDESK_DEMO_DATA="${HELPDESK_DEMO_DATA:-true}"
+COMPANY_RAG_DEMO_DATA="${COMPANY_RAG_DEMO_DATA:-true}"
+SIMILAR_TICKETS_DEMO_DATA="${SIMILAR_TICKETS_DEMO_DATA:-true}"
+
+HELPDESK_DEMO_FLAG=""
+if [ "$HELPDESK_DEMO_DATA" = "true" ]; then
+  HELPDESK_DEMO_FLAG="-DDemoData=true"
+fi
+
+COMPANY_RAG_DEMO_FLAG=""
+if [ "$COMPANY_RAG_DEMO_DATA" = "true" ]; then
+  COMPANY_RAG_DEMO_FLAG="-Ddemo.data.load=true"
+fi
+
+SIMILAR_TICKETS_DEMO_FLAG=""
+if [ "$SIMILAR_TICKETS_DEMO_DATA" = "true" ]; then
+  SIMILAR_TICKETS_DEMO_FLAG="-DDemoData=true"
 fi
 
 PIDS=()
@@ -20,6 +39,38 @@ kill_tree() {
 
 stop_containers() {
   docker compose down --remove-orphans
+}
+
+wait_for_port() {
+  local name=$1 port=$2 timeout=${3:-180}
+  local elapsed=0
+  while ! nc -z localhost "$port" >/dev/null 2>&1; do
+    sleep 1
+    elapsed=$((elapsed + 1))
+    if [ "$elapsed" -ge "$timeout" ]; then
+      echo "ERROR: Timed out waiting for $name on port $port"
+      return 1
+    fi
+  done
+  echo "  [ready] $name (port $port)"
+}
+
+wait_for_http() {
+  local name=$1 url=$2 timeout=${3:-240}
+  local elapsed=0 code=""
+  while true; do
+    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 "$url" || true)
+    if [ "$code" != "000" ]; then
+      echo "  [ready] $name ($url, status $code)"
+      return 0
+    fi
+    sleep 1
+    elapsed=$((elapsed + 1))
+    if [ "$elapsed" -ge "$timeout" ]; then
+      echo "ERROR: Timed out waiting for $name at $url"
+      return 1
+    fi
+  done
 }
 
 cleanup() {
@@ -52,38 +103,50 @@ stop_containers
 echo "=== Starting Docker containers ==="
   docker compose up -d
 echo "=== Waiting for databases to be ready ==="
-sleep 10
+wait_for_port "mysql" 3306 120
+wait_for_port "ticket oracle" 1521 120
+wait_for_port "company oracle" 1522 120
 
 # --- Start application services ---
 echo "=== Starting services ==="
+echo "  demo flags: helpdesk=$HELPDESK_DEMO_DATA company-rag=$COMPANY_RAG_DEMO_DATA similar-tickets=$SIMILAR_TICKETS_DEMO_DATA"
 
-(cd "$ROOT/services/medicalappointment-user-facing" && exec mvn quarkus:dev) &
+(cd "$ROOT/services/medicapt-user-facing" && exec mvn quarkus:dev) &
 PIDS+=($!)
-sleep 5
 
-(cd "$ROOT/services/medicalappointment-helpdesk" && exec mvn quarkus:dev -DDemoData=true) &
+(cd "$ROOT/services/helpdesk" && exec mvn quarkus:dev $HELPDESK_DEMO_FLAG) &
 PIDS+=($!)
-sleep 10
 
-(cd "$ROOT/services/medicalappointment-ai-triage" && exec mvn quarkus:dev) &
+(cd "$ROOT/services/ai-triage" && exec mvn quarkus:dev) &
 PIDS+=($!)
-sleep 5
 
-(cd "$ROOT/services/medicalappointment-company-rag" && exec mvn quarkus:dev -Ddemo.data.load=true) &
+(cd "$ROOT/services/company-rag" && exec mvn quarkus:dev $COMPANY_RAG_DEMO_FLAG) &
 PIDS+=($!)
-sleep 5
 
-(cd "$ROOT/services/medicalappointment-similar-tickets" && mvn clean verify && exec java -Dconfig.profile=prod -jar target/similar-tickets.jar) &
+(cd "$ROOT/services/similar-tickets" && mvn -Dmaven.test.skip=true clean package && exec java -Dconfig.profile=prod $SIMILAR_TICKETS_DEMO_FLAG -jar target/similar-tickets.jar) &
+PIDS+=($!)
+
+(cd "$ROOT/services/coding-assistant" && exec mvn quarkus:dev) &
 PIDS+=($!)
 
 echo ""
 echo "=== All services starting ==="
 echo ""
-echo "  medicalappointment-user-facing   http://localhost:8083"
-echo "  medicalappointment-helpdesk      http://localhost:8080"
-echo "  medicalappointment-ai-triage     http://localhost:8081"
-echo "  medicalappointment-similar-tickets http://localhost:8082"
-echo "  medicalappointment-company-rag   http://localhost:8084"
+echo "  medicapt-user-facing             http://localhost:8083"
+echo "  helpdesk                         http://localhost:8080"
+echo "  ai-triage                        http://localhost:8081"
+echo "  similar-tickets                  http://localhost:8082"
+echo "  company-rag                      http://localhost:8084"
+echo "  coding-assistant                 http://localhost:8085"
+echo ""
+echo "=== Waiting for services to be reachable ==="
+wait_for_http "medicapt-user-facing" "http://localhost:8083"
+wait_for_http "helpdesk" "http://localhost:8080"
+wait_for_http "ai-triage" "http://localhost:8081"
+wait_for_http "similar-tickets" "http://localhost:8082"
+wait_for_http "company-rag" "http://localhost:8084"
+wait_for_http "coding-assistant" "http://localhost:8085"
+echo "=== All services started ==="
 echo ""
 echo "Press Ctrl+C to stop all services"
 

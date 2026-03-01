@@ -1,14 +1,14 @@
 services:
   company:
     extends:
-      file: services/medicalappointment-company-rag/docker-compose.yml
+      file: services/company-rag/docker-compose.yml
       service: oracle
     container_name: company
     ports:
       - "1522:1521"
   ticket:
     extends:
-      file: services/medicalappointment-similar-tickets/docker-compose.yml
+      file: services/similar-tickets/docker-compose.yml
       service: oracle
     container_name: ticket
     ports:
@@ -16,6 +16,6 @@ services:
   mysql:
     extends:
       service: mysql
-      file: services/medicalappointment-helpdesk/docker-compose.yml
+      file: services/helpdesk/docker-compose.yml
 volumes:
   mysql_data:

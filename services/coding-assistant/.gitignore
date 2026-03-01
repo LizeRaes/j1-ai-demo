@@ -1,0 +1,14 @@
+target/
+.quarkus/
+dependency-reduced-pom.xml
+
+repos/
+job-logs/
+
+.vscode/
+.idea/
+*.iml
+
+.project
+.classpath
+.settings/
