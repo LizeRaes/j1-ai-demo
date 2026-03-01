@@ -31,13 +31,86 @@ document.addEventListener('DOMContentLoaded', () => {
         // Start with dispatcher inbox
         switchTab('dispatcher');
 
+        // Apply ticket deep-link if present (e.g. ?tab=inbox&ticketId=123).
+        openTicketFromUrl();
+
         // Start event polling
         startEventPolling();
+
+        // Refresh selected ticket detail when persona changes so RBAC-driven docs update immediately.
+        window.addEventListener('actor-context-changed', handleActorContextChanged);
     } catch (error) {
         console.error('Error initializing app:', error);
         document.body.innerHTML = '<div style="padding: 2rem; color: red;">Error loading application. Check console for details.</div>';
     }
 });
+
+async function handleActorContextChanged() {
+    try {
+        const selectedTicketId = state.selectedTicketId;
+        if (selectedTicketId) {
+            await loadTicketDetail(selectedTicketId);
+        }
+    } catch (error) {
+        console.error('Error refreshing after actor context change:', error);
+    }
+}
+
+function getDeepLinkState() {
+    const url = new URL(window.location.href);
+    let tab = url.searchParams.get('tab');
+    let ticketId = url.searchParams.get('ticketId');
+
+    // Backward-compatible support for hash links like #inbox?ticketId=123
+    if ((!tab || !ticketId) && window.location.hash) {
+        const rawHash = window.location.hash.substring(1);
+        const [hashTab, hashQuery] = rawHash.split('?');
+        if (!tab && hashTab) {
+            tab = hashTab;
+        }
+        if (!ticketId && hashQuery) {
+            const params = new URLSearchParams(hashQuery);
+            ticketId = params.get('ticketId');
+        }
+    }
+
+    const parsedTicketId = ticketId ? Number(ticketId) : null;
+    return {
+        tab: tab || 'inbox',
+        ticketId: Number.isFinite(parsedTicketId) && parsedTicketId > 0 ? parsedTicketId : null,
+    };
+}
+
+async function openTicketFromUrl() {
+    const {tab, ticketId} = getDeepLinkState();
+    if (!ticketId) {
+        return;
+    }
+
+    const supportedTabs = new Set(['inbox', 'team', 'mine']);
+    const selectedTab = supportedTabs.has(tab) ? tab : 'inbox';
+    switchTab(selectedTab);
+    const viewMap = {
+        inbox: 'inbox',
+        team: 'team',
+        mine: 'mine',
+    };
+    await renderTickets(viewMap[selectedTab] || 'inbox');
+
+    const listItem = document.querySelector(`.list-item[data-ticket-id="${ticketId}"]`);
+    if (listItem) {
+        document.querySelectorAll('.list-item').forEach(el => {
+            el.classList.remove('selected');
+        });
+        listItem.classList.add('selected');
+        listItem.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }
+
+    state.selectedTicketId = ticketId;
+    state.addTicketToHistory(ticketId);
+    await loadTicketDetail(ticketId);
+    updateNavButtons();
+}
 
 function setupTicketNavigation() {
     const backBtn = document.getElementById('ticket-nav-back');

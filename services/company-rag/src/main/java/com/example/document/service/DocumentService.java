@@ -151,7 +151,8 @@ public class DocumentService {
         String strategy = matchChunkingStrategy(documentName);
         List<TextSegment> segments = chunkingService.chunkDocument(document, documentName, strategy);
 
-        deleteDocumentEmbeddings(documentName);
+        // Re-embedding should replace vectors but keep document RBAC policy.
+        deleteDocumentEmbeddings(documentName, false);
 
         for (TextSegment segment : segments) {
             Embedding embedding = embeddingModel.embed(segment.text()).content();
@@ -160,9 +161,15 @@ public class DocumentService {
     }
 
     public void deleteDocumentEmbeddings(String documentName) {
+        deleteDocumentEmbeddings(documentName, true);
+    }
+
+    public void deleteDocumentEmbeddings(String documentName, boolean removeAccessPolicy) {
         try {
             embeddingStore.removeAll(metadataKey("documentName").isEqualTo(documentName));
-            accessPolicyService.removeDocument(documentName);
+            if (removeAccessPolicy) {
+                accessPolicyService.removeDocument(documentName);
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Warning: Error deleting embeddings for " + documentName + ": ", e);
         }

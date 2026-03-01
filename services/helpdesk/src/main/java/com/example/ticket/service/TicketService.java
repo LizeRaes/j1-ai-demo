@@ -3,14 +3,16 @@ package com.example.ticket.service;
 import com.example.ticket.domain.constants.*;
 import com.example.ticket.domain.model.Ticket;
 import com.example.ticket.domain.model.Comment;
+import com.example.ticket.domain.model.TicketPullRequest;
 import com.example.ticket.dto.*;
-import com.example.ticket.external.SimilarityClient;
+import com.example.ticket.external.CodingAssistantClient;
 import com.example.ticket.mapper.TicketMapper;
 import com.example.ticket.mapper.TicketTypeTeamMapper;
 import com.example.ticket.service.adapter.CommentService;
 import com.example.ticket.service.adapter.EventService;
 import com.example.ticket.service.adapter.IncomingRequestService;
 import com.example.ticket.service.adapter.TicketStateService;
+import com.example.ticket.service.adapter.TicketPullRequestService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -20,11 +22,13 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ApplicationScoped
 public class TicketService {
@@ -43,28 +47,36 @@ public class TicketService {
 
     @Inject
     @RestClient
-    SimilarityClient similarityClient;
+    CodingAssistantClient codingAssistantClient;
 
     @Inject
     IncomingRequestService incomingRequestService;
 
+    @Inject
+    TicketPullRequestService ticketPullRequestService;
+
+    @ConfigProperty(name = "app.coding-assistant.enabled", defaultValue = "true")
+    boolean codingAssistantEnabled;
+
+    @ConfigProperty(name = "app.coding-assistant.repo-url")
+    Optional<String> codingAssistantRepoUrl;
+
+    @ConfigProperty(name = "app.coding-assistant.confidence-threshold", defaultValue = "0.60")
+    Double codingAssistantConfidenceThreshold;
+
     @Transactional
     public TicketDto submit(DispatchedTicketDto dto) {
-        // Get the original request text
         var incomingRequest = incomingRequestService.getIncomingRequest(dto.incomingRequestId());
         if (incomingRequest == null) {
             throw new IllegalArgumentException("Incoming request not found: " + dto.incomingRequestId());
         }
 
-        // Validate ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null");
         }
 
-        // TicketType defines intent; AssignedTeam is a derived consequence.
-        Long nextId = ticketStateService.findMaxId() + 1;
         TicketMapper ticketMapper = new TicketMapper();
-        Ticket ticket = ticketMapper.toDispatchTicket(dto, incomingRequest, nextId);
+        Ticket ticket = ticketMapper.toDispatchTicket(dto, incomingRequest);
         ticketStateService.persist(ticket);
 
         eventService.logEvent(
@@ -87,12 +99,8 @@ public class TicketService {
                 null
         );
 
-        // Send to similarity service (async, non-blocking)
-        sendTicketToSimilarityService(ticket);
-
         TicketDto ticketDto = ticketMapper.toTicketDto(ticket);
 
-        // Mark incoming request as converted
         incomingRequestService.markAsConvertedToTicket(dto.incomingRequestId());
 
         return ticketDto;
@@ -100,14 +108,12 @@ public class TicketService {
 
     @Transactional
     public TicketDto manualSubmit(ManualTicketDto dto) {
-        // Validate ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null");
         }
 
         TicketMapper ticketMapper =  new TicketMapper();
-        Long nextId = ticketStateService.findMaxId() + 1;
-        Ticket ticket = ticketMapper.toManualTicket(dto, nextId);
+        Ticket ticket = ticketMapper.toManualTicket(dto);
         ticketStateService.persist(ticket);
 
         eventService.logEvent(
@@ -120,26 +126,19 @@ public class TicketService {
                 null
         );
 
-        // Send to similarity service (async, non-blocking)
-        sendTicketToSimilarityService(ticket);
-
         return ticketMapper.toTicketDto(ticket);
     }
 
     @Transactional
     public TicketDto aiSubmit(AITicketDto dto) {
-        // Validate ticketType - AI can only suggest ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null. AI must provide a valid ticketType.");
         }
 
-        // TicketType defines intent; AssignedTeam is a derived consequence.
         TicketMapper ticketMapper = new TicketMapper();
-        Long nextId = ticketStateService.findMaxId() + 1;
-        Ticket ticket = ticketMapper.toAiTicket(dto, nextId);
+        Ticket ticket = ticketMapper.toAiTicket(dto);
         ticketStateService.persist(ticket);
 
-        // If this ticket was created from an incoming request, mark it as converted
         if (dto.incomingRequestId() != null) {
             incomingRequestService.markAsConvertedToTicket(dto.incomingRequestId());
         }
@@ -154,22 +153,20 @@ public class TicketService {
                 dto.aiPayloadJson()
         );
 
-        // Send to similarity service (async, non-blocking)
-        sendTicketToSimilarityService(ticket);
-
         return ticketMapper.toTicketDto(ticket);
     }
 
     public List<TicketDto> findTickets(String view, String team, String user) {
-        List<Ticket> tickets = switch (view) {
-            case "team" -> ticketStateService.findByAssignedTeam(team);
+        String normalizedView = view == null ? "all" : view;
+        String normalizedTeam = team == null ? null : team.trim().toLowerCase();
+        List<Ticket> tickets = switch (normalizedView) {
+            case "team" -> ticketStateService.findByAssignedTeam(normalizedTeam);
             case String v when (user != null && v.equals("mine")) -> ticketStateService.findByAssignedTo(user);
             case String _ -> ticketStateService.listAll();
         };
 
-        // Filter out ROLLED_BACK tickets from normal views
         tickets = tickets.stream()
-                .filter(t -> t.getStatus() != TicketStatus.ROLLED_BACK)
+                .filter(this::isVisibleToUi)
                 .toList();
         return tickets.stream()
                 .map(ticket -> new TicketDto(ticket.getId(), ticket.getUserId(), ticket.getOriginalRequest(),
@@ -177,13 +174,13 @@ public class TicketService {
                         ticket.getAssignedTeam(), ticket.getAssignedTo(), ticket.getUrgencyFlag(),
                         ticket.getUrgencyScore(), ticket.getAiConfidence(), ticket.getRollbackAllowed(),
                         filterAiPayloadForCurrentActor(ticket.getAiPayloadJson()), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
-                        ticket.getUpdatedAt(), List.of()))
+                        ticket.getUpdatedAt(), List.of(), mapPullRequests(ticket.getId())))
                 .toList();
     }
 
     public TicketDto findTicket(Long id) {
         Ticket ticket = ticketStateService.findById(id);
-        if (ticket == null) {
+        if (ticket == null || !isVisibleToUi(ticket)) {
             return null;
         }
         List<Comment> comments = commentService.findByTicketId(id);
@@ -194,7 +191,7 @@ public class TicketService {
                 filterAiPayloadForCurrentActor(ticket.getAiPayloadJson()), ticket.getIncomingRequestId(), ticket.getCreatedAt(),
                 ticket.getUpdatedAt(), comments.stream()
                 .map(c -> new CommentDto(c.id, ticket.getId(), c.getAuthorId(), c.getBody()))
-                .toList());
+                .toList(), mapPullRequests(ticket.getId()));
     }
 
     @Transactional
@@ -212,30 +209,6 @@ public class TicketService {
                 EventSeverity.INFO,
                 "ticketing-ui",
                 "Ticket #" + ticket.getId() + " accepted by " + userId,
-                ticket.getId(),
-                null,
-                null
-        );
-
-        return new TicketMapper().toTicketDto(ticket);
-    }
-
-    @Transactional
-    public TicketDto rejectAndReturnToDispatch(Long id) {
-        Ticket ticket = ticketStateService.findById(id);
-        if (ticket == null) {
-            return null;
-        }
-        ticket.setStatus(TicketStatus.RETURNED_TO_DISPATCH);
-        ticket.setAssignedTeam("DISPATCH");
-        ticket.setAssignedTo(null);
-        ticketStateService.persist(ticket);
-
-        eventService.logEvent(
-                EventType.RETURNED_TO_DISPATCH,
-                EventSeverity.INFO,
-                "ticketing-ui",
-                "Ticket #" + ticket.getId() + " returned to dispatch",
                 ticket.getId(),
                 null,
                 null
@@ -266,17 +239,8 @@ public class TicketService {
         return new TicketMapper().toTicketDto(ticket);
     }
 
-    /**
-     * Updates ticketType and automatically recomputes assignedTeam.
-     * Dispatcher may change ticketType (not team); team updates automatically.
-     *
-     * @param id  Ticket ID
-     * @param dto UpdateTicketTypeDto with new ticketType
-     * @return Updated ticket DTO
-     */
     @Transactional
     public TicketDto updateTicketType(Long id, UpdateTicketTypeDto dto) {
-        // Validate ticketType
         if (dto.ticketType() == null) {
             throw new IllegalArgumentException("TicketType is required and cannot be null");
         }
@@ -288,12 +252,9 @@ public class TicketService {
 
         TicketType oldType = ticket.getTicketType();
         ticket.setTicketType(dto.ticketType());
-        // TicketType defines intent; AssignedTeam is a derived consequence.
-        // Changing ticketType always recomputes assignedTeam.
         TicketMapper ticketMapper = new TicketMapper();
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
         ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(dto.ticketType()).name());
-        // Re-assign to default user for the new team if not already assigned
         if (ticket.getAssignedTo() == null) {
             String assignedTo = ticketMapper.mapUserIdForTeam(ticket.getAssignedTeam());
             ticket.setAssignedTo(assignedTo);
@@ -346,7 +307,6 @@ public class TicketService {
             return null;
         }
 
-        // Verify this is an AI ticket that can be rolled back
         if (ticket.getStatus() != TicketStatus.FROM_AI || !ticket.getRollbackAllowed()) {
             throw new IllegalArgumentException("Ticket cannot be rolled back. Only FROM_AI tickets with rollbackAllowed=true can be rolled back.");
         }
@@ -355,19 +315,16 @@ public class TicketService {
             throw new IllegalArgumentException("Ticket has no associated incoming request to roll back to.");
         }
 
-        // Mark ticket as rolled back
-        ticket.setStatus(TicketStatus.ROLLED_BACK);
+        ticket.setStatus(TicketStatus.RETURNED_TO_DISPATCH);
         ticketStateService.persist(ticket);
 
-        // Mark incoming request as returned from AI
         incomingRequestService.markAsReturnedFromAi(ticket.getIncomingRequestId());
 
-        // Emit event
         eventService.logEvent(
                 EventType.AI_TICKET_ROLLED_BACK,
                 EventSeverity.INFO,
                 "ticketing-ui",
-                "AI ticket #" + ticket.getId() + " rolled back to incoming request #" + ticket.getIncomingRequestId(),
+                "AI ticket #" + ticket.getId() + " returned to dispatch queue (incoming request #" + ticket.getIncomingRequestId() + ").",
                 ticket.getId(),
                 ticket.getIncomingRequestId(),
                 null
@@ -376,38 +333,203 @@ public class TicketService {
         return new TicketMapper().toTicketDto(ticket);
     }
 
-    /**
-     * Create a placeholder ticket for triage processing.
-     * This ticket will be updated with triage results later.
-     */
     @Transactional
-    public Ticket createPlaceholderTicketForTriage(String userId, String originalRequest, Long incomingRequestId) {
+    public Ticket createInitialTicketForTriage(String userId, String originalRequest, Long incomingRequestId) {
         TicketMapper ticketMapper = new TicketMapper();
-        Ticket ticket = ticketMapper.toPlaceholderTicket(userId, originalRequest, incomingRequestId);
+        Ticket ticket = ticketMapper.toInitialTriageTicket(userId, originalRequest, incomingRequestId);
         ticketStateService.persist(ticket);
-
-        // Send to similarity service when ticket is created (text is final and won't change)
-        // The ticketType will be updated later, but the embedding is based on the text, not the type
-        sendTicketToSimilarityService(ticket);
-
         return ticket;
     }
 
-    /**
-     * Filter AI payload (policyCitations) based on the current actor's team.
-     * This is applied at read-time so DB always stores the full payload.
-     */
+    @Transactional
+    public TicketPullRequestDto addManualPullRequest(Long ticketId, AddPullRequestDto dto) {
+        if (dto == null || dto.prUrl() == null || dto.prUrl().isBlank()) {
+            throw new IllegalArgumentException("prUrl is required.");
+        }
+
+        Ticket ticket = ticketStateService.findById(ticketId);
+        if (ticket == null) {
+            return null;
+        }
+
+        TicketPullRequest pullRequest = new TicketPullRequest();
+        pullRequest.setTicket(ticket);
+        pullRequest.setPrUrl(dto.prUrl().trim());
+        pullRequest.setAiGenerated(false);
+        ticketPullRequestService.persist(pullRequest);
+
+        eventService.logEvent(
+                EventType.SYSTEM_STEP,
+                EventSeverity.INFO,
+                "ticketing-ui",
+                "Manual PR added to ticket #" + ticketId,
+                ticketId,
+                null,
+                null
+        );
+
+        return toPullRequestDto(pullRequest);
+    }
+
+    @Transactional
+    public void upsertAiPullRequest(Long ticketId, String prUrl) {
+        if (ticketId == null || prUrl == null || prUrl.isBlank()) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "coding-assistant-callback",
+                    "Ignoring coding assistant callback due to missing ticketId/prUrl.",
+                    ticketId,
+                    null,
+                    null
+            );
+            return;
+        }
+
+        Ticket ticket = ticketStateService.findById(ticketId);
+        if (ticket == null) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "coding-assistant-callback",
+                    "Ignoring coding assistant callback for unknown ticket #" + ticketId,
+                    ticketId,
+                    null,
+                    null
+            );
+            return;
+        }
+
+        TicketPullRequest existingAiPr = ticketPullRequestService.findAiPullRequestByTicketId(ticketId);
+        String normalizedPrUrl = prUrl.trim();
+        if (existingAiPr != null) {
+            existingAiPr.setPrUrl(normalizedPrUrl);
+            ticketPullRequestService.persist(existingAiPr);
+            eventService.logEvent(
+                    EventType.SYSTEM_STEP,
+                    EventSeverity.INFO,
+                    "coding-assistant-callback",
+                    "AI PR updated for ticket #" + ticketId + " (existing AI PR overwritten).",
+                    ticketId,
+                    null,
+                    null
+            );
+            return;
+        }
+
+        TicketPullRequest created = new TicketPullRequest();
+        created.setTicket(ticket);
+        created.setPrUrl(normalizedPrUrl);
+        created.setAiGenerated(true);
+        ticketPullRequestService.persist(created);
+        eventService.logEvent(
+                EventType.SYSTEM_STEP,
+                EventSeverity.INFO,
+                "coding-assistant-callback",
+                "AI PR added to ticket #" + ticketId,
+                ticketId,
+                null,
+                null
+        );
+    }
+
+    private List<TicketPullRequestDto> mapPullRequests(Long ticketId) {
+        return ticketPullRequestService.findByTicketId(ticketId).stream()
+                .map(this::toPullRequestDto)
+                .toList();
+    }
+
+    private TicketPullRequestDto toPullRequestDto(TicketPullRequest pr) {
+        return new TicketPullRequestDto(
+                pr.getId(),
+                pr.getPrUrl(),
+                pr.getAiGenerated()
+        );
+    }
+
+    private boolean isBugTicketType(TicketType ticketType) {
+        return ticketType == TicketType.BUG_APP || ticketType == TicketType.BUG_BACKEND;
+    }
+
+    private boolean isVisibleToUi(Ticket ticket) {
+        if (ticket == null) {
+            return false;
+        }
+        return ticket.getStatus() != TicketStatus.AI_TRIAGE_PENDING
+                && ticket.getStatus() != TicketStatus.RETURNED_TO_DISPATCH;
+    }
+
+    private void triggerCodingAssistantBestEffort(Ticket ticket) {
+        if (!codingAssistantEnabled) {
+            eventService.logEvent(
+                    EventType.SYSTEM_STEP,
+                    EventSeverity.INFO,
+                    "ticketing-api",
+                    "Coding assistant trigger skipped for ticket #" + ticket.getId() + " (disabled).",
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
+            return;
+        }
+
+        String repoUrl = codingAssistantRepoUrl.map(String::trim).orElse("");
+        if (repoUrl.isBlank()) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "ticketing-api",
+                    "Coding assistant trigger skipped for ticket #" + ticket.getId() + " (repo URL not configured).",
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
+            return;
+        }
+
+        CodingAssistantSubmitJobRequestDto request = new CodingAssistantSubmitJobRequestDto(
+                ticket.getId(),
+                ticket.getOriginalRequest(),
+                repoUrl,
+                codingAssistantConfidenceThreshold
+        );
+
+        try {
+            CodingAssistantSubmitJobResponseDto response = codingAssistantClient.submitJob(request);
+            String status = response != null && response.status() != null ? response.status() : "UNKNOWN";
+            String message = response != null && response.message() != null ? response.message() : "";
+            eventService.logEvent(
+                    EventType.SYSTEM_STEP,
+                    EventSeverity.INFO,
+                    "ticketing-api",
+                    "Coding assistant trigger for ticket #" + ticket.getId() + " returned status " + status + ". " + message,
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
+        } catch (Exception e) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "ticketing-api",
+                    "Coding assistant trigger could not be started for ticket #" + ticket.getId() + ": " + e.getMessage(),
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
+        }
+    }
+
     private String filterAiPayloadForCurrentActor(String aiPayloadJson) {
         if (aiPayloadJson == null || aiPayloadJson.isBlank()) {
             return aiPayloadJson;
         }
         String actorTeam;
         try {
-            if (requestContext == null) return "DISPATCHER";
+            if (requestContext == null) return aiPayloadJson;
             String team = requestContext.getHeaderString("X-Actor-Team");
-            actorTeam = (team != null) ? team : "DISPATCHER";
+            actorTeam = (team != null) ? team : Team.DISPATCHING.value();
         } catch (Exception e) {
-            // If no request context is active, fall back to unfiltered payload
             return aiPayloadJson;
         }
         if (actorTeam.isBlank()) {
@@ -422,17 +544,24 @@ public class TicketService {
                 return aiPayloadJson;
             }
 
-            String normalizedTeam = actorTeam.toLowerCase();
+            String normalizedTeam = actorTeam.trim().toLowerCase();
             ArrayNode filtered = objectMapper.createArrayNode();
             for (JsonNode citation : citationsNode) {
                 if (citation == null || !citation.isObject()) continue;
                 JsonNode rbacTeamsNode = citation.get("rbacTeams");
                 if (rbacTeamsNode == null || !rbacTeamsNode.isArray()) continue;
+
+                // Empty RBAC list means company-wide visibility.
+                if (rbacTeamsNode.isEmpty()) {
+                    filtered.add(citation);
+                    continue;
+                }
+
                 boolean hasAccess = false;
                 for (JsonNode teamNode : rbacTeamsNode) {
                     if (teamNode != null && teamNode.isTextual()) {
-                        String team = teamNode.asText();
-                        if (team != null && team.equalsIgnoreCase(normalizedTeam)) {
+                        String normalizedCitationTeam = teamNode.asText().trim().toLowerCase();
+                        if (!normalizedCitationTeam.isBlank() && normalizedCitationTeam.equals(normalizedTeam)) {
                             hasAccess = true;
                             break;
                         }
@@ -453,9 +582,6 @@ public class TicketService {
         }
     }
 
-    /**
-     * Update a placeholder ticket with triage results.
-     */
     @Transactional
     public void updateTicketWithTriageResults(Long ticketId, String ticketType, Double urgencyScore, Double aiConfidence,
                                               List<Long> relatedTicketIds, List<TriageResponseDto.PolicyCitation> policyCitations) {
@@ -465,18 +591,17 @@ public class TicketService {
         }
 
         ticket.setTicketType(TicketType.valueOf(ticketType));
+        ticket.setStatus(TicketStatus.FROM_AI);
         ticket.setUrgencyScore(urgencyScore != null ? urgencyScore : 5.0);
-        ticket.setUrgencyFlag(ticket.getUrgencyScore() >= 7.0); // Flag as urgent if score >= 7
+        ticket.setUrgencyFlag(ticket.getUrgencyScore() >= 7.0);
         ticket.setAiConfidence(aiConfidence != null ? aiConfidence / 100.0 : 0.0);
 
-        // Update assigned team based on new ticket type
         TicketTypeTeamMapper ticketTypeTeamMapper = new TicketTypeTeamMapper();
-        ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).name());
+        ticket.setAssignedTeam(ticketTypeTeamMapper.deriveTeamFromTicketType(ticket.getTicketType()).value());
         TicketMapper ticketMapper = new TicketMapper();
         String assignedTo = ticketMapper.mapUserIdForTeam(ticket.getAssignedTeam());
         ticket.setAssignedTo(assignedTo);
 
-        // Store relatedTicketIds and policyCitations in aiPayloadJson
         Map<String, Object> aiPayload = new HashMap<>();
         aiPayload.put("relatedTicketIds", relatedTicketIds != null ? relatedTicketIds : List.of());
         aiPayload.put("policyCitations", policyCitations != null ? policyCitations : List.of());
@@ -490,68 +615,18 @@ public class TicketService {
 
         ticketStateService.persist(ticket);
 
-        // Mark incoming request as converted if it exists
         if (ticket.getIncomingRequestId() != null) {
             incomingRequestService.markAsConvertedToTicket(ticket.getIncomingRequestId());
         }
 
-        // Do NOT send to similarity service here - this is an UPDATE operation.
-        // The ticket was already sent when it was created as a placeholder.
-    }
+        if (isBugTicketType(ticket.getTicketType())) {
+            triggerCodingAssistantBestEffort(ticket);
+        }
 
-    /**
-     * Send ticket to similarity service for embedding creation.
-     * This is called only when tickets are created (text is immutable after creation).
-     * Non-blocking: errors are logged but don't affect ticket creation.
-     */
-    private void sendTicketToSimilarityService(Ticket ticket) {
-        SimilarityUpsertRequestDto request = new SimilarityUpsertRequestDto(ticket.getId(), ticket.getTicketType().name(), ticket.getOriginalRequest());
-
-        similarityClient.upsertTicketAsync(request)
-                .thenAccept(_ -> {
-                    // Success - log event
-                    eventService.logEvent(
-                            EventType.SYSTEM_STEP,
-                            EventSeverity.INFO,
-                            "ticketing-api",
-                            "Sending ticket #" + ticket.getId() + " to embedding service",
-                            ticket.getId(),
-                            null,
-                            null
-                    );
-                })
-                .exceptionally(throwable -> {
-                    // Error - log event with error details
-                    String errorMessage = throwable.getMessage();
-                    if (errorMessage == null) {
-                        errorMessage = throwable.getClass().getSimpleName();
-                    }
-                    eventService.logEvent(
-                            EventType.ERROR_OCCURRED,
-                            EventSeverity.WARNING,
-                            "ticketing-api",
-                            "sent to ticket similarity system: error - " + throwable.getClass().getSimpleName() + " - " + errorMessage,
-                            ticket.getId(),
-                            null,
-                            null
-                    );
-                    return null;
-                });
     }
 
     @Transactional
     public void updateTicketAsFallback(Long ticketId, IncomingRequestDto request, String failReason) {
-        // Update placeholder ticket with OTHER type for dispatcher review
-        updateTicketWithTriageResults(
-                ticketId,
-                TicketType.OTHER.name(), // Maps to DISPATCH team
-                5.0,
-                0.0, // Zero confidence for fallback
-                List.of(),
-                List.of()
-        );
-
-        // Store failure reason in AI payload
         Map<String, Object> aiPayload = new HashMap<>();
         aiPayload.put("failReason", failReason);
         aiPayload.put("relatedTicketIds", List.of());
@@ -564,18 +639,32 @@ public class TicketService {
             aiPayloadJson = "{\"failReason\":\"" + failReason.replace("\"", "\\\"") + "\"}";
         }
 
-        // Update ticket's AI payload with failure reason
-        // Note: This is a simplified approach - in a real system you might want to update the ticket's aiPayloadJson field
-        // For now, the failure reason is logged in the event
+        Ticket ticket = ticketStateService.findById(ticketId);
+        if (ticket != null) {
+            ticket.setStatus(TicketStatus.RETURNED_TO_DISPATCH);
+            ticket.setTicketType(TicketType.OTHER);
+            ticket.setAssignedTeam(Team.DISPATCHING.value());
+            ticket.setAssignedTo(null);
+            ticket.setUrgencyFlag(false);
+            ticket.setUrgencyScore(5.0);
+            ticket.setAiConfidence(0.0);
+            ticket.setRollbackAllowed(false);
+            ticket.setAiPayloadJson(aiPayloadJson);
+            ticketStateService.persist(ticket);
+        }
 
-        // Emit AI_TRIAGE_FAILED event
+        if (request != null && request.id() != null) {
+            incomingRequestService.markAsAiTriageFailed(request.id());
+        }
+        Long requestId = request != null ? request.id() : null;
+
         eventService.logEvent(
                 EventType.AI_TRIAGE_FAILED,
-                EventSeverity.ERROR,
+                EventSeverity.WARNING,
                 "ai-triage-worker",
-                "AI triage failed for request #" + request.id() + " (ticket #" + ticketId + "): " + failReason,
+                "AI triage failed for request #" + requestId + " (ticket #" + ticketId + " returned to dispatch): " + failReason,
                 ticketId,
-                request.id(),
+                requestId,
                 aiPayloadJson
         );
     }

@@ -79,10 +79,10 @@ public class DocumentResource {
         logService.addLog("Upsert document: " + request.documentName(), "upsert");
 
         try {
-            // If RBAC teams not specified, use document-wide (empty list)
+            // If RBAC teams are omitted on upsert, preserve existing policy.
             List<String> rbacTeams = request.rbacTeams() != null ?
                     request.rbacTeams() :
-                    List.of(); // Empty list means document-wide
+                    accessPolicyService.getAccessTeams(request.documentName());
 
             documentService.upsertDocument(
                     request.documentName(),

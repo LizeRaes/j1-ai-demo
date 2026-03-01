@@ -9,6 +9,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
@@ -40,7 +41,14 @@ public class CallbackClient {
         String authHeader = callbackAuthToken.startsWith("Bearer ")
                 ? callbackAuthToken
                 : "Bearer " + callbackAuthToken;
-        callbackApi.postResult(payload, authHeader);
+        try (Response response = callbackApi.postResult(payload, authHeader)) {
+            int status = response.getStatus();
+            String body = response.hasEntity() ? response.readEntity(String.class) : "";
+            logger.accept("Callback response: HTTP " + status + (body != null && !body.isBlank() ? " " + body : ""));
+            if (status < 200 || status >= 300) {
+                throw new IllegalStateException("Helpdesk callback returned non-2xx status: " + status);
+            }
+        }
         logger.accept("Callback delivered for ticket " + payload.ticketId());
     }
 
@@ -49,7 +57,7 @@ public class CallbackClient {
     @Produces(MediaType.APPLICATION_JSON)
     interface HelpdeskCallbackApi {
         @POST
-        void postResult(
+        Response postResult(
                 CallbackResultRequest payload,
                 @HeaderParam("Authorization") String authorization
         );

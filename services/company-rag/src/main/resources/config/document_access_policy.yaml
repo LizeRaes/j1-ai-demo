@@ -1,23 +1,23 @@
   Approved_Response_Templates.txt:
     read:
-      - dispatch
+      - dispatching
       - billing
-      - reschedule
+      - scheduling
 
   Billing_Refund_Policy.txt:
     read:
       - billing
-      - dispatch
+      - dispatching
 
   Data_Privacy_User_Data_Handling.txt:
     read:
-      - dispatch
+      - dispatching
       - billing
-      - reschedule
+      - scheduling
 
   Known_Bugs_Limitations.txt:
     read:
-      - dispatch
+      - dispatching
       - engineering
 
   MedicalAppointment_Architecture.txt:
@@ -30,4 +30,4 @@
 
   Security_Escalation_Policy.txt:
     read:
-      - dispatch
+      - dispatching

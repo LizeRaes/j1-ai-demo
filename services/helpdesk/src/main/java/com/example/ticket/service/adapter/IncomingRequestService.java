@@ -92,6 +92,15 @@ public class IncomingRequestService {
     }
 
     @Transactional
+    public void markAsAiTriageFailed(Long id) {
+        IncomingRequest request = incomingRequestRepository.findById(id);
+        if (request != null) {
+            request.setStatus(RequestStatus.AI_TRIAGE_FAILED);
+            incomingRequestRepository.persist(request);
+        }
+    }
+
+    @Transactional
     public void deleteAll() {
         incomingRequestRepository.deleteAll();
     }

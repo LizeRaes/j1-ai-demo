@@ -34,11 +34,12 @@ public class DemoDataService {
         logService.addLog("Cleared existing Oracle AI Database data", "demo-data");
 
         int totalLoaded = 0;
+        long nextDemoTicketId = 1L;
         for (String file : DEMO_DATA_FILES) {
             List<Map<String, Object>> tickets = loadTicketsFromFile(file);
 
             for (Map<String, Object> ticket : tickets) {
-                Long ticketId = Long.valueOf(ticket.get("id").toString());
+                Long ticketId = nextDemoTicketId++;
                 String ticketType = ticket.get("ticketType").toString();
                 String originalRequest = ticket.get("originalRequest").toString();
 

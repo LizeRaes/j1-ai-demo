@@ -3,6 +3,7 @@ import {formatTime, getEventColorClass} from '../util/format.js';
 import {$, createElement} from '../util/dom.js';
 import {switchTab} from './router.js';
 import {UI_CONFIG} from '../config.js';
+import {state} from './state.js';
 
 let lastEventTime = null;
 let pollInterval = null;
@@ -232,6 +233,22 @@ function refreshTicketViews() {
     // and new tickets might not belong to the current user/team
 }
 
+function refreshSelectedTicketDetailIfNeeded(changedTicketIds) {
+    if (!Array.isArray(changedTicketIds) || changedTicketIds.length === 0) return;
+    const selectedTicketId = state.selectedTicketId;
+    if (!selectedTicketId) return;
+
+    const selectedTicketIdStr = String(selectedTicketId);
+    const hasSelectedTicketUpdate = changedTicketIds.some(id => String(id) === selectedTicketIdStr);
+    if (!hasSelectedTicketUpdate) return;
+
+    import('./renderTicketDetail.js')
+        .then(({loadTicketDetail}) => loadTicketDetail(selectedTicketId))
+        .catch(err => {
+            console.error('Error refreshing selected ticket detail:', err);
+        });
+}
+
 async function loadEvents() {
     try {
         const events = await getRecentEvents(lastEventTime, 200);
@@ -246,6 +263,7 @@ async function loadEvents() {
         if (events.length > 0) {
             // Track new ticket creation events to trigger refresh
             const newTicketEvents = [];
+            const callbackUpdatedTicketIds = [];
 
             // Add new events to allEvents array (avoid duplicates)
             events.forEach(event => {
@@ -257,6 +275,9 @@ async function loadEvents() {
                     if (eventType === 'TICKET_CREATED' || eventType === 'AI_TICKET_CREATED') {
                         newTicketEvents.push(event);
                     }
+                    if (event.source === 'coding-assistant-callback' && event.ticketId) {
+                        callbackUpdatedTicketIds.push(event.ticketId);
+                    }
                 }
             });
 
@@ -267,8 +288,12 @@ async function loadEvents() {
             applyFilter();
 
             // If new tickets were created, refresh the ticket lists
-            if (newTicketEvents.length > 0) {
+            const shouldRefreshTicketViews = newTicketEvents.length > 0 || callbackUpdatedTicketIds.length > 0;
+            if (shouldRefreshTicketViews) {
                 refreshTicketViews();
+            }
+            if (callbackUpdatedTicketIds.length > 0) {
+                refreshSelectedTicketDetailIfNeeded(callbackUpdatedTicketIds);
             }
 
             // Update last event time to most recent (last item in ASC array)

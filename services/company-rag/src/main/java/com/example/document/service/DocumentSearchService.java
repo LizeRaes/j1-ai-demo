@@ -39,6 +39,9 @@ public class DocumentSearchService {
     @Inject
     DocumentAccessPolicyService accessPolicyService;
 
+    @Inject
+    LogService logService;
+
 
     public List<DocumentSearchResponse.DocumentResult> searchDocuments(String queryText, int maxResults, double minScore) {
         Embedding queryEmbedding = embeddingModel.embed(queryText).content();
@@ -52,6 +55,7 @@ public class DocumentSearchService {
         EmbeddingSearchResult<TextSegment> result = vectorDatabaseConfig.getEmbeddingStore().search(request);
 
         List<DocumentSearchResponse.DocumentResult> searchResults = new ArrayList<>();
+        LOGGER.info("Document search started. query=\"" + summarizeQuery(queryText) + "\", maxResults=" + maxResults + ", minScore=" + minScore + ", rawMatches=" + result.matches().size());
 
         for (EmbeddingMatch<TextSegment> match : result.matches()) {
             TextSegment segment = match.embedded();
@@ -68,6 +72,14 @@ public class DocumentSearchService {
 
             String documentLink = "/documents/" + documentName;
 
+            LOGGER.info("Search match: document=" + documentName + ", score=" + score + ", teams=" + (rbacTeams.isEmpty() ? "[company-wide]" : rbacTeams));
+            logService.addLog(
+                    "Match: doc=" + documentName
+                            + ", score=" + formatPercent(score)
+                            + ", rbac=" + (rbacTeams.isEmpty() ? "[company-wide]" : rbacTeams),
+                    "search"
+            );
+
             searchResults.add(new DocumentSearchResponse.DocumentResult(
                     documentName,
                     documentLink,
@@ -77,7 +89,20 @@ public class DocumentSearchService {
             ));
         }
 
+        LOGGER.info("Document search completed. returnedMatches=" + searchResults.size());
         return searchResults;
+    }
+
+    private String formatPercent(double score) {
+        return String.format("%.1f%%", score * 100.0);
+    }
+
+    private String summarizeQuery(String queryText) {
+        if (queryText == null) {
+            return "";
+        }
+        String normalized = queryText.replaceAll("\\s+", " ").trim();
+        return normalized.length() > 80 ? normalized.substring(0, 80) + "..." : normalized;
     }
 
     public List<ChunksResponse.ChunkInfo> getAllChunks() {

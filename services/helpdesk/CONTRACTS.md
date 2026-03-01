@@ -256,7 +256,19 @@ curl "http://localhost:8080/api/tickets?view=mine&user=billing-user1" \
     "assignedTo": "billing-user1",
     "urgencyFlag": true,
     "urgencyScore": 8.0,
-    "createdAt": "2026-01-28T10:18:00.000Z"
+    "createdAt": "2026-01-28T10:18:00.000Z",
+    "pullRequests": [
+      {
+        "id": 12,
+        "prUrl": "https://github.com/org/repo/pull/91",
+        "aiGenerated": true
+      },
+      {
+        "id": 13,
+        "prUrl": "https://github.com/org/repo/pull/95",
+        "aiGenerated": false
+      }
+    ]
   }
 ]
 ```
@@ -286,6 +298,18 @@ curl "http://localhost:8080/api/tickets/205" \
   "urgencyFlag": true,
   "urgencyScore": 8.0,
   "aiPayloadJson": "{\"relatedTicketIds\":[912],\"policyCitations\":[...]}",
+  "pullRequests": [
+    {
+      "id": 12,
+      "prUrl": "https://github.com/org/repo/pull/91",
+      "aiGenerated": true
+    },
+    {
+      "id": 13,
+      "prUrl": "https://github.com/org/repo/pull/95",
+      "aiGenerated": false
+    }
+  ],
   "comments": [
     {
       "authorId": "billing-user1",
@@ -316,12 +340,12 @@ curl -X POST "http://localhost:8080/api/tickets/205/accept?userId=billing-user1"
 }
 ```
 
-#### 3.6 Reject AI Ticket and Return to Dispatch
+#### 3.6 Reject AI Ticket (Return Complaint to Dispatcher Queue)
 
-- **HTTP**: `POST /api/tickets/{id}/reject-and-return-to-dispatch`
+- **HTTP**: `POST /api/tickets/{id}/rollback-to-request`
 
 ```bash
-curl -X POST "http://localhost:8080/api/tickets/220/reject-and-return-to-dispatch" \
+curl -X POST "http://localhost:8080/api/tickets/220/rollback-to-request" \
   -H "X-Actor-Id: billing-user1" \
   -H "X-Actor-Team: billing"
 ```
@@ -384,11 +408,70 @@ curl -X POST "http://localhost:8080/api/tickets/205/comments" \
 }
 ```
 
+#### 3.9 Add Pull Request Link to Ticket (Manual/UI)
+
+- **HTTP**: `POST /api/tickets/{id}/pull-requests`
+- Adds a PR entry with `aiGenerated=false`
+
+```bash
+curl -X POST "http://localhost:8080/api/tickets/205/pull-requests" \
+  -H "Content-Type: application/json" \
+  -H "X-Actor-Id: engineering-user1" \
+  -H "X-Actor-Team: engineering" \
+  -d '{
+    "prUrl": "https://github.com/org/repo/pull/95"
+  }'
+```
+
+**Example Response** (`201 Created`):
+
+```json
+{
+  "id": 13,
+  "prUrl": "https://github.com/org/repo/pull/95",
+  "aiGenerated": false
+}
+```
+
 ---
 
-### 4. Events
+### 4. Coding Assistant Callback (Service-to-Service)
 
-#### 4.1 Get Recent Events
+#### 4.1 Callback from Coding Assistant
+
+- **HTTP**: `POST /api/coding-assistant`
+- **Auth**: `Authorization: Bearer <token>`
+- The token must match `app.coding-assistant.callback.auth-token`
+- Best effort: the callback never crashes the app; invalid payloads are ignored and logged.
+
+```bash
+curl -X POST "http://localhost:8080/api/coding-assistant" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer change-me" \
+  -d '{
+    "ticketId": 205,
+    "prUrl": "https://github.com/org/repo/pull/91"
+  }'
+```
+
+**Example Response** (`200 OK`):
+
+```json
+{
+  "status": "OK"
+}
+```
+
+Behavior:
+- If no AI PR exists yet for the ticket, it is added with `aiGenerated=true`
+- If an AI PR already exists, it is overwritten with the new `prUrl`
+- Manual PR entries (`aiGenerated=false`) are left untouched
+
+---
+
+### 5. Events
+
+#### 5.1 Get Recent Events
 
 - **HTTP**: `GET /api/events/recent?since={timestamp}&limit={n}`
 
@@ -417,7 +500,7 @@ curl "http://localhost:8080/api/events/recent?limit=50" \
 
 ---
 
-### 5. Triage Worker (Manual Trigger)
+### 6. Triage Worker (Manual Trigger)
 
 Normally, incoming requests are triaged automatically, but you can trigger a full run manually.
 
@@ -440,13 +523,13 @@ curl -X POST http://localhost:8080/api/triage-worker/process \
 
 ---
 
-### 6. Documents (Proxy – RBAC-Aware Display in UI)
+### 7. Documents (Proxy – RBAC-Aware Display in UI)
 
 The helpdesk UI does **not** call the external documents service directly (to avoid CORS).  
 Instead, it uses a **proxy endpoint** in this service, and the UI applies RBAC based on `rbacTeams` and the current
 persona/team.
 
-#### 6.1 Proxy: Get Document Content
+#### 7.1 Proxy: Get Document Content
 
 - **HTTP**: `GET /api/documents/content/{documentName}`
 - **Proxies to**: `http://localhost:8084/api/documents/content/{documentName}`
@@ -479,7 +562,7 @@ Users report that the "Reschedule" button is disabled...
 
 ---
 
-### 7. External Documents Service (Reference Only)
+### 8. External Documents Service (Reference Only)
 
 This service is **outside** the Quarkus app, but is included here for completeness.
 

@@ -5,8 +5,6 @@ import com.example.ticket.domain.model.Comment;
 import com.example.ticket.dto.CreateIncomingRequestDto;
 import com.example.ticket.dto.TicketDto;
 import com.example.ticket.mapper.TicketMapper;
-import com.example.ticket.persistence.CommentRepository;
-import com.example.ticket.persistence.TicketRepository;
 import com.example.ticket.service.adapter.CommentService;
 import com.example.ticket.service.adapter.IncomingRequestService;
 import com.example.ticket.service.adapter.TicketStateService;
@@ -36,6 +34,12 @@ import java.util.stream.Stream;
 public class DataSeeder {
 
     private static final Logger LOGGER = Logger.getLogger(DataSeeder.class.getName());
+    private static final String[] DEMO_DATA_FILES = {
+            "demo-tickets-access-other.json",
+            "demo-tickets-billing.json",
+            "demo-tickets-engineering.json",
+            "demo-tickets-scheduling.json"
+    };
 
     @ConfigProperty(name = "demo.dir.location")
     String directory;
@@ -74,56 +78,55 @@ public class DataSeeder {
     private void clearAllData() {
         commentService.deleteAll();
         ticketStateService.deleteAll();
+        ticketStateService.resetAutoIncrement();
         incomingRequestService.deleteAll();
         LOGGER.info("Cleared all tickets, comments, and incoming requests");
     }
 
     @Transactional
     int loadDemoTicketsFromFiles() throws URISyntaxException,IOException {
-        // List of demo data files to load
         URL url = Thread.currentThread().getContextClassLoader().getResource(directory);
         Path dirPath = Paths.get(Objects.requireNonNull(url).toURI());
 
-
         int totalTickets = 0;
-        try (Stream<Path> files = Files.walk(dirPath)) {
-            for (Path path : files.filter(Files::isRegularFile).toList()) {
-                try (InputStream docStream = Files.newInputStream(path)) {
+        ObjectMapper mapper = new ObjectMapper();
+        TicketMapper ticketMapper = new TicketMapper();
 
-                    int fileTicketCount = 0;
-                    ObjectMapper mapper = new ObjectMapper();
-                    List<TicketDto> tickets = mapper.readValue(docStream, new TypeReference<>() {
-                    });
+        for (String fileName : DEMO_DATA_FILES) {
+            Path path = dirPath.resolve(fileName);
+            if (!Files.exists(path) || !Files.isRegularFile(path)) {
+                LOGGER.warning("Demo data file missing or not a regular file: " + path);
+                continue;
+            }
 
-                    TicketMapper ticketMapper = new TicketMapper();
-                    for (TicketDto dto : tickets) {
-                        Ticket ticket = ticketMapper.toTicket(dto);
+            try (InputStream docStream = Files.newInputStream(path)) {
+                int fileTicketCount = 0;
+                List<TicketDto> tickets = mapper.readValue(docStream, new TypeReference<>() {
+                });
 
-                        if (ticket.getId() == null ) {
-                            ticket.setId(ticketStateService.findMaxId() + 1);
-                        }
-                        ticketStateService.persist(ticket);
+                for (TicketDto dto : tickets) {
+                    Ticket ticket = ticketMapper.toTicket(dto);
+                    ticket.setId(null);
+                    ticketStateService.persist(ticket);
 
-
-                        if (dto.comments() != null) {
-                            dto.comments().stream()
-                                    .map(cd -> {
-                                        Comment c = new Comment();
-                                        c.setTicket(ticket);
-                                        c.setAuthorId(cd.authorId());
-                                        c.setBody(cd.body());
-                                        return c;
-                                    })
-                                    .forEach(commentService::persist);
-                        }
-
-                        fileTicketCount++;
+                    if (dto.comments() != null) {
+                        dto.comments().stream()
+                                .map(cd -> {
+                                    Comment c = new Comment();
+                                    c.setTicket(ticket);
+                                    c.setAuthorId(cd.authorId());
+                                    c.setBody(cd.body());
+                                    return c;
+                                })
+                                .forEach(commentService::persist);
                     }
 
-                    totalTickets += fileTicketCount;
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "⚠ Error loading " + path + ": ", e);
+                    fileTicketCount++;
                 }
+
+                totalTickets += fileTicketCount;
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "⚠ Error loading " + path + ": ", e);
             }
         }
 

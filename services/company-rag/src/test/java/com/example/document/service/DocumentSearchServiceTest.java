@@ -40,6 +40,8 @@ public class DocumentSearchServiceTest {
     EmbeddingModel embeddingModel;
     @Mock
     DocumentAccessPolicyService accessPolicyService;
+    @Mock
+    LogService logService;
 
     @InjectMocks
     DocumentSearchService service;
@@ -74,6 +76,7 @@ public class DocumentSearchServiceTest {
         assertEquals("test text", r.citation());
         assertEquals(0.87, r.score(), 1e-9);
         assertEquals(List.of("teamA", "teamB"), r.rbacTeams());
+        verify(logService, atLeastOnce()).addLog(contains("score=87.0%"), eq("search"));
     }
 
     @Test

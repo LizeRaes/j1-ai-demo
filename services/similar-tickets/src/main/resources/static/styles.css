@@ -20,7 +20,9 @@ body {
     height: 2.5rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: 0 1rem;
+    text-align: center;
     font-size: 1rem;
     font-weight: 700;
     color: #1f2937;

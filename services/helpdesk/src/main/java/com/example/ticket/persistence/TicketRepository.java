@@ -10,11 +10,8 @@ import java.util.List;
 @ApplicationScoped
 public class TicketRepository implements PanacheRepository<Ticket> {
 
-    public Long findMaxId() {
-        Long maxId = getEntityManager()
-                .createQuery("SELECT coalesce(max(id), 0) from Ticket t", Long.class)
-                .getSingleResult();
-        return maxId != null ? maxId : 0L;
+    public void resetAutoIncrement() {
+        getEntityManager().createNativeQuery("ALTER TABLE tickets AUTO_INCREMENT = 1").executeUpdate();
     }
 
     public List<Ticket> findByStatus(TicketStatus status) {

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 @ApplicationScoped
@@ -72,7 +71,6 @@ public class TriageWorkerService {
      * Called when a new request is created via the intake endpoint.
      * This method returns immediately - triage happens in background.
      */
-    @Transactional
     public void processRequest(IncomingRequestDto request) {
         // Only process NEW requests
         if (request.status() != RequestStatus.NEW) {
@@ -88,12 +86,13 @@ public class TriageWorkerService {
             return;
         }
 
-        // Create placeholder ticket first (triage service requires ticketId)
-        Ticket placeholderTicket;
+        // Create initial ticket first so triage receives a real ticket ID.
+        Ticket initialTicket;
         try {
-            placeholderTicket = createPlaceholderTicketForTriage(request.userId(), request.rawText(), request.id());
+            initialTicket = ticketService.createInitialTicketForTriage(request.userId(), request.rawText(), request.id());
         } catch (Exception e) {
-            LOGGER.log(Level.ERROR, "Error creating placeholder ticket for request " + request.id() + ": ", e);
+            LOGGER.log(Level.ERROR, "Error creating initial triage ticket for request " + request.id() + ": ", e);
+            incomingRequestService.markAsAiTriageFailed(request.id());
             return;
         }
 
@@ -102,34 +101,28 @@ public class TriageWorkerService {
                 EventType.AI_TRIAGE_STARTED,
                 EventSeverity.WARNING,
                 "ai-triage-worker",
-                "AI triage started for request #" + request.id() + " (ticket #" + placeholderTicket.getId() + ")",
-                placeholderTicket.getId(),
+                "AI triage started for request #" + request.id() + " (ticket #" + initialTicket.getId() + ")",
+                initialTicket.getId(),
                 request.id(),
                 null
         );
 
         // Build triage request
-        TriageRequestDto triageRequest = getTriageRequestDto(request, placeholderTicket);
+        TriageRequestDto triageRequest = getTriageRequestDto(request, initialTicket);
 
         // Store ticketId in final variable for use in async callbacks
-        final Long ticketId = placeholderTicket.getId();
+        final Long ticketId = initialTicket.getId();
 
         // Call AI triage service asynchronously
         // Completion happens in background thread - never blocks request thread
         triageClient.classifyAsync(triageRequest)
-                .thenComposeAsync(response -> {
-                    // Process response in background - update placeholder ticket
-                    // Use the same executor to ensure proper context
-                    return CompletableFuture.runAsync(() -> {
-                        try {
-                            // Call through self-injected proxy to ensure @Transactional works
-                            handleTriageResponse(request, response, ticketId);
-                        } catch (Exception e) {
-                            LOGGER.log(Level.ERROR, "Error handling triage response for request " + request.id() + ": ", e);
-                            // Fallback: update ticket with OTHER type
-                            ticketService.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
-                        }
-                    });
+                .thenAccept(response -> {
+                    try {
+                        handleTriageResponse(request, response, ticketId);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.ERROR, "Error handling triage response for request " + request.id() + ": ", e);
+                        ticketService.updateTicketAsFallback(ticketId, request, "Error processing triage response: " + e.getMessage());
+                    }
                 })
                 .exceptionally(throwable -> {
                     // Handle any exception in the async chain
@@ -139,7 +132,7 @@ public class TriageWorkerService {
                 });
     }
 
-    private static @NonNull TriageRequestDto getTriageRequestDto(IncomingRequestDto request, Ticket placeholderTicket) {
+    private static @NonNull TriageRequestDto getTriageRequestDto(IncomingRequestDto request, Ticket initialTicket) {
         List<TriageRequestDto.AllowedTicketType> types = new ArrayList<>();
 
         types.add(new TriageRequestDto.AllowedTicketType("BILLING_REFUND", "User is asking for a refund or billing reimbursement"));
@@ -153,18 +146,13 @@ public class TriageWorkerService {
         types.add(new TriageRequestDto.AllowedTicketType("ENGINEERING_OTHER", "Engineering-related issue that does not clearly fit a known bug category"));
         types.add(new TriageRequestDto.AllowedTicketType("OTHER", "AI cannot confidently classify this request and a human dispatcher must decide"));
 
-        return new TriageRequestDto(request.id(), request.rawText(), placeholderTicket.getId(), types);
-    }
-
-    @Transactional
-    public Ticket createPlaceholderTicketForTriage(String userId, String originalRequest, Long incomingRequestId) {
-        return ticketService.createPlaceholderTicketForTriage(userId, originalRequest, incomingRequestId);
+        return new TriageRequestDto(request.id(), request.rawText(), initialTicket.getId(), types);
     }
 
     @Transactional
     public void handleTriageResponse(IncomingRequestDto request, TriageResponseDto response, Long ticketId) {
         if ("OK".equals(response.status())) {
-            // Success - update placeholder ticket with AI classification
+            // Success - update initial triage ticket with AI classification
             ticketService.updateTicketWithTriageResults(
                     ticketId,
                     response.ticketType(),

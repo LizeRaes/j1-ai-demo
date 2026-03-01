@@ -3,7 +3,7 @@ package com.medicalappointment.triage.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SimilaritySearchRequest {
-    @JsonProperty("type")
+    @JsonProperty("ticketType")
     private String ticketType;
 
     @JsonProperty("text")
@@ -12,7 +12,7 @@ public class SimilaritySearchRequest {
     @JsonProperty("maxResults")
     private Integer maxResults;
 
-    @JsonProperty("id")
+    @JsonProperty("ticketId")
     private Integer ticketId;
 
     public SimilaritySearchRequest() {

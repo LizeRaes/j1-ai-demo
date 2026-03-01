@@ -22,7 +22,7 @@ class CodingAssistantResourceIT {
     @Test
     void submitJobAccepted() {
         when(orchestratorService.submit(any()))
-                .thenReturn(new SubmitJobResponse("42", JobSubmissionStatus.ACCEPTED, "queued"));
+                .thenReturn(new SubmitJobResponse(JobSubmissionStatus.ACCEPTED, "queued"));
 
         String body = """
                 {
@@ -40,7 +40,6 @@ class CodingAssistantResourceIT {
                 .post("/api/coding-assistant/jobs")
                 .then()
                 .statusCode(202)
-                .body("jobId", equalTo("42"))
                 .body("status", equalTo("ACCEPTED"))
                 .body("message", equalTo("queued"));
 

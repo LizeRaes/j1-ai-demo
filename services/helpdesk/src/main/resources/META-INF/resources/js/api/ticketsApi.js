@@ -25,10 +25,6 @@ export async function acceptTicket(id, userId) {
     return post(`/tickets/${id}/accept?userId=${encodeURIComponent(userId)}`, {});
 }
 
-export async function rejectAndReturnToDispatch(id) {
-    return post(`/tickets/${id}/reject-and-return-to-dispatch`, {});
-}
-
 export async function rollbackToRequest(id) {
     return post(`/tickets/${id}/rollback-to-request`, {});
 }
@@ -43,4 +39,8 @@ export async function updateTicketType(id, data) {
 
 export async function addComment(id, authorId, body) {
     return post(`/tickets/${id}/comments`, {authorId, body});
+}
+
+export async function addPullRequest(id, prUrl) {
+    return post(`/tickets/${id}/pull-requests`, {prUrl});
 }

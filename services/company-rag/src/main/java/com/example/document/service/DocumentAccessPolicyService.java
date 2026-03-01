@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toMap;
 
 @ApplicationScoped
 public class DocumentAccessPolicyService {
@@ -34,25 +33,25 @@ public class DocumentAccessPolicyService {
     void init() {
         try {
             List<Path> configLocation = scan(accessConfigLocation);
-            InputStream configStream = Files.newInputStream(configLocation.getFirst());
+            if (configLocation.isEmpty()) {
+                LOGGER.warning("No access policy config file found at: " + accessConfigLocation);
+                accessPolicy = new HashMap<>();
+                return;
+            }
 
-            Yaml yaml = new Yaml();
-            Map<String, List<String>> data = yaml.load(configStream);
+            Path configPath = configLocation.getFirst();
+            try (InputStream configStream = Files.newInputStream(configPath)) {
+                Yaml yaml = new Yaml();
+                Object loaded = yaml.load(configStream);
+                accessPolicy = parseAccessPolicy(loaded);
+            }
 
-            accessPolicy = Optional.ofNullable(data).orElse(Map.of()).entrySet().stream()
-                            .filter(e -> e.getValue() instanceof Map<?, ?>)
-                            .map(e -> Map.entry(e.getKey(), (Map<?, ?>) e.getValue()))
-                            .map(e -> Map.entry(e.getKey(), e.getValue().get("read")))
-                            .filter(e -> e.getValue() instanceof List<?>)
-                            .collect(toMap(
-                                    Map.Entry::getKey,
-                                    e -> ((List<?>) e.getValue())
-                                            .stream()
-                                            .filter(String.class::isInstance)
-                                            .map(String.class::cast)
-                                            .collect(toCollection(ArrayList::new))
-                            ));
+            LOGGER.info("Loaded " + accessPolicy.size() + " document access policies from " + configPath);
+            accessPolicy.forEach((doc, teams) ->
+                    LOGGER.info("Access policy loaded: " + doc + " -> " + (teams.isEmpty() ? "[company-wide]" : teams))
+            );
         } catch (Exception e) {
+            accessPolicy = new HashMap<>();
             LOGGER.log(Level.SEVERE, "Error loading document access policy: ", e);
         }
     }
@@ -90,6 +89,48 @@ public class DocumentAccessPolicyService {
      */
     public Map<String, List<String>> getAllAccessPolicies() {
         return new HashMap<>(accessPolicy);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, List<String>> parseAccessPolicy(Object loaded) {
+        if (!(loaded instanceof Map<?, ?> rootMap)) {
+            LOGGER.warning("Access policy YAML is not a map. Loaded type: " + (loaded == null ? "null" : loaded.getClass().getName()));
+            return new HashMap<>();
+        }
+
+        Map<String, List<String>> parsed = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rootMap.entrySet()) {
+            if (!(entry.getKey() instanceof String docNameRaw)) {
+                continue;
+            }
+            String documentName = docNameRaw.trim();
+            if (documentName.isBlank()) {
+                continue;
+            }
+
+            List<String> teams = extractTeams(entry.getValue());
+            parsed.put(documentName, teams);
+        }
+
+        return parsed;
+    }
+
+    private List<String> extractTeams(Object policyNode) {
+        Object teamsNode = policyNode;
+        if (policyNode instanceof Map<?, ?> policyMap) {
+            teamsNode = policyMap.get("read");
+        }
+
+        if (!(teamsNode instanceof List<?> teamList)) {
+            return new ArrayList<>();
+        }
+
+        return teamList.stream()
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(toCollection(ArrayList::new));
     }
 
     private List<Path> scan(String directory) throws URISyntaxException {

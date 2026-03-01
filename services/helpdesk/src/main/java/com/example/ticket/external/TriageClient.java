@@ -13,14 +13,14 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import java.util.concurrent.CompletionStage;
 
 @Path("/api/triage")
-@RegisterRestClient
+@RegisterRestClient(configKey = "triage")
 public interface TriageClient {
 
     @POST
     @Path("/v1/classify")
     @Produces(MediaType.APPLICATION_JSON)
     @Retry(maxRetries = 1, delay = 1000)
-    @Timeout(300)
+    @Timeout(30000)
     CompletionStage<TriageResponseDto> classifyAsync(TriageRequestDto request);
 
 }

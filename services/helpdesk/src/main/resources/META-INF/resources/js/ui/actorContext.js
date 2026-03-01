@@ -3,25 +3,29 @@ const ACTOR_STORAGE_KEY = 'ticketing-actor-context';
 
 // Team to default user mapping (lowercase team names)
 const TEAM_DEFAULT_USERS = {
-    'dispatch': 'dispatch-user1',
+    'dispatching': 'dispatching-user1',
     'billing': 'billing-user1',
-    'reschedule': 'reschedule-user1',
+    'scheduling': 'scheduling-user1',
     'engineering': 'engineering-user1',
 };
 
 // Team to role mapping (lowercase team names)
 const TEAM_ROLES = {
-    'dispatch': 'DISPATCHER',
-    'billing': 'BILLING_AGENT',
-    'reschedule': 'SCHEDULING_AGENT',
-    'engineering': 'ENGINEER',
+    'dispatching': 'dispatching',
+    'billing': 'billing',
+    'scheduling': 'scheduling',
+    'engineering': 'engineering',
 };
+const VALID_TEAMS = Object.keys(TEAM_DEFAULT_USERS);
 
 export function getActorContext() {
     const stored = localStorage.getItem(ACTOR_STORAGE_KEY);
     if (stored) {
         try {
-            return JSON.parse(stored);
+            const parsed = JSON.parse(stored);
+            if (parsed && VALID_TEAMS.includes(parsed.team)) {
+                return parsed;
+            }
         } catch (e) {
             console.error('Failed to parse actor context:', e);
         }
@@ -29,9 +33,9 @@ export function getActorContext() {
 
     // Default context
     return {
-        team: 'dispatch',
-        actorId: 'dispatch-user1',
-        role: 'DISPATCHER',
+        team: 'dispatching',
+        actorId: 'dispatching-user1',
+        role: 'dispatching',
     };
 }
 
@@ -56,10 +60,10 @@ export function renderActorContext() {
         <div class="actor-context-group">
             <label for="actor-team" class="actor-label">Persona:</label>
             <select id="actor-team" class="actor-select">
-                <option value="dispatch" ${context.team === 'dispatch' ? 'selected' : ''}>Dispatcher</option>
-                <option value="billing" ${context.team === 'billing' ? 'selected' : ''}>Billing Agent</option>
-                <option value="reschedule" ${context.team === 'reschedule' ? 'selected' : ''}>Scheduling Agent</option>
-                <option value="engineering" ${context.team === 'engineering' ? 'selected' : ''}>Engineer</option>
+                <option value="dispatching" ${context.team === 'dispatching' ? 'selected' : ''}>Dispatching</option>
+                <option value="billing" ${context.team === 'billing' ? 'selected' : ''}>Billing</option>
+                <option value="scheduling" ${context.team === 'scheduling' ? 'selected' : ''}>Scheduling</option>
+                <option value="engineering" ${context.team === 'engineering' ? 'selected' : ''}>Engineering</option>
             </select>
         </div>
         <div class="actor-context-group">
@@ -101,6 +105,8 @@ function updateActorContext() {
         window.state.currentUserId = actorId;
     }
 
+    window.dispatchEvent(new CustomEvent('actor-context-changed', {detail: context}));
+
     // NOTE: We intentionally do NOT force a tab change here.
     // The current view (list + selected ticket) should stay as-is when persona changes.
 }
@@ -109,7 +115,7 @@ export function getActorHeaders() {
     const context = getActorContext();
     return {
         'X-Actor-Id': context.actorId || 'demo-user',
-        'X-Actor-Role': context.role || 'USER',
-        'X-Actor-Team': context.team || 'dispatch',
+        'X-Actor-Role': context.role || 'dispatching',
+        'X-Actor-Team': context.team || 'dispatching',
     };
 }

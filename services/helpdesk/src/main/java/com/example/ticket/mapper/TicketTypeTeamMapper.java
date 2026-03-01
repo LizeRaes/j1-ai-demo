@@ -9,12 +9,12 @@ import com.example.ticket.domain.constants.TicketType;
  * <p>
  * Mapping:
  * - BILLING_* → billing
- * - SCHEDULING_* → reschedule
- * - ACCOUNT_* → dispatch
- * - SUPPORT_OTHER → dispatch
+ * - SCHEDULING_* → scheduling
+ * - ACCOUNT_* → dispatching
+ * - SUPPORT_OTHER → dispatching
  * - BUG_* → engineering
  * - ENGINEERING_* → engineering
- * - OTHER → dispatch (AI couldn't classify, needs human dispatcher)
+ * - OTHER → dispatching
  */
 public class TicketTypeTeamMapper {
 
@@ -32,29 +32,15 @@ public class TicketTypeTeamMapper {
 
         return switch (ticketType.name()) {
             case String type when type.startsWith("BILLING_") -> Team.BILLING;
-            case String type when type.startsWith("SCHEDULING_") -> Team.RESCHEDULE;
-            case String type when type.startsWith("ACCOUNT_") -> Team.DISPATCH;
-            case String type when type.startsWith("SUPPORT_OTHER") -> Team.DISPATCH;
+            case String type when type.startsWith("SCHEDULING_") -> Team.SCHEDULING;
+            case String type when type.startsWith("ACCOUNT_") -> Team.DISPATCHING;
+            case String type when type.startsWith("SUPPORT_OTHER") -> Team.DISPATCHING;
             case String type when type.startsWith("BUG_") -> Team.ENGINEERING;
             case String type when type.startsWith("ENGINEERING_") -> Team.ENGINEERING;
-            case String type when type.equals("OTHER") -> Team.DISPATCH;
+            case String type when type.equals("OTHER") -> Team.DISPATCHING;
             case String t -> throw new IllegalArgumentException("Unknown TicketType: " + t);
         };
 
     }
 
-    /**
-     * Checks if a ticket type requires human dispatcher review.
-     * Tickets ending with _OTHER or generic OTHER require review.
-     *
-     * @param ticketType The ticket type
-     * @return true if dispatcher review is required
-     */
-    public boolean requiresDispatcherReview(TicketType ticketType) {
-        if (ticketType == null) {
-            return true; // Invalid tickets require review
-        }
-        String typeName = ticketType.name();
-        return typeName.equals("OTHER") || typeName.endsWith("_OTHER");
-    }
 }

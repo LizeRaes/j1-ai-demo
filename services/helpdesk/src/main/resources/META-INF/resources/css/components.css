@@ -344,3 +344,20 @@
     font-style: italic;
     font-size: 0.9rem;
 }
+
+.pr-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pr-ai-badge {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+    border-radius: 10px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}

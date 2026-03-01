@@ -40,12 +40,12 @@ public class TicketStateService {
     }
 
     @Transactional
-    public Long findMaxId() {
-        return ticketRepository.findMaxId();
+    public void deleteAll() {
+        ticketRepository.deleteAll();
     }
 
     @Transactional
-    public void deleteAll() {
-        ticketRepository.deleteAll();
+    public void resetAutoIncrement() {
+        ticketRepository.resetAutoIncrement();
     }
 }

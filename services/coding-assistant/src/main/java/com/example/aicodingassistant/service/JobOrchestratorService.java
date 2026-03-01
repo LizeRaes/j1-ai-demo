@@ -64,7 +64,6 @@ public class JobOrchestratorService {
         String existingJobId = activeJobsByTicketId.putIfAbsent(request.ticketId(), "PENDING");
         if (existingJobId != null) {
             return new SubmitJobResponse(
-                    "",
                     JobSubmissionStatus.REJECTED,
                     "A coding assistant job is already active for ticket " + request.ticketId() + ".");
         }
@@ -78,7 +77,6 @@ public class JobOrchestratorService {
         executorService.submit(() -> process(context));
 
         return new SubmitJobResponse(
-                jobId,
                 JobSubmissionStatus.ACCEPTED,
                 "Job accepted and queued for asynchronous processing.");
     }

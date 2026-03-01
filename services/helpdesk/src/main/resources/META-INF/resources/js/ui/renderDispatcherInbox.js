@@ -124,7 +124,7 @@ function showDispatchForm(request) {
                     <option value="ENGINEERING_OTHER">Engineering - Other</option>
                 </optgroup>
                 <optgroup label="Unclassified">
-                    <option value="OTHER">Other (Needs Dispatcher Review)</option>
+                    <option value="OTHER">Other</option>
                 </optgroup>
             </select>
             <small style="color: #666; display: block; margin-top: 4px;">Team will be assigned automatically based on ticket type</small>

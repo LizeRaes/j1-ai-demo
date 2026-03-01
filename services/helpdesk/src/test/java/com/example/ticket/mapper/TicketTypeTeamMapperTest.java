@@ -5,9 +5,7 @@ import com.example.ticket.domain.constants.TicketType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TicketTypeTeamMapperTest {
 
@@ -21,15 +19,15 @@ class TicketTypeTeamMapperTest {
 
     @Test
     void deriveTeamFromTicketTypeScheduling() {
-        assertEquals(Team.RESCHEDULE, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_CANCELLATION));
-        assertEquals(Team.RESCHEDULE, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_OTHER));
+        assertEquals(Team.SCHEDULING, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_CANCELLATION));
+        assertEquals(Team.SCHEDULING, mapper.deriveTeamFromTicketType(TicketType.SCHEDULING_OTHER));
     }
 
     @Test
     void deriveTeamFromTicketType() {
-        assertEquals(Team.DISPATCH, mapper.deriveTeamFromTicketType(TicketType.ACCOUNT_ACCESS));
-        assertEquals(Team.DISPATCH, mapper.deriveTeamFromTicketType(TicketType.SUPPORT_OTHER));
-        assertEquals(Team.DISPATCH, mapper.deriveTeamFromTicketType(TicketType.OTHER));
+        assertEquals(Team.DISPATCHING, mapper.deriveTeamFromTicketType(TicketType.ACCOUNT_ACCESS));
+        assertEquals(Team.DISPATCHING, mapper.deriveTeamFromTicketType(TicketType.SUPPORT_OTHER));
+        assertEquals(Team.DISPATCHING, mapper.deriveTeamFromTicketType(TicketType.OTHER));
     }
 
     @Test
@@ -42,24 +40,5 @@ class TicketTypeTeamMapperTest {
     @Test
     void deriveTeamFromTicketTypeWithTicketTypeIsNull() {
         assertThrows(IllegalArgumentException.class, () -> mapper.deriveTeamFromTicketType(null));
-    }
-
-    @Test
-    void requiresDispatcherReviewForOtherTypesAndNull() {
-        assertTrue(mapper.requiresDispatcherReview(TicketType.OTHER));
-        assertTrue(mapper.requiresDispatcherReview(TicketType.SUPPORT_OTHER));
-        assertTrue(mapper.requiresDispatcherReview(TicketType.BILLING_OTHER));
-        assertTrue(mapper.requiresDispatcherReview(TicketType.SCHEDULING_OTHER));
-        assertTrue(mapper.requiresDispatcherReview(TicketType.ENGINEERING_OTHER));
-        assertTrue(mapper.requiresDispatcherReview(null));
-    }
-
-    @Test
-    void requiresDispatcherReviewForSpecificNonOtherTypes() {
-        assertFalse(mapper.requiresDispatcherReview(TicketType.BILLING_REFUND));
-        assertFalse(mapper.requiresDispatcherReview(TicketType.SCHEDULING_CANCELLATION));
-        assertFalse(mapper.requiresDispatcherReview(TicketType.ACCOUNT_ACCESS));
-        assertFalse(mapper.requiresDispatcherReview(TicketType.BUG_APP));
-        assertFalse(mapper.requiresDispatcherReview(TicketType.BUG_BACKEND));
     }
 }

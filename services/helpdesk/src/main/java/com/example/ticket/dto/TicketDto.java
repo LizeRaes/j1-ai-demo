@@ -13,5 +13,6 @@ public record TicketDto(Long id, String userId, String originalRequest,
                         TicketType ticketType, TicketStatus status, TicketSource source,
                         String assignedTeam, String assignedTo, Boolean urgencyFlag, Double urgencyScore,
                         Double aiConfidence, Boolean rollbackAllowed, String aiPayloadJson, Long incomingRequestId,
-                        LocalDateTime createdAt, LocalDateTime updatedAt, List<CommentDto> comments) {
+                        LocalDateTime createdAt, LocalDateTime updatedAt, List<CommentDto> comments,
+                        List<TicketPullRequestDto> pullRequests) {
 }

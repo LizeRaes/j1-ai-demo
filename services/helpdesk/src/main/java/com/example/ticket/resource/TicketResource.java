@@ -1,6 +1,5 @@
 package com.example.ticket.resource;
 
-import com.example.ticket.domain.constants.TicketStatus;
 import com.example.ticket.dto.*;
 import com.example.ticket.service.TicketService;
 import jakarta.inject.Inject;
@@ -60,16 +59,6 @@ public class TicketResource {
     }
 
     @POST
-    @Path("/{id}/reject-and-return-to-dispatch")
-    public Response rejectAndReturnToDispatch(@PathParam("id") Long id) {
-        TicketDto ticket = ticketService.rejectAndReturnToDispatch(id);
-        if (ticket == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.ok(ticket).build();
-    }
-
-    @POST
     @Path("/{id}/status")
     public Response updateTicketStatus(@PathParam("id") Long id, UpdateTicketStatusDto dto) {
         TicketDto ticket = ticketService.updateTicketStatus(id, dto.status());
@@ -101,6 +90,20 @@ public class TicketResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.status(Response.Status.CREATED).entity(comment).build();
+    }
+
+    @POST
+    @Path("/{id}/pull-requests")
+    public Response addPullRequest(@PathParam("id") Long id, AddPullRequestDto dto) {
+        try {
+            TicketPullRequestDto pullRequest = ticketService.addManualPullRequest(id, dto);
+            if (pullRequest == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.status(Response.Status.CREATED).entity(pullRequest).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
     }
 
     @POST

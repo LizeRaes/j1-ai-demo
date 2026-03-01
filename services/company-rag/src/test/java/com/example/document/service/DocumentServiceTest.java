@@ -77,6 +77,7 @@ class DocumentServiceTest {
 
         verify(accessPolicyService).updateDocumentAccess("TestDoc", List.of("teamX"));
         verify(embeddingStore).removeAll(any(Filter.class));
+        verify(accessPolicyService, never()).removeDocument("TestDoc");
         verify(embeddingStore, times(2)).add(any(Embedding.class), any(TextSegment.class));
 
         ArgumentCaptor<String> strategyCap = ArgumentCaptor.forClass(String.class);
@@ -90,6 +91,9 @@ class DocumentServiceTest {
         ResultSet rs = mock(ResultSet.class);
         Connection connection = mock(Connection.class);
         when(accessPolicyService.getAllAccessPolicies()).thenReturn(Map.of("PolicyDoc", List.of("teamA")));
+        when(accessPolicyService.getAccessTeams("PolicyDoc")).thenReturn(List.of("teamA"));
+        when(accessPolicyService.getAccessTeams("DBDoc1")).thenReturn(List.of());
+        when(accessPolicyService.getAccessTeams("DBDoc2")).thenReturn(List.of());
 
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.prepareStatement(anyString())).thenReturn(ps);
@@ -102,6 +106,13 @@ class DocumentServiceTest {
                 .map(DocumentsResponse.DocumentInfo::documentName)
                 .toList()
                 .containsAll(List.of("PolicyDoc", "DBDoc1", "DBDoc2")));
+        assertTrue(
+                names.stream()
+                        .filter(d -> "PolicyDoc".equals(d.documentName()))
+                        .findFirst()
+                        .map(d -> List.of("teamA").equals(d.rbacTeams()))
+                        .orElse(false)
+        );
     }
 
     @Test

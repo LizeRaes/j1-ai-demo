@@ -26,8 +26,8 @@ representatives and engineers use this system to:
     - **Incoming complaint → AI Triage → Ticket**: User complaints from MedicalAppointment arrive as incoming requests,
       which are immediately processed by AI triage service (async, non-blocking) to create tickets. The AI triage
       service classifies requests and returns ticket type, urgency score, confidence, related tickets, and policy
-      citations. If AI can't classify or triage fails/times out, a ticket with type `OTHER` is created and assigned to
-      the DISPATCH team for human review.
+      citations. While triage is pending, the provisional ticket is hidden. If triage fails/times out, the request
+      returns to dispatcher inbox for human review.
     - **Manual ticket creation**: Customer service can create tickets directly (admin/demo)
     - **JSON endpoint ticket creation**: AI systems or external scripts can create tickets via API (for AI/demo scripts)
 
@@ -52,10 +52,11 @@ representatives and engineers use this system to:
     - Document links are hidden if user's team is not in the document's `rbacTeams` list
 
 - **Ticket Lifecycle Management**:
-    - Accept tickets
-    - Update status (IN_PROGRESS, WAITING_ON_USER, COMPLETED)
-    - Reject & Return to Dispatch (for AI tickets)
+    - Accept AI-triaged tickets (`FROM_AI`)
+    - Reject AI-triaged tickets back to dispatcher queue (`RETURNED_TO_DISPATCH`)
+    - Set work statuses (`IN_PROGRESS`, `WAITING_ON_USER`, `COMPLETED`) for accepted AI tickets and human-dispatched tickets
     - Add comments
+    - Note: advanced assignment/ownership workflow is intentionally out of scope for this demo
 
 - **Live Event Logs**:
     - Real-time event stream in side pane
@@ -85,6 +86,16 @@ representatives and engineers use this system to:
 
 2. **Run Quarkus** (choose one of the following modes):
 
+   **Recommended first run (coding-assistant disabled):**
+   > Disable until you explicitly want bug-to-PR automation.  
+   > When enabled, coding-assistant requires `codex` CLI + `gh` + `git` installed and authenticated (see `services/coding-assistant/README.md`).
+   ```bash
+   mvn quarkus:dev -DDemoData=true -Dapp.coding-assistant.enabled=false
+   ```
+   > Tests are safe to run without coding-assistant/codex/triage services; business-logic tests use mocks.  
+   > Run tests with:
+   > `mvn test`
+
    **Load Demo Data** (clears database and loads tickets from `demo-tickets.json`):
    ```bash
    mvn quarkus:dev -DDemoData=true
@@ -104,6 +115,35 @@ representatives and engineers use this system to:
 
 3. **Access the Application**:
     - Open http://localhost:8080
+
+### Coding Assistant Integration (Optional)
+
+Helpdesk can trigger `coding-assistant` automatically for `BUG_*` tickets (best effort, non-blocking).
+
+Configuration in `src/main/resources/application.properties`:
+
+- `app.coding-assistant.enabled=true|false`
+- `app.coding-assistant.repo-url=...` (set this directly in properties to your own repo URL)
+- `app.coding-assistant.confidence-threshold=0.60`
+- `app.coding-assistant.callback.auth-token=...`
+
+How to disable quickly:
+
+```bash
+mvn quarkus:dev -Dapp.coding-assistant.enabled=false
+```
+
+How to point to your own repo clone/remote:
+
+```bash
+# Edit src/main/resources/application.properties and set:
+# app.coding-assistant.repo-url=https://github.com/<your-org>/<your-repo>
+```
+
+Notes:
+
+- If `app.coding-assistant.enabled=true` but no repo URL is set, helpdesk skips the trigger and logs a warning.
+- Callback token must match coding-assistant's `app.callback.auth-token`.
 
 ## API Endpoints
 
@@ -125,7 +165,7 @@ representatives and engineers use this system to:
 - `GET /api/tickets?view=inbox|team|mine&team=...&user=...` - List tickets
 - `GET /api/tickets/{id}` - Get ticket
 - `POST /api/tickets/{id}/accept` - Accept ticket
-- `POST /api/tickets/{id}/reject-and-return-to-dispatch` - Reject AI ticket
+- `POST /api/tickets/{id}/rollback-to-request` - Reject AI ticket and return complaint to dispatcher queue
 - `POST /api/tickets/{id}/status` - Update ticket status
 - `POST /api/tickets/{id}/comments` - Add comment
 
@@ -227,7 +267,7 @@ the following fields:
 **Optional fields:**
 
 - `status` (string): Ticket status (defaults to `FROM_DISPATCH`). Valid values: `FROM_DISPATCH`, `FROM_AI`, `TRIAGED`,
-  `IN_PROGRESS`, `WAITING_ON_USER`, `COMPLETED`, `RETURNED_TO_DISPATCH`, `ROLLED_BACK`
+  `IN_PROGRESS`, `WAITING_ON_USER`, `COMPLETED`, `RETURNED_TO_DISPATCH`
 - `source` (string): Ticket source (defaults to `MANUAL`). Valid values: `MANUAL`, `AI`, `API`
 - `assignedTo` (string): User ID to assign ticket to (defaults to team's default user)
 - `urgencyFlag` (boolean): Whether ticket is marked urgent (defaults to `false`)

@@ -14,6 +14,7 @@ import java.util.List;
 @Table(name = "tickets")
 public class Ticket {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -72,6 +73,9 @@ public class Ticket {
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TicketPullRequest> pullRequests;
 
     public Long getId() {
         return id;
@@ -191,6 +195,14 @@ public class Ticket {
 
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public List<TicketPullRequest> getPullRequests() {
+        return pullRequests;
+    }
+
+    public void setPullRequests(List<TicketPullRequest> pullRequests) {
+        this.pullRequests = pullRequests;
     }
 
     public LocalDateTime getCreatedAt() {

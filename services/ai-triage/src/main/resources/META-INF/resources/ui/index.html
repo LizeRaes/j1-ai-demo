@@ -30,6 +30,7 @@
             height: 2.5rem;
             display: flex;
             align-items: center;
+            justify-content: center;
             padding: 0 1rem;
             font-size: 1rem;
             font-weight: 700;
@@ -485,6 +486,8 @@
 
         let currentZoom = 100;
         let defaultZoom = 100;
+        let shouldFollowEventLog = true;
+        let shouldFollowTicketList = true;
 
         // Load config and initialize zoom
         async function initializeZoom() {
@@ -605,7 +608,9 @@
                     <div class="related-tickets">
                         <div class="related-tickets-label">Similar Tickets:</div>
                         <div class="related-ticket-ids">
-                            ${ticket.relatedTicketIds.map(id => `<span class="related-ticket-id">#${id}</span>`).join('')}
+                            ${ticket.relatedTicketIds.map(id => `
+                                <a class="related-ticket-id" href="http://localhost:8080/?tab=inbox&ticketId=${id}">#${id}</a>
+                            `).join('')}
                         </div>
                     </div>
                 `;
@@ -670,17 +675,29 @@
             return div.innerHTML;
         }
 
+        function isNearTop(element, threshold = 8) {
+            return element.scrollTop <= threshold;
+        }
+
         function loadEvents() {
             fetch(`${API_BASE}/events`)
                 .then(response => response.json())
                 .then(events => {
                     const content = document.getElementById('eventsContent');
+                    const previousScrollTop = content.scrollTop;
+                    const previousScrollHeight = content.scrollHeight;
                     if (events.length === 0) {
                         content.innerHTML = '<div class="empty-state">No events yet</div>';
                     } else {
                         content.innerHTML = events.map(renderEvent).join('');
-                        // Auto-scroll to top (newest events)
-                        content.scrollTop = 0;
+                        if (shouldFollowEventLog || isNearTop(content)) {
+                            // Follow newest events while user is at the top.
+                            content.scrollTop = 0;
+                        } else {
+                            // Keep reader position stable when reviewing older entries.
+                            const heightDelta = content.scrollHeight - previousScrollHeight;
+                            content.scrollTop = previousScrollTop + heightDelta;
+                        }
                     }
                 })
                 .catch(error => {
@@ -693,12 +710,20 @@
                 .then(response => response.json())
                 .then(tickets => {
                     const content = document.getElementById('ticketsContent');
+                    const previousScrollTop = content.scrollTop;
+                    const previousScrollHeight = content.scrollHeight;
                     if (tickets.length === 0) {
                         content.innerHTML = '<div class="empty-state">No tickets yet</div>';
                     } else {
                         content.innerHTML = tickets.map(renderTicket).join('');
-                        // Auto-scroll to top (newest tickets)
-                        content.scrollTop = 0;
+                        if (shouldFollowTicketList || isNearTop(content)) {
+                            // Follow newest tickets while user is at the top.
+                            content.scrollTop = 0;
+                        } else {
+                            // Keep reader position stable when reviewing older entries.
+                            const heightDelta = content.scrollHeight - previousScrollHeight;
+                            content.scrollTop = previousScrollTop + heightDelta;
+                        }
                     }
                 })
                 .catch(error => {
@@ -708,6 +733,15 @@
 
         // Initialize zoom on page load
         initializeZoom();
+
+        const eventsContent = document.getElementById('eventsContent');
+        eventsContent.addEventListener('scroll', () => {
+            shouldFollowEventLog = isNearTop(eventsContent);
+        });
+        const ticketsContent = document.getElementById('ticketsContent');
+        ticketsContent.addEventListener('scroll', () => {
+            shouldFollowTicketList = isNearTop(ticketsContent);
+        });
 
         // Load data on page load
         loadEvents();

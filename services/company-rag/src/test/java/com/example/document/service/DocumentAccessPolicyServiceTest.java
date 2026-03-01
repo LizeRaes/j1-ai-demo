@@ -16,62 +16,64 @@ public class DocumentAccessPolicyServiceTest {
     @BeforeEach
     void setup() {
         service = new DocumentAccessPolicyService();
+        service.accessConfigLocation = "classpath:/config/document_access_policy.yaml";
         service.init();
     }
 
     @Test
-    void testGetAccessTeamsDocumentExists() {
-        List<String> teams = service.getAccessTeams("Approved_Response_Templates.txt");
-        assertNotNull(teams);
+    void loadsCurrentYamlPoliciesWithExpectedTeams() {
+        Map<String, List<String>> policies = service.getAllAccessPolicies();
+
+        assertEquals(7, policies.size(), "Expected all current YAML documents to be loaded");
+        assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Approved_Response_Templates.txt"));
+        assertEquals(List.of("billing", "dispatching"), policies.get("Billing_Refund_Policy.txt"));
+        assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Data_Privacy_User_Data_Handling.txt"));
+        assertEquals(List.of("dispatching", "engineering"), policies.get("Known_Bugs_Limitations.txt"));
+        assertEquals(List.of("engineering"), policies.get("MedicalAppointment_Architecture.txt"));
+        assertEquals(List.of("billing"), policies.get("Payment_System_Payment_Flow.txt"));
+        assertEquals(List.of("dispatching"), policies.get("Security_Escalation_Policy.txt"));
     }
 
     @Test
-    void testGetAccessTeamsDocumentDoesNotExist() {
+    void getAccessTeamsReturnsConfiguredTeamsForKnownDocument() {
+        List<String> teams = service.getAccessTeams("Known_Bugs_Limitations.txt");
+        assertEquals(List.of("dispatching", "engineering"), teams);
+    }
+
+    @Test
+    void getAccessTeamsReturnsEmptyListForUnknownDocument() {
         List<String> teams = service.getAccessTeams("NonExistentDocument.txt");
         assertNotNull(teams);
         assertTrue(teams.isEmpty());
     }
 
     @Test
-    void testUpdateDocumentAccessWithTeams() {
+    void updateDocumentAccessWithTeams() {
         String documentName = "TestDocument.txt";
-        List<String> teams = List.of("Team1", "Team2");
+        List<String> teams = List.of("team1", "team2");
         service.updateDocumentAccess(documentName, teams);
         assertEquals(teams, service.getAccessTeams(documentName));
     }
 
     @Test
-    void testUpdateDocumentAccessEmptyTeams() {
+    void updateDocumentAccessWithEmptyOrNullTeamsMeansCompanyWide() {
         String documentName = "TestDocument.txt";
         service.updateDocumentAccess(documentName, List.of());
         assertTrue(service.getAccessTeams(documentName).isEmpty());
-    }
 
-    @Test
-    void testUpdateDocumentAccessNullTeams() {
-        String documentName = "TestDocument.txt";
         service.updateDocumentAccess(documentName, null);
         assertTrue(service.getAccessTeams(documentName).isEmpty());
     }
 
     @Test
-    void testRemoveDocument() {
+    void removeDocument() {
         String documentName = "TestDocument.txt";
-        List<String> teams = List.of("Team1", "Team2");
+        List<String> teams = List.of("team1", "team2");
         service.updateDocumentAccess(documentName, teams);
         assertFalse(service.getAccessTeams(documentName).isEmpty());
+
         service.removeDocument(documentName);
         assertTrue(service.getAccessTeams(documentName).isEmpty());
-    }
-
-    @Test
-    void testGetAllAccessPolicies() {
-        String documentName = "TestDocument.txt";
-        List<String> teams = List.of("Team1", "Team2");
-        service.updateDocumentAccess(documentName, teams);
-        Map<String, List<String>> list = service.getAllAccessPolicies();
-        assertNotNull(list);
-        assertFalse(list.isEmpty());
     }
 
     @AfterEach

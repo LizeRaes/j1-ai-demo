@@ -59,6 +59,7 @@ Request example:
 
 - `POST` to configured callback URL (`quarkus.rest-client.helpdesk-callback.url`)
 - Header: `Authorization: Bearer <app.callback.auth-token>`
+- Helpdesk validates this token against `app.coding-assistant.callback.auth-token`
 
 Callback payload:
 
@@ -110,6 +111,9 @@ In `src/main/resources/application.properties`:
 - `app.ai-coding-assistant.model=` (optional)
 - `app.callback.auth-token=...`
 - `quarkus.rest-client.helpdesk-callback.url=http://localhost:8080/api/coding-assistant`
+
+For local demo defaults, keep `app.callback.auth-token` (coding-assistant) equal to
+`app.coding-assistant.callback.auth-token` (helpdesk).
 
 Request fields are mandatory in each job submission: `ticketId`, `originalRequest`, `repoUrl`, and `confidenceThreshold`.
 

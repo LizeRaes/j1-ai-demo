@@ -36,7 +36,7 @@ public final class RequestValidation {
     }
 
     private static Response bad(String message) {
-        SubmitJobResponse body = new SubmitJobResponse("", JobSubmissionStatus.REJECTED, message);
+        SubmitJobResponse body = new SubmitJobResponse(JobSubmissionStatus.REJECTED, message);
         return Response.status(Response.Status.BAD_REQUEST).entity(body).build();
     }
 }

@@ -1,7 +1,7 @@
 import {
     acceptTicket,
     addComment,
-    rejectAndReturnToDispatch,
+    addPullRequest,
     rollbackToRequest,
     updateTicketStatus
 } from '../api/ticketsApi.js';
@@ -52,8 +52,8 @@ export function renderTicketDetail(ticket) {
     actionsSection.innerHTML = '<h4>Actions</h4>';
     const actionsDiv = createElement('div', 'ticket-actions');
 
-    // Accept button (for FROM_AI or FROM_DISPATCH)
-    if (ticket.status === 'FROM_AI' || ticket.status === 'FROM_DISPATCH') {
+    // Accept button (for FROM_AI only)
+    if (ticket.status === 'FROM_AI') {
         const acceptBtn = createElement('button', 'btn btn-success', 'Accept');
         acceptBtn.addEventListener('click', async () => {
             try {
@@ -94,24 +94,6 @@ export function renderTicketDetail(ticket) {
         actionsDiv.appendChild(rollbackBtn);
     }
 
-    // Reject & Return to Dispatch (for FROM_AI without incoming request)
-    if (ticket.status === 'FROM_AI' && ticket.rollbackAllowed && !ticket.incomingRequestId) {
-        const rejectBtn = createElement('button', 'btn btn-danger', 'Reject & Return to Dispatch');
-        rejectBtn.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to reject and return this ticket to dispatch?')) {
-                try {
-                    await rejectAndReturnToDispatch(ticket.id);
-                    alert('Ticket returned to dispatch!');
-                    await renderTickets('inbox');
-                    await loadTicketDetail(ticket.id);
-                } catch (error) {
-                    alert('Error rejecting ticket: ' + error.message);
-                }
-            }
-        });
-        actionsDiv.appendChild(rejectBtn);
-    }
-
     // Ticket Type change (for dispatcher - can change ticketType, team updates automatically)
     if (ticket.status === 'FROM_DISPATCH' || ticket.status === 'FROM_AI' || ticket.status === 'RETURNED_TO_DISPATCH') {
         const typeSelect = createElement('select', 'form-select');
@@ -128,7 +110,7 @@ export function renderTicketDetail(ticket) {
             {value: 'BUG_APP', label: 'Bug - App', group: 'Bugs / Engineering'},
             {value: 'BUG_BACKEND', label: 'Bug - Backend', group: 'Bugs / Engineering'},
             {value: 'ENGINEERING_OTHER', label: 'Engineering - Other', group: 'Bugs / Engineering'},
-            {value: 'OTHER', label: 'Other (Needs Dispatcher Review)', group: 'Unclassified'}
+            {value: 'OTHER', label: 'Other', group: 'Unclassified'}
         ];
 
         ticketTypes.forEach(type => {
@@ -162,9 +144,11 @@ export function renderTicketDetail(ticket) {
     }
 
     // Status change (for TRIAGED+)
-    if (ticket.status === 'TRIAGED' || ticket.status === 'IN_PROGRESS' || ticket.status === 'WAITING_ON_USER') {
+    if (ticket.status === 'FROM_DISPATCH' || ticket.status === 'TRIAGED' || ticket.status === 'IN_PROGRESS' || ticket.status === 'WAITING_ON_USER') {
         const statusSelect = createElement('select', 'status-select');
-        const statuses = ['TRIAGED', 'IN_PROGRESS', 'WAITING_ON_USER', 'COMPLETED'];
+        const statuses = ticket.status === 'FROM_DISPATCH'
+            ? ['IN_PROGRESS', 'WAITING_ON_USER', 'COMPLETED']
+            : ['TRIAGED', 'IN_PROGRESS', 'WAITING_ON_USER', 'COMPLETED'];
         statuses.forEach(status => {
             const option = createElement('option');
             option.value = status;
@@ -281,7 +265,7 @@ export function renderTicketDetail(ticket) {
             // Check RBAC: only show document link if user's team is in rbacTeams
             const hasAccess = citation.rbacTeams &&
                 Array.isArray(citation.rbacTeams) &&
-                citation.rbacTeams.some(team => team.toLowerCase() === userTeam);
+                (citation.rbacTeams.length === 0 || citation.rbacTeams.some(team => team.toLowerCase() === userTeam));
 
             // Debug logging
             if (citation.documentName) {
@@ -350,6 +334,62 @@ export function renderTicketDetail(ticket) {
 
     relatedDocsSection.appendChild(relatedDocsList);
     detail.appendChild(relatedDocsSection);
+
+    // Pull Requests
+    const pullRequestsSection = createElement('div', 'ticket-section related-section');
+    pullRequestsSection.innerHTML = '<h4>Pull Requests</h4>';
+    const pullRequestsList = createElement('div', 'related-list');
+    const pullRequests = Array.isArray(ticket.pullRequests) ? ticket.pullRequests : [];
+
+    if (pullRequests.length > 0) {
+        pullRequests.forEach(pr => {
+            const prItem = createElement('div', 'related-item pr-item');
+            const prLink = createElement('a', 'related-link', pr.prUrl);
+            prLink.href = pr.prUrl;
+            prLink.target = '_blank';
+            prLink.rel = 'noopener noreferrer';
+            prItem.appendChild(prLink);
+
+            if (pr.aiGenerated) {
+                const aiBadge = createElement('span', 'pr-ai-badge', 'AI');
+                prItem.appendChild(aiBadge);
+            }
+
+            pullRequestsList.appendChild(prItem);
+        });
+    } else {
+        const emptyPrs = createElement('div', 'related-empty', 'No pull requests yet');
+        pullRequestsList.appendChild(emptyPrs);
+    }
+
+    pullRequestsSection.appendChild(pullRequestsList);
+
+    const addPrForm = createElement('div', 'form-group');
+    const addPrLabel = createElement('label', 'form-label');
+    addPrLabel.textContent = 'Add PR link manually';
+    const addPrInput = createElement('input', 'form-input');
+    addPrInput.placeholder = 'https://github.com/org/repo/pull/123';
+    const addPrBtn = createElement('button', 'btn btn-primary', 'Add PR');
+    addPrBtn.style.marginTop = '0.5rem';
+    addPrBtn.addEventListener('click', async () => {
+        const prUrl = addPrInput.value.trim();
+        if (!prUrl) {
+            alert('Please enter a PR URL');
+            return;
+        }
+        try {
+            await addPullRequest(ticket.id, prUrl);
+            addPrInput.value = '';
+            await loadTicketDetail(ticket.id);
+        } catch (error) {
+            alert('Error adding PR: ' + error.message);
+        }
+    });
+    addPrForm.appendChild(addPrLabel);
+    addPrForm.appendChild(addPrInput);
+    addPrForm.appendChild(addPrBtn);
+    pullRequestsSection.appendChild(addPrForm);
+    detail.appendChild(pullRequestsSection);
 
     // Comments
     const commentsSection = createElement('div', 'ticket-section');
