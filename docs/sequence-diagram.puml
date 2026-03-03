@@ -1,0 +1,34 @@
+@startuml
+hide footbox
+autonumber
+
+participant "MediFlow User App\n(8083)" as MediFlow
+participant "Helpdesk System\n(8080)" as Helpdesk
+participant "AI Triage Agent\n(8081)" as AITriage
+participant "Similar Tickets Service\n(8082)" as Similarity
+participant "Company RAG Service\n(8084)" as RAG
+participant "AI Code Assistant\n(8085)" as CodeAI
+participant "Urgency Scorer Model\n(8086)" as Urgency
+
+MediFlow -> Helpdesk : POST /api/intake/incoming-request
+
+Helpdesk -> Similarity : POST /api/similarity/tickets/upsert
+Similarity --> Helpdesk : OK
+
+Helpdesk --> AITriage : POST /api/triage/v1/classify\n(async)
+
+AITriage -> Similarity : POST /api/similarity/tickets/search
+Similarity --> AITriage : related ticket IDs
+
+AITriage -> RAG : POST /api/documents/search
+RAG --> AITriage : policy citations
+
+AITriage -> Urgency : POST /api/urgency/score
+Urgency --> AITriage : urgency score
+
+AITriage --> Helpdesk : classification + enrichment + urgency
+
+Helpdesk -> CodeAI : POST /api/coding-assistant/jobs\n(async)
+CodeAI --> Helpdesk : POST /api/coding-assistant\n(async callback with PR link)
+
+@enduml
