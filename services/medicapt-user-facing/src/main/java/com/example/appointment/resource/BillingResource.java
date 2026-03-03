@@ -1,7 +1,7 @@
 package com.example.appointment.resource;
 
-import com.medicalappointment.services.BillingService;
-import com.medicalappointment.services.SchedulingService;
+import com.example.appointment.services.BillingService;
+import com.example.appointment.services.SchedulingService;
 import io.quarkus.qute.Template;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;

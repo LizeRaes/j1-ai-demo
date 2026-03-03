@@ -1,7 +1,7 @@
 package com.example.appointment.mapper;
 
-import com.example.ticket.domain.constants.Team;
-import com.example.ticket.domain.constants.TicketType;
+import com.example.appointment.domain.constants.Team;
+import com.example.appointment.domain.constants.TicketType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

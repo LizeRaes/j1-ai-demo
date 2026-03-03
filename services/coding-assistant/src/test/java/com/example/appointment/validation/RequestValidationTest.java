@@ -1,6 +1,6 @@
 package com.example.appointment.validation;
 
-import com.example.aicodingassistant.dto.SubmitJobRequest;
+import com.example.appointment.dto.SubmitJobRequest;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 

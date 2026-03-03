@@ -1,6 +1,6 @@
-package com.example.ticket.dto;
+package com.example.appointment.dto;
 
-import com.example.ticket.domain.constants.TicketType;
+import com.example.appointment.domain.constants.TicketType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

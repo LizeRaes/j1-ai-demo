@@ -1,6 +1,6 @@
 package com.example.appointment.services;
 
-import com.medicalappointment.model.PaymentStatus;
+import com.example.appointment.model.PaymentStatus;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.HashMap;
 import java.util.Map;

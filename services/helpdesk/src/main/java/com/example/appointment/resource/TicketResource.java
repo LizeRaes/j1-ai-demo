@@ -1,7 +1,7 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.dto.*;
-import com.example.ticket.service.TicketService;
+import com.example.appointment.dto.*;
+import com.example.appointment.service.TicketService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

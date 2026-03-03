@@ -1,11 +1,11 @@
-package com.example.aicodingassistant.api;
+package com.example.appointment.api;
 
-import com.example.aicodingassistant.dto.SubmitJobRequest;
-import com.example.aicodingassistant.dto.SubmitJobResponse;
-import com.example.aicodingassistant.logging.JobLogService;
-import com.example.aicodingassistant.logging.JobLogStream;
-import com.example.aicodingassistant.service.JobOrchestratorService;
-import com.example.aicodingassistant.validation.RequestValidation;
+import com.example.appointment.dto.SubmitJobRequest;
+import com.example.appointment.dto.SubmitJobResponse;
+import com.example.appointment.logging.JobLogService;
+import com.example.appointment.logging.JobLogStream;
+import com.example.appointment.service.JobOrchestratorService;
+import com.example.appointment.validation.RequestValidation;
 import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;

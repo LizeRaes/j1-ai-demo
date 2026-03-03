@@ -1,6 +1,6 @@
-package com.example.aicodingassistant.api;
+package com.example.appointment.api;
 
-import com.example.aicodingassistant.dto.CallbackResultRequest;
+import com.example.appointment.dto.CallbackResultRequest;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.Consumes;

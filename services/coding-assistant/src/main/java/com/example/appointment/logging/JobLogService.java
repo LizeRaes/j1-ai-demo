@@ -1,4 +1,4 @@
-package com.example.aicodingassistant.logging;
+package com.example.appointment.logging;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

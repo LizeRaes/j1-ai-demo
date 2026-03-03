@@ -1,13 +1,13 @@
 package com.example.appointment.service;
 
-import com.example.aicodingassistant.api.CallbackClient;
-import com.example.aicodingassistant.domain.AnalysisResult;
-import com.example.aicodingassistant.domain.FixResult;
-import com.example.aicodingassistant.domain.JobSubmissionStatus;
-import com.example.aicodingassistant.dto.CallbackResultRequest;
-import com.example.aicodingassistant.dto.SubmitJobRequest;
-import com.example.aicodingassistant.dto.SubmitJobResponse;
-import com.example.aicodingassistant.logging.JobLogService;
+import com.example.appointment.api.CallbackClient;
+import com.example.appointment.domain.AnalysisResult;
+import com.example.appointment.domain.FixResult;
+import com.example.appointment.domain.JobSubmissionStatus;
+import com.example.appointment.dto.CallbackResultRequest;
+import com.example.appointment.dto.SubmitJobRequest;
+import com.example.appointment.dto.SubmitJobResponse;
+import com.example.appointment.logging.JobLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

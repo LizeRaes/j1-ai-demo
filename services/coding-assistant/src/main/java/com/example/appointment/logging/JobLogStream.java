@@ -1,4 +1,4 @@
-package com.example.aicodingassistant.logging;
+package com.example.appointment.logging;
 
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;

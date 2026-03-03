@@ -1,6 +1,6 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.service.TriageWorkerService;
+import com.example.appointment.service.TriageWorkerService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;

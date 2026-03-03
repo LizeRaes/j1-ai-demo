@@ -1,8 +1,8 @@
-package com.example.ticket.domain.model;
+package com.example.appointment.domain.model;
 
-import com.example.ticket.domain.constants.TicketSource;
-import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.constants.TicketType;
+import com.example.appointment.domain.constants.TicketSource;
+import com.example.appointment.domain.constants.TicketStatus;
+import com.example.appointment.domain.constants.TicketType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;

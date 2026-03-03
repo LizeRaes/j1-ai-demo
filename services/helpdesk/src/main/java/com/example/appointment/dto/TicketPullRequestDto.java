@@ -1,4 +1,4 @@
-package com.example.ticket.dto;
+package com.example.appointment.dto;
 
 public record TicketPullRequestDto(
         Long id,

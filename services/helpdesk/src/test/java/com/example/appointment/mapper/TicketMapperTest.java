@@ -1,15 +1,15 @@
 package com.example.appointment.mapper;
 
-import com.example.ticket.domain.constants.RequestStatus;
-import com.example.ticket.domain.constants.TicketSource;
-import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.constants.TicketType;
-import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.dto.AITicketDto;
-import com.example.ticket.dto.DispatchedTicketDto;
-import com.example.ticket.dto.IncomingRequestDto;
-import com.example.ticket.dto.ManualTicketDto;
-import com.example.ticket.dto.TicketDto;
+import com.example.appointment.domain.constants.RequestStatus;
+import com.example.appointment.domain.constants.TicketSource;
+import com.example.appointment.domain.constants.TicketStatus;
+import com.example.appointment.domain.constants.TicketType;
+import com.example.appointment.domain.model.Ticket;
+import com.example.appointment.dto.AITicketDto;
+import com.example.appointment.dto.DispatchedTicketDto;
+import com.example.appointment.dto.IncomingRequestDto;
+import com.example.appointment.dto.ManualTicketDto;
+import com.example.appointment.dto.TicketDto;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
-package com.example.ticket.persistence;
+package com.example.appointment.persistence;
 
-import com.example.ticket.domain.model.EventLog;
+import com.example.appointment.domain.model.EventLog;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 

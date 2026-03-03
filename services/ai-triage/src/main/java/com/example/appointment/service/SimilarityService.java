@@ -1,8 +1,8 @@
-package com.medicalappointment.triage.service;
+package com.example.appointment.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medicalappointment.triage.dto.SimilaritySearchRequest;
-import com.medicalappointment.triage.dto.SimilaritySearchResponse;
+import com.example.appointment.dto.SimilaritySearchRequest;
+import com.example.appointment.dto.SimilaritySearchResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

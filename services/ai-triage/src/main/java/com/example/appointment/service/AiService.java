@@ -1,8 +1,8 @@
-package com.medicalappointment.triage.service;
+package com.example.appointment.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medicalappointment.triage.dto.AiTriageResult;
-import com.medicalappointment.triage.dto.TriageRequest;
+import com.example.appointment.dto.AiTriageResult;
+import com.example.appointment.dto.TriageRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;

@@ -1,4 +1,4 @@
-package com.example.aicodingassistant.domain;
+package com.example.appointment.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

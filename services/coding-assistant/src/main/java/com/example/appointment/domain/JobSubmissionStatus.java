@@ -1,4 +1,4 @@
-package com.example.aicodingassistant.domain;
+package com.example.appointment.domain;
 
 public enum JobSubmissionStatus {
     ACCEPTED,

@@ -1,7 +1,7 @@
-package com.example.ticket.service.adapter;
+package com.example.appointment.service.adapter;
 
-import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.persistence.TicketRepository;
+import com.example.appointment.domain.model.Ticket;
+import com.example.appointment.persistence.TicketRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;

@@ -1,4 +1,4 @@
-package com.medicalappointment.triage.dto;
+package com.example.appointment.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

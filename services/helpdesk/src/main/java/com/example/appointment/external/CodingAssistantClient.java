@@ -1,7 +1,7 @@
-package com.example.ticket.external;
+package com.example.appointment.external;
 
-import com.example.ticket.dto.CodingAssistantSubmitJobRequestDto;
-import com.example.ticket.dto.CodingAssistantSubmitJobResponseDto;
+import com.example.appointment.dto.CodingAssistantSubmitJobRequestDto;
+import com.example.appointment.dto.CodingAssistantSubmitJobResponseDto;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;

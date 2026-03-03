@@ -1,13 +1,13 @@
-package com.example.ticket.service;
+package com.example.appointment.service;
 
-import com.example.ticket.domain.constants.EventSeverity;
-import com.example.ticket.domain.constants.EventType;
-import com.example.ticket.domain.constants.RequestStatus;
-import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.dto.*;
-import com.example.ticket.external.TriageClient;
-import com.example.ticket.service.adapter.EventService;
-import com.example.ticket.service.adapter.IncomingRequestService;
+import com.example.appointment.domain.constants.EventSeverity;
+import com.example.appointment.domain.constants.EventType;
+import com.example.appointment.domain.constants.RequestStatus;
+import com.example.appointment.domain.model.Ticket;
+import com.example.appointment.dto.*;
+import com.example.appointment.external.TriageClient;
+import com.example.appointment.service.adapter.EventService;
+import com.example.appointment.service.adapter.IncomingRequestService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

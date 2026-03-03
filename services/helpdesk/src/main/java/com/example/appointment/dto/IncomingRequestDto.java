@@ -1,6 +1,6 @@
-package com.example.ticket.dto;
+package com.example.appointment.dto;
 
-import com.example.ticket.domain.constants.RequestStatus;
+import com.example.appointment.domain.constants.RequestStatus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;

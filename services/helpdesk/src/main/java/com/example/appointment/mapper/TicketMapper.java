@@ -1,11 +1,11 @@
-package com.example.ticket.mapper;
+package com.example.appointment.mapper;
 
-import com.example.ticket.domain.constants.Team;
-import com.example.ticket.domain.constants.TicketSource;
-import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.constants.TicketType;
-import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.dto.*;
+import com.example.appointment.domain.constants.Team;
+import com.example.appointment.domain.constants.TicketSource;
+import com.example.appointment.domain.constants.TicketStatus;
+import com.example.appointment.domain.constants.TicketType;
+import com.example.appointment.domain.model.Ticket;
+import com.example.appointment.dto.*;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.List;

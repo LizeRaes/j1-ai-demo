@@ -1,7 +1,7 @@
 package com.example.appointment.services;
 
-import com.medicalappointment.model.HelpdeskRequest;
-import com.medicalappointment.model.IncomingRequest;
+import com.example.appointment.model.HelpdeskRequest;
+import com.example.appointment.model.IncomingRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Client;

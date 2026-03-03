@@ -1,10 +1,10 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.domain.constants.RequestStatus;
-import com.example.ticket.dto.CreateIncomingRequestDto;
-import com.example.ticket.dto.IncomingRequestDto;
-import com.example.ticket.service.TriageWorkerService;
-import com.example.ticket.service.adapter.IncomingRequestService;
+import com.example.appointment.domain.constants.RequestStatus;
+import com.example.appointment.dto.CreateIncomingRequestDto;
+import com.example.appointment.dto.IncomingRequestDto;
+import com.example.appointment.service.TriageWorkerService;
+import com.example.appointment.service.adapter.IncomingRequestService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

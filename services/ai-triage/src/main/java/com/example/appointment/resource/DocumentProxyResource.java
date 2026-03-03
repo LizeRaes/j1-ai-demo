@@ -1,7 +1,7 @@
-package com.medicalappointment.triage.resource;
+package com.example.appointment.resource;
 
-import com.medicalappointment.triage.external.InternalDocumentClient;
-import com.medicalappointment.triage.service.EventLogService;
+import com.example.appointment.external.InternalDocumentClient;
+import com.example.appointment.service.EventLogService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

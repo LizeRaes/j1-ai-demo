@@ -1,4 +1,4 @@
-package com.example.ticket.domain.model;
+package com.example.appointment.domain.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

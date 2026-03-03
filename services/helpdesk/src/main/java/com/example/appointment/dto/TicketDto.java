@@ -1,8 +1,8 @@
-package com.example.ticket.dto;
+package com.example.appointment.dto;
 
-import com.example.ticket.domain.constants.TicketSource;
-import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.constants.TicketType;
+import com.example.appointment.domain.constants.TicketSource;
+import com.example.appointment.domain.constants.TicketStatus;
+import com.example.appointment.domain.constants.TicketType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;

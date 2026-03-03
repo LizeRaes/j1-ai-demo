@@ -1,4 +1,4 @@
-package com.example.aicodingassistant.dto;
+package com.example.appointment.dto;
 
 public record CallbackResultRequest(
         long ticketId,

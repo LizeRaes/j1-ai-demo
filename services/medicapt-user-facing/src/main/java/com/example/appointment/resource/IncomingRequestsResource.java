@@ -1,6 +1,6 @@
 package com.example.appointment.resource;
 
-import com.medicalappointment.model.IncomingRequest;
+import com.example.appointment.model.IncomingRequest;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

@@ -1,20 +1,20 @@
 package com.example.appointment.service;
 
-import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.domain.model.TicketPullRequest;
-import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.constants.TicketType;
-import com.example.ticket.dto.AddPullRequestDto;
-import com.example.ticket.dto.CodingAssistantSubmitJobRequestDto;
-import com.example.ticket.dto.CodingAssistantSubmitJobResponseDto;
-import com.example.ticket.dto.IncomingRequestDto;
-import com.example.ticket.dto.TicketPullRequestDto;
-import com.example.ticket.external.CodingAssistantClient;
-import com.example.ticket.service.adapter.CommentService;
-import com.example.ticket.service.adapter.EventService;
-import com.example.ticket.service.adapter.IncomingRequestService;
-import com.example.ticket.service.adapter.TicketPullRequestService;
-import com.example.ticket.service.adapter.TicketStateService;
+import com.example.appointment.domain.model.Ticket;
+import com.example.appointment.domain.model.TicketPullRequest;
+import com.example.appointment.domain.constants.TicketStatus;
+import com.example.appointment.domain.constants.TicketType;
+import com.example.appointment.dto.AddPullRequestDto;
+import com.example.appointment.dto.CodingAssistantSubmitJobRequestDto;
+import com.example.appointment.dto.CodingAssistantSubmitJobResponseDto;
+import com.example.appointment.dto.IncomingRequestDto;
+import com.example.appointment.dto.TicketPullRequestDto;
+import com.example.appointment.external.CodingAssistantClient;
+import com.example.appointment.service.adapter.CommentService;
+import com.example.appointment.service.adapter.EventService;
+import com.example.appointment.service.adapter.IncomingRequestService;
+import com.example.appointment.service.adapter.TicketPullRequestService;
+import com.example.appointment.service.adapter.TicketStateService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -61,7 +61,7 @@ class TicketServiceTest {
         open.setOriginalRequest("Need help");
         open.setTicketType(TicketType.OTHER);
         open.setStatus(TicketStatus.FROM_DISPATCH);
-        open.setSource(com.example.ticket.domain.constants.TicketSource.MANUAL);
+        open.setSource(com.example.appointment.domain.constants.TicketSource.MANUAL);
         open.setAssignedTeam("dispatching");
         open.setUrgencyFlag(false);
         open.setRollbackAllowed(false);
@@ -72,7 +72,7 @@ class TicketServiceTest {
         returnedToDispatch.setOriginalRequest("Old ticket");
         returnedToDispatch.setTicketType(TicketType.OTHER);
         returnedToDispatch.setStatus(TicketStatus.RETURNED_TO_DISPATCH);
-        returnedToDispatch.setSource(com.example.ticket.domain.constants.TicketSource.AI);
+        returnedToDispatch.setSource(com.example.appointment.domain.constants.TicketSource.AI);
         returnedToDispatch.setAssignedTeam("dispatching");
         returnedToDispatch.setUrgencyFlag(false);
         returnedToDispatch.setRollbackAllowed(true);
@@ -83,7 +83,7 @@ class TicketServiceTest {
         pending.setOriginalRequest("Awaiting triage");
         pending.setTicketType(TicketType.OTHER);
         pending.setStatus(TicketStatus.AI_TRIAGE_PENDING);
-        pending.setSource(com.example.ticket.domain.constants.TicketSource.AI);
+        pending.setSource(com.example.appointment.domain.constants.TicketSource.AI);
         pending.setAssignedTeam("dispatching");
         pending.setUrgencyFlag(false);
         pending.setRollbackAllowed(true);
@@ -193,7 +193,7 @@ class TicketServiceTest {
         when(ticketStateService.findById(150L)).thenReturn(ticket);
 
         IncomingRequestDto request = new IncomingRequestDto(77L, "u-test", "intake-ui", "broken flow",
-                com.example.ticket.domain.constants.RequestStatus.AI_TRIAGE_IN_PROGRESS, null, null);
+                com.example.appointment.domain.constants.RequestStatus.AI_TRIAGE_IN_PROGRESS, null, null);
 
         service.updateTicketAsFallback(150L, request, "triage timeout");
 

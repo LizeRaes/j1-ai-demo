@@ -1,8 +1,8 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.dto.DispatchedTicketDto;
-import com.example.ticket.dto.TicketDto;
-import com.example.ticket.service.TicketService;
+import com.example.appointment.dto.DispatchedTicketDto;
+import com.example.appointment.dto.TicketDto;
+import com.example.appointment.service.TicketService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;

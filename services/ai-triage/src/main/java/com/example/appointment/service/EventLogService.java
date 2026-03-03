@@ -1,7 +1,7 @@
-package com.medicalappointment.triage.service;
+package com.example.appointment.service;
 
-import com.medicalappointment.triage.dto.Event;
-import com.medicalappointment.triage.dto.TicketView;
+import com.example.appointment.dto.Event;
+import com.example.appointment.dto.TicketView;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.ArrayList;

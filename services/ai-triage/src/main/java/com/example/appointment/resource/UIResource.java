@@ -1,8 +1,8 @@
-package com.medicalappointment.triage.resource;
+package com.example.appointment.resource;
 
-import com.medicalappointment.triage.dto.Event;
-import com.medicalappointment.triage.dto.TicketView;
-import com.medicalappointment.triage.service.EventLogService;
+import com.example.appointment.dto.Event;
+import com.example.appointment.dto.TicketView;
+import com.example.appointment.service.EventLogService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

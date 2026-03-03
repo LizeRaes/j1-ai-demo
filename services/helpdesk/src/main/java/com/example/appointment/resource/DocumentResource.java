@@ -1,9 +1,9 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.domain.constants.EventSeverity;
-import com.example.ticket.domain.constants.EventType;
-import com.example.ticket.external.InternalDocumentClient;
-import com.example.ticket.service.adapter.EventService;
+import com.example.appointment.domain.constants.EventSeverity;
+import com.example.appointment.domain.constants.EventType;
+import com.example.appointment.external.InternalDocumentClient;
+import com.example.appointment.service.adapter.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

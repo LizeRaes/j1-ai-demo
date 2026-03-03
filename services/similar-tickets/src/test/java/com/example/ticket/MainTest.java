@@ -1,4 +1,4 @@
-package org.example.similarity;
+package com.example.ticket;
 
 import dev.langchain4j.internal.Json;
 import io.helidon.common.media.type.MediaTypes;

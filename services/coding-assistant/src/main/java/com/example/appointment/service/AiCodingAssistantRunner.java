@@ -1,7 +1,7 @@
-package com.example.aicodingassistant.service;
+package com.example.appointment.service;
 
-import com.example.aicodingassistant.domain.AnalysisResult;
-import com.example.aicodingassistant.domain.FixResult;
+import com.example.appointment.domain.AnalysisResult;
+import com.example.appointment.domain.FixResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;

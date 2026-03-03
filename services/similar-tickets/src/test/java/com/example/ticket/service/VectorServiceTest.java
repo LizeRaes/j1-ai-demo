@@ -1,4 +1,4 @@
-package org.example.similarity.service;
+package com.example.ticket.service;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -9,7 +9,7 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.Filter;
 import io.helidon.integrations.langchain4j.providers.oracle.EmbeddingTableConfig;
 import io.helidon.integrations.langchain4j.providers.oracle.OracleEmbeddingStoreConfig;
-import org.example.similarity.dto.TicketsResponse;
+import com.example.ticket.dto.TicketsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

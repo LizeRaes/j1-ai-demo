@@ -1,6 +1,6 @@
-package com.example.aicodingassistant.domain;
+package com.example.appointment.domain;
 
-import com.example.aicodingassistant.dto.SubmitJobRequest;
+import com.example.appointment.dto.SubmitJobRequest;
 
 public record JobContext(
         String jobId,

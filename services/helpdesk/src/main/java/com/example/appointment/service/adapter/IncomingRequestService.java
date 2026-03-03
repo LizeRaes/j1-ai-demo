@@ -1,10 +1,10 @@
-package com.example.ticket.service.adapter;
+package com.example.appointment.service.adapter;
 
-import com.example.ticket.domain.constants.RequestStatus;
-import com.example.ticket.domain.model.IncomingRequest;
-import com.example.ticket.dto.CreateIncomingRequestDto;
-import com.example.ticket.dto.IncomingRequestDto;
-import com.example.ticket.persistence.IncomingRequestRepository;
+import com.example.appointment.domain.constants.RequestStatus;
+import com.example.appointment.domain.model.IncomingRequest;
+import com.example.appointment.dto.CreateIncomingRequestDto;
+import com.example.appointment.dto.IncomingRequestDto;
+import com.example.appointment.persistence.IncomingRequestRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;

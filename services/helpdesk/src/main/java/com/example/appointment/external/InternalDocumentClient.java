@@ -1,4 +1,4 @@
-package com.example.ticket.external;
+package com.example.appointment.external;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

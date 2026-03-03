@@ -1,7 +1,7 @@
-package com.example.ticket.persistence;
+package com.example.appointment.persistence;
 
-import com.example.ticket.domain.constants.TicketStatus;
-import com.example.ticket.domain.model.Ticket;
+import com.example.appointment.domain.constants.TicketStatus;
+import com.example.appointment.domain.model.Ticket;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 

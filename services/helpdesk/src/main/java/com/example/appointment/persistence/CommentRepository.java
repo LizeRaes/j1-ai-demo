@@ -1,6 +1,6 @@
-package com.example.ticket.persistence;
+package com.example.appointment.persistence;
 
-import com.example.ticket.domain.model.Comment;
+import com.example.appointment.domain.model.Comment;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;

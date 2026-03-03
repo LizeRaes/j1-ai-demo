@@ -1,13 +1,13 @@
-package com.example.ticket.config;
+package com.example.appointment.config;
 
-import com.example.ticket.domain.model.Ticket;
-import com.example.ticket.domain.model.Comment;
-import com.example.ticket.dto.CreateIncomingRequestDto;
-import com.example.ticket.dto.TicketDto;
-import com.example.ticket.mapper.TicketMapper;
-import com.example.ticket.service.adapter.CommentService;
-import com.example.ticket.service.adapter.IncomingRequestService;
-import com.example.ticket.service.adapter.TicketStateService;
+import com.example.appointment.domain.model.Ticket;
+import com.example.appointment.domain.model.Comment;
+import com.example.appointment.dto.CreateIncomingRequestDto;
+import com.example.appointment.dto.TicketDto;
+import com.example.appointment.mapper.TicketMapper;
+import com.example.appointment.service.adapter.CommentService;
+import com.example.appointment.service.adapter.IncomingRequestService;
+import com.example.appointment.service.adapter.TicketStateService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.runtime.StartupEvent;
@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 @ApplicationScoped
 public class DataSeeder {

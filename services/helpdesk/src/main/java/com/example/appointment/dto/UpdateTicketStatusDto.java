@@ -1,6 +1,6 @@
-package com.example.ticket.dto;
+package com.example.appointment.dto;
 
-import com.example.ticket.domain.constants.TicketStatus;
+import com.example.appointment.domain.constants.TicketStatus;
 
 public record UpdateTicketStatusDto(TicketStatus status) {
 }

@@ -1,4 +1,4 @@
-package com.example.ticket.domain.constants;
+package com.example.appointment.domain.constants;
 
 public enum TicketSource {
     MANUAL,

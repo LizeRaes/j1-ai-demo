@@ -1,7 +1,7 @@
-package com.example.ticket.external;
+package com.example.appointment.external;
 
-import com.example.ticket.dto.TriageRequestDto;
-import com.example.ticket.dto.TriageResponseDto;
+import com.example.appointment.dto.TriageRequestDto;
+import com.example.appointment.dto.TriageResponseDto;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;

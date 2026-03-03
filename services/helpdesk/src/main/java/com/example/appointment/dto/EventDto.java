@@ -1,7 +1,7 @@
-package com.example.ticket.dto;
+package com.example.appointment.dto;
 
-import com.example.ticket.domain.constants.EventSeverity;
-import com.example.ticket.domain.constants.EventType;
+import com.example.appointment.domain.constants.EventSeverity;
+import com.example.appointment.domain.constants.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

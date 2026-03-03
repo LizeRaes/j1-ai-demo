@@ -1,8 +1,8 @@
 package com.example.appointment.api;
 
-import com.example.aicodingassistant.domain.JobSubmissionStatus;
-import com.example.aicodingassistant.dto.SubmitJobResponse;
-import com.example.aicodingassistant.service.JobOrchestratorService;
+import com.example.appointment.domain.JobSubmissionStatus;
+import com.example.appointment.dto.SubmitJobResponse;
+import com.example.appointment.service.JobOrchestratorService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;

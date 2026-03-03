@@ -1,10 +1,10 @@
-package com.example.ticket.service.adapter;
+package com.example.appointment.service.adapter;
 
-import com.example.ticket.domain.constants.EventSeverity;
-import com.example.ticket.domain.constants.EventType;
-import com.example.ticket.domain.model.EventLog;
-import com.example.ticket.dto.EventDto;
-import com.example.ticket.persistence.EventLogRepository;
+import com.example.appointment.domain.constants.EventSeverity;
+import com.example.appointment.domain.constants.EventType;
+import com.example.appointment.domain.model.EventLog;
+import com.example.appointment.dto.EventDto;
+import com.example.appointment.persistence.EventLogRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;

@@ -1,4 +1,4 @@
-package org.example.similarity.service;
+package com.example.ticket.service;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;

@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example.appointment</groupId>
-    <artifactId>ai-coding-assistant</artifactId>
+    <artifactId>coding-assistant</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>

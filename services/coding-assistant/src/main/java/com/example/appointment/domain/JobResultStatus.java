@@ -1,4 +1,4 @@
-package com.example.aicodingassistant.domain;
+package com.example.appointment.domain;
 
 public enum JobResultStatus {
     PR_CREATED,

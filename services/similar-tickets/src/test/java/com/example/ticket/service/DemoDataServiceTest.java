@@ -1,4 +1,4 @@
-package org.example.similarity.service;
+package com.example.ticket.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

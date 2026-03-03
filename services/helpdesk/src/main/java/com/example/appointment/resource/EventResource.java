@@ -1,7 +1,7 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.dto.EventDto;
-import com.example.ticket.service.adapter.EventService;
+import com.example.appointment.dto.EventDto;
+import com.example.appointment.service.adapter.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

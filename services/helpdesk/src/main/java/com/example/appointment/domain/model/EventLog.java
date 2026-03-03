@@ -1,7 +1,7 @@
-package com.example.ticket.domain.model;
+package com.example.appointment.domain.model;
 
-import com.example.ticket.domain.constants.EventSeverity;
-import com.example.ticket.domain.constants.EventType;
+import com.example.appointment.domain.constants.EventSeverity;
+import com.example.appointment.domain.constants.EventType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 

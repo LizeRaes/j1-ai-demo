@@ -1,6 +1,6 @@
-package com.example.aicodingassistant.dto;
+package com.example.appointment.dto;
 
-import com.example.aicodingassistant.domain.JobSubmissionStatus;
+import com.example.appointment.domain.JobSubmissionStatus;
 
 public record SubmitJobResponse(
         JobSubmissionStatus status,

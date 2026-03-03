@@ -1,8 +1,8 @@
-package com.example.aicodingassistant.validation;
+package com.example.appointment.validation;
 
-import com.example.aicodingassistant.domain.JobSubmissionStatus;
-import com.example.aicodingassistant.dto.SubmitJobRequest;
-import com.example.aicodingassistant.dto.SubmitJobResponse;
+import com.example.appointment.domain.JobSubmissionStatus;
+import com.example.appointment.dto.SubmitJobRequest;
+import com.example.appointment.dto.SubmitJobResponse;
 import jakarta.ws.rs.core.Response;
 
 public final class RequestValidation {

@@ -1,10 +1,10 @@
-package com.example.ticket.resource;
+package com.example.appointment.resource;
 
-import com.example.ticket.domain.constants.EventSeverity;
-import com.example.ticket.domain.constants.EventType;
-import com.example.ticket.dto.CodingAssistantCallbackDto;
-import com.example.ticket.service.TicketService;
-import com.example.ticket.service.adapter.EventService;
+import com.example.appointment.domain.constants.EventSeverity;
+import com.example.appointment.domain.constants.EventType;
+import com.example.appointment.dto.CodingAssistantCallbackDto;
+import com.example.appointment.service.TicketService;
+import com.example.appointment.service.adapter.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HeaderParam;

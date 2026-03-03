@@ -1,7 +1,7 @@
 package com.example.appointment.services;
 
-import com.medicalappointment.model.Appointment;
-import com.medicalappointment.model.AppointmentStatus;
+import com.example.appointment.model.Appointment;
+import com.example.appointment.model.AppointmentStatus;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.LocalDate;
 import java.time.LocalTime;
