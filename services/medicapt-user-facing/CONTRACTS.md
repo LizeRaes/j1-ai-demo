@@ -312,44 +312,7 @@ Content-Type: application/json
 
 ---
 
-## 6. Internal Helpdesk Receiver (Demo Only)
-
-### `POST /api/incoming-requests`
-
-- **Description**: Internal demo endpoint that logs incoming helpdesk-like requests.
-- **Content-Type**: `application/json`
-- **Request Body** (`IncomingRequest`):
-
-```json
-{
-  "userId": "u-charlie",
-  "channel": "web",
-  "rawText": "I need to reschedule my appointment for next week."
-}
-```
-
-**cURL**
-```bash
-curl -i -X POST http://localhost:8083/api/incoming-requests \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "u-charlie",
-    "channel": "web",
-    "rawText": "I need to reschedule my appointment for next week."
-  }'
-```
-
-**Example Response**
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{"status": "received", "message": "Request logged"}
-```
-
----
-
-## 7. External Helpdesk Ingestion API
+## 6. External Helpdesk Ingestion API
 
 > This is the **external** system MedicalAppointment sends tickets to. It is not served by this app, but the contract is important.
 

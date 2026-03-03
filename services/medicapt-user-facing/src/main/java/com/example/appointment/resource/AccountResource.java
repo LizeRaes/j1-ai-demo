@@ -7,6 +7,10 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @Path("/account")
 public class AccountResource {
     @Inject
@@ -31,12 +35,14 @@ public class AccountResource {
     public Response resetPassword() {
         String userId = accountService.getUserId();
         boolean success = accountService.resetPassword(userId);
-        
+
         if (success) {
-            return Response.seeOther(java.net.URI.create("/account?message=Password reset email sent"))
+            String message = URLEncoder.encode("Password reset email sent", StandardCharsets.UTF_8);
+            return Response.seeOther(URI.create("/account?message=" + message))
                     .build();
         } else {
-            return Response.seeOther(java.net.URI.create("/account?error=Password reset failed"))
+            String error = URLEncoder.encode("Password reset failed", StandardCharsets.UTF_8);
+            return Response.seeOther(URI.create("/account?error=" + error))
                     .build();
         }
     }
