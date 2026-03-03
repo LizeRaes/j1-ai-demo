@@ -149,7 +149,7 @@ For demonstration purposes, all operations use a default user:
 ### Project Structure
 
 ```
-src/main/java/com/medicalappointment/
+src/main/java/com/example/appointment/
 ├── model/              # Domain models
 │   ├── Appointment.java
 │   ├── AppointmentStatus.java
@@ -160,7 +160,7 @@ src/main/java/com/medicalappointment/
 │   ├── BillingService.java
 │   ├── AccountService.java
 │   └── HelpdeskClient.java
-└── resources/          # REST endpoints
+└── resource/          # REST endpoints
     ├── HomeResource.java
     ├── AppointmentResource.java
     ├── BillingResource.java

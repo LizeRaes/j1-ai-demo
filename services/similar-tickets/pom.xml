@@ -9,8 +9,9 @@
         <version>4.3.3</version>
         <relativePath/>
     </parent>
-    <groupId>org.example.similarity</groupId>
-    <artifactId>similar-tickets</artifactId>
+
+    <groupId>com.example.ticket</groupId>
+    <artifactId>similarity</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
