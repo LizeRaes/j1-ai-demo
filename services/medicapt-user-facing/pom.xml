@@ -5,7 +5,7 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.medicalappointment</groupId>
+  <groupId>com.example.appointment</groupId>
   <artifactId>user-facing</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
@@ -14,8 +14,8 @@
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.version>3.31.2</quarkus.platform.version>
 
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
