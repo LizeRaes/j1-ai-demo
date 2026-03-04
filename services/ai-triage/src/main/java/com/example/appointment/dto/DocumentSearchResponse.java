@@ -1,20 +1,17 @@
 package com.example.appointment.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
-public class DocumentSearchResponse {
-    @JsonProperty("results")
-    private List<DocumentResult> results;
+public record DocumentSearchResponse(@JsonProperty("results") List<DocumentResult> results) {
 
-    public DocumentSearchResponse() {
+    public record DocumentResult(@JsonProperty("documentName") String documentName,
+                                 @JsonProperty("documentLink") String documentLink,
+                                 @JsonProperty("citation") String citation,
+                                 @JsonProperty("score") double score,
+                                 @JsonProperty("rbacTeams") List<String> rbacTeams) {
     }
 
-    public List<DocumentResult> getResults() {
-        return results;
-    }
 
-    public void setResults(List<DocumentResult> results) {
-        this.results = results;
-    }
 }

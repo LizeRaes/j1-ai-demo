@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Appointment Helpdesk AI Triage</title>
+    <style>
+        :root { --base-font-size: 16px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: var(--base-font-size); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; height: 100vh; overflow: hidden; }
+        .service-name-banner { height: 2.5rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #1f2937; background: #eef2f7; border-bottom: 1px solid #d1d5db; }
+        .zoom-controls { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; gap: 8px; background: rgba(255,255,255,0.95); padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .zoom-button { background: #4a90e2; border: none; color: white; font-size: 1.125rem; width: 2.25rem; height: 2.25rem; border-radius: 0.25rem; cursor: pointer; }
+        .zoom-level { display: flex; align-items: center; justify-content: center; min-width: 3.125rem; font-size: 0.875rem; font-weight: 500; color: #333; }
+        .container { display: flex; height: calc(100vh - 2.5rem); }
+        .events-panel { width: 33.33%; background: #1e1e1e; color: #d4d4d4; display: flex; flex-direction: column; border-right: 2px solid #333; transition: width .3s ease, opacity .3s ease; }
+        .events-panel.collapsed { width: 0; opacity: 0; overflow: hidden; border-right: none; }
+        .events-header { background: #252526; padding: 0.9375rem 1.25rem; border-bottom: 1px solid #333; font-weight: 600; font-size: 0.875rem; color: #ccc; display: flex; justify-content: space-between; cursor: pointer; }
+        .events-content { flex: 1; overflow-y: auto; padding: 0.625rem; }
+        .events-collapse-button { position: fixed; left: 0; top: 50%; transform: translateY(-50%); background: #252526; border: none; border-right: 2px solid #333; color: #ccc; font-size: 1rem; padding: 1.25rem .5rem; cursor: pointer; z-index: 1000; border-radius: 0 .5rem .5rem 0; display: none; }
+        .events-collapse-button.visible { display: block; }
+        .event-entry { padding: .625rem .75rem; margin-bottom: .5rem; border-radius: .25rem; font-size: .75rem; line-height: 1.5; border-left: 3px solid transparent; background: #252526; }
+        .event-entry.INFO { border-left-color: #4ec9b0; }
+        .event-entry.WARN { border-left-color: #dcdcaa; }
+        .event-entry.ERROR { border-left-color: #f48771; }
+        .event-time { color: #858585; font-size: .6875rem; margin-bottom: .25rem; }
+        .event-ticket-id { color: #4ec9b0; font-weight: 500; }
+        .tickets-panel { width: 66.67%; background: #fff; display: flex; flex-direction: column; overflow: hidden; transition: width .3s ease; }
+        .tickets-panel.expanded { width: 100%; }
+        .tickets-header { background: #f8f8f8; padding: .9375rem 1.25rem; border-bottom: 1px solid #e0e0e0; font-weight: 600; font-size: .875rem; color: #333; }
+        .tickets-content { flex: 1; overflow-y: auto; padding: 1.25rem; }
+        .ticket-card { background: #fff; border: 1px solid #e0e0e0; border-radius: .5rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+        .ticket-id { font-size: 1.125rem; font-weight: 600; color: #333; }
+        .ticket-status { padding: .25rem .75rem; border-radius: .75rem; font-size: .6875rem; font-weight: 600; text-transform: uppercase; }
+        .ticket-status.OK { background: #d4edda; color: #155724; }
+        .ticket-status.FAILED { background: #f8d7da; color: #721c24; }
+        .empty-state { text-align: center; padding: 2.5rem; color: #999; font-size: .875rem; }
+        .related-ticket-id { background: #e7f3ff; color: #0066cc; padding: .25rem .625rem; border-radius: .75rem; font-size: .6875rem; font-weight: 500; }
+        .policy-citation { background: #fff3cd; padding: .5rem .75rem; border-radius: .25rem; font-size: .6875rem; color: #856404; margin-bottom: .375rem; border-left: 3px solid #ffc107; }
+        .fail-reason { background: #f8d7da; border-left: 3px solid #dc3545; padding: .75rem; border-radius: .25rem; color: #721c24; font-size: .75rem; margin-top: .75rem; }
+    </style>
+</head>
+<body
+    data-default-zoom-percent="{defaultZoomPercent}"
+    data-polling-enabled="{pollingEnabled}"
+    data-polling-interval-ms="{pollingIntervalMs}"
+    data-documents-api-base="{documentsApiBase}"
+    data-helpdesk-app-base="{helpdeskAppBase}">
+<div class="zoom-controls">
+    <button class="zoom-button" onclick="zoomOut()" title="Zoom Out">−</button>
+    <div class="zoom-level" id="zoomLevel">100%</div>
+    <button class="zoom-button" onclick="zoomIn()" title="Zoom In">+</button>
+</div>
+
+<div class="service-name-banner">Medical Appointment Helpdesk AI Triage</div>
+<div class="container">
+    <div class="events-panel" id="eventsPanel">
+        <div class="events-header" onclick="toggleEventsPanel()"><span>Events Log</span><span>◀</span></div>
+        <div class="events-content" id="eventsContent"><div class="empty-state">No events yet</div></div>
+    </div>
+    <button class="events-collapse-button" id="eventsCollapseButton" onclick="toggleEventsPanel()"><span>▶</span></button>
+    <div class="tickets-panel" id="ticketsPanel">
+        <div class="tickets-header">Received Tickets</div>
+        <div class="tickets-content" id="ticketsContent"><div class="empty-state">No tickets yet</div></div>
+    </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
