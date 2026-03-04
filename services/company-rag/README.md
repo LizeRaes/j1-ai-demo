@@ -198,12 +198,12 @@ Storage and sync behavior:
 
 ## Document Access Policy
 
-Document access is managed via RBAC (Role-Based Access Control) defined in `src/main/resources/config/document_access_policy.yaml`.
+Document access is managed via RBAC (Role-Based Access Control) stored in `company-documents/config/document_access_policy.yaml` (writable).
 
 - Each document can have a list of teams with read access
 - If no teams are specified (empty list), the document is company-wide accessible
 - The access policy is automatically loaded on startup and updated when documents are added/modified
-- At runtime, you may override the location of this document by providing the absolute path to it in `demo.access.split.location` variable.
+
 
 ## API Endpoints
 
@@ -463,7 +463,7 @@ curl -OJ http://localhost:8084/api/documents/download/Quarterly_Report.pdf
 
 - **Embeddings are stored in Qdrant** and persist across application restarts
 - **Document metadata** (document name, chunk index) is stored in Qdrant payload
-- **Document access policy** is stored in `src/main/resources/config/document_access_policy.yaml`
+- **Document access policy** is stored in `company-documents/config/document_access_policy.yaml` (writable, persisted on RBAC changes)
 - Documents are automatically re-embedded on startup from `company-documents/`
 
 ## Configuration
@@ -523,7 +523,7 @@ quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-3-large
 
 Documents are stored in a writable local folder configured by `demo.dir.location` (default: `company-documents`). The document name (filename) serves as the unique document ID.
 
-The document access policy is stored in `src/main/resources/config/document_access_policy.yaml` with the following format:
+The document access policy is stored in `company-documents/config/document_access_policy.yaml` with the following format:
 
 ```yaml
 Document_Name.txt:
@@ -531,25 +531,3 @@ Document_Name.txt:
     - team1
     - team2
 ```
-
-## Troubleshooting
-
-**OpenAI API Errors:**
-- Verify `OPENAI_API_KEY` is set correctly
-- Check API key has sufficient credits/quota
-- Ensure network can reach OpenAI API
-
-**Documents Not Loading:**
-- Check that documents exist in your `demo.dir.location` folder (default: `company-documents/`)
-- Verify document filenames match the expected format (`.txt` extension)
-- Check application logs for loading errors
-
-**Docling Connection Errors:**
-- Ensure Docling Serve is running: `docker-compose up -d docling`
-- Verify `document.preprocessing.docling.base-url` points to the correct host/port
-- If running with `document.preprocessing.mode=docling`, `.txt` files are always parsed as plain text; `.md` and other docling-targeted formats are sent to Docling and skipped/logged on conversion failure
-
-**RBAC Issues:**
-- Verify `document_access_policy.yaml` is in `src/main/resources/config/`
-- Check YAML syntax is correct
-- Ensure document names in YAML match actual document filenames

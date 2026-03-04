@@ -6,40 +6,51 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 public class DocumentAccessPolicyServiceTest {
 
+    private static final String SAMPLE_ACCESS_POLICY_YAML = """
+            DocA.txt:
+              read: [team1, team2]
+            DocB.md:
+              read: [team2]
+            DocC.pdf:
+              read: []
+            """;
+
     private DocumentAccessPolicyService service;
+    private Path tempConfigDir;
 
     @BeforeEach
-    void setup() {
+    void setup() throws Exception {
+        tempConfigDir = Files.createTempDirectory("access-policy-test");
+        Path configPath = tempConfigDir.resolve("config").resolve("document_access_policy.yaml");
+        Files.createDirectories(configPath.getParent());
+        Files.writeString(configPath, SAMPLE_ACCESS_POLICY_YAML);
+
         service = new DocumentAccessPolicyService();
-        service.accessConfigLocation = "classpath:/config/document_access_policy.yaml";
+        service.accessConfigPath = configPath.toString();
         service.init();
     }
 
     @Test
-    void loadsCurrentYamlPoliciesWithExpectedTeams() {
+    void loadsYamlPoliciesWithExpectedTeams() {
         Map<String, List<String>> policies = service.getAllAccessPolicies();
 
-        assertEquals(9, policies.size(), "Expected all current YAML documents to be loaded");
-        assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Approved_Response_Templates.md"));
-        assertEquals(List.of("billing", "dispatching"), policies.get("Billing_Refund_Policy.md"));
-        assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Data_Privacy_User_Data_Handling.txt"));
-        assertEquals(List.of("dispatching", "engineering"), policies.get("Known_Bugs_Limitations.md"));
-        assertEquals(List.of("engineering"), policies.get("MedicalAppointment_Architecture.txt"));
-        assertEquals(List.of("billing"), policies.get("Payment_System_Payment_Flow.txt"));
-        assertEquals(List.of("dispatching"), policies.get("Security_Escalation_Policy.md"));
-        assertEquals(List.of("billing", "dispatching"), policies.get("Billing_Payment_Reliability_Report_26.pdf"));
-        assertEquals(List.of("engineering", "dispatching"), policies.get("Account_Security_Incident_Report_26.pdf"));
+        assertEquals(3, policies.size());
+        assertEquals(List.of("team1", "team2"), policies.get("DocA.txt"));
+        assertEquals(List.of("team2"), policies.get("DocB.md"));
+        assertEquals(List.of(), policies.get("DocC.pdf"));
     }
 
     @Test
     void getAccessTeamsReturnsConfiguredTeamsForKnownDocument() {
-        List<String> teams = service.getAccessTeams("Known_Bugs_Limitations.md");
-        assertEquals(List.of("dispatching", "engineering"), teams);
+        List<String> teams = service.getAccessTeams("DocA.txt");
+        assertEquals(List.of("team1", "team2"), teams);
     }
 
     @Test
@@ -55,6 +66,42 @@ public class DocumentAccessPolicyServiceTest {
         List<String> teams = List.of("team1", "team2");
         service.updateDocumentAccess(documentName, teams);
         assertEquals(teams, service.getAccessTeams(documentName));
+    }
+
+    @Test
+    void updateDocumentAccessPersistsToYaml() throws Exception {
+        String documentName = "PersistedDoc.txt";
+        List<String> teams = List.of("teamA", "teamB");
+        service.updateDocumentAccess(documentName, teams);
+
+        DocumentAccessPolicyService service2 = new DocumentAccessPolicyService();
+        service2.accessConfigPath = service.accessConfigPath;
+        service2.init();
+        assertEquals(teams, service2.getAccessTeams(documentName));
+    }
+
+    @Test
+    void missingFileTreatsAsNoRbac() throws Exception {
+        Path nonExistentPath = tempConfigDir.resolve("nonexistent").resolve("document_access_policy.yaml");
+
+        DocumentAccessPolicyService svc = new DocumentAccessPolicyService();
+        svc.accessConfigPath = nonExistentPath.toString();
+        svc.init();
+
+        assertTrue(svc.getAllAccessPolicies().isEmpty());
+        assertTrue(svc.getAccessTeams("AnyDoc.txt").isEmpty());
+    }
+
+    @Test
+    void removeDocumentPersistsToYaml() throws Exception {
+        String documentName = "ToRemove.txt";
+        service.updateDocumentAccess(documentName, List.of("teamX"));
+        service.removeDocument(documentName);
+
+        DocumentAccessPolicyService service2 = new DocumentAccessPolicyService();
+        service2.accessConfigPath = service.accessConfigPath;
+        service2.init();
+        assertTrue(service2.getAccessTeams(documentName).isEmpty());
     }
 
     @Test
@@ -79,7 +126,16 @@ public class DocumentAccessPolicyServiceTest {
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         service = null;
+        if (tempConfigDir != null && Files.exists(tempConfigDir)) {
+            try (var paths = Files.walk(tempConfigDir)) {
+                paths.sorted((a, b) -> -a.compareTo(b)).forEach(p -> {
+                    try {
+                        Files.deleteIfExists(p);
+                    } catch (Exception ignored) { }
+                });
+            }
+        }
     }
 }

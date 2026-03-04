@@ -393,7 +393,6 @@ function createLogEntry(event) {
         entry.addEventListener('click', () => {
             // Navigate to ticket detail
             switchTab('inbox');
-            // TODO: trigger ticket detail load
         });
     }
 
