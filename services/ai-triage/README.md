@@ -33,6 +33,51 @@ A Quarkus application that uses AI to automatically classify and triage customer
 
 The application will run on port **8081**.
 
+### Running with Local / OpenAI-Compatible Models
+
+The service can run against any OpenAI-compatible API by changing the base URL and model name.
+
+#### Docker Model Runner (Local Model)
+
+**Enable in Docker Desktop** → Settings → AI:
+- Enable Docker Model Runner
+- Enable host-side TCP support
+
+**Pull a model**
+```bash
+docker model pull ai/llama3.2:1B-Q8_0
+```
+
+**Configure** `application.properties`
+```properties
+quarkus.langchain4j.openai.base-url=http://localhost:12434/engines/llama.cpp/v1
+quarkus.langchain4j.openai.chat-model.model-name=ai/llama3.2:1B-Q8_0
+```
+
+**Verify**
+```bash
+curl http://localhost:12434/engines/llama.cpp/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer not-needed" \
+  -d '{"model":"ai/llama3.2:1B-Q8_0","stream":false,"messages":[{"role":"user","content":"Hi"}]}'
+```
+
+#### NVIDIA NIM
+
+```properties
+quarkus.langchain4j.openai.base-url=https://integrate.api.nvidia.com/v1
+quarkus.langchain4j.openai.api-key=${NIM_API_KEY}
+quarkus.langchain4j.openai.chat-model.model-name=meta/llama-3.1-8b-instruct
+```
+
+**Verify**
+```bash
+curl https://integrate.api.nvidia.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $NIM_API_KEY" \
+  -d '{"model":"meta/llama-3.1-8b-instruct","stream":false,"messages":[{"role":"user","content":"Hi"}]}'
+```
+
 ## Configuration
 
 Edit `src/main/resources/application.properties` to configure:

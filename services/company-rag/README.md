@@ -99,45 +99,30 @@ Then, if you want to inspect what Docling produces for a specific file in `compa
 ```bash
 mvn -q -DskipTests compile exec:java \
   -Dexec.mainClass=com.example.document.tool.DoclingPreviewCli \
-  -Dexec.args="Billing_Payment_Reliability_Report_26.pdf --max-chars=6000"
+  -Dexec.args="Billing_Payment_Reliability_Report_26.pdf $OPENAI_API_KEY"
 ```
 
-Optional flags and properties:
-- `--no-image-parse`: disable Docling image parsing options and keep blobs as returned by Docling.
-- `--no-image-parse-remove-blob`: disable image parsing and replace inline image blobs with `--- image blob removed by CLI tool ---`.
-- `--enable-picture-description`: also enable Docling picture description enrichment (off by default).
-- `--picture-api-model=<MODEL>`: when picture description is enabled, send requests to a remote VLM API with this model name (example: `qwen2.5vl:7b-q4_K_M` for Ollama).
-- `--picture-api-url=<URL>`: remote VLM API endpoint (default when model is set: `http://127.0.0.1:1234/v1/chat/completions` for LM Studio).
-- `--picture-api-timeout-sec=<N>`: timeout for the remote picture description API call (default `120` when model is set).
-- `--picture-api-bearer-token=<TOKEN>`: optional bearer token for remote API auth.
-- `--picture-api-prompt=<TEXT>`: custom prompt for image description.
-- `--debug`: print per-attempt retry logs when Docling result is not ready yet.
-- `--max-attempts=<N>`: max retries when Docling returns "Task result not found" (default `3`).
-- `--max-wait-ms=<N>`: max time to wait for Docling async task result readiness (default `60000`).
-- `--max-chars=<N>`: truncate console output to `N` characters.
-- `-Ddocling.base-url=http://localhost:5001`: override Docling URL.
-- `-Ddocuments.dir=company-documents`: override source folder.
+Optional: `--keep-image-blobs` to embed base64 images in output (default: PLACEHOLDER mode, no blobs).
 
-Notes on known Docling behavior:
-- This CLI uses OCR + table parsing by default and keeps picture description off unless `--enable-picture-description` is set.
-- If Docling returns `Task result not found`, the CLI retries sync briefly and then falls back to Docling async conversion endpoint automatically.
+### Document ingestion: picture description (VLM)
 
-If you want picture descriptions with LM Studio/Ollama, make sure all of this is true:
-- Ollama is running and a vision model is available (`ollama list`), for example `qwen2.5vl:7b-q4_K_M`.
-- Docling container can reach Ollama endpoint (for Docker Desktop use `host.docker.internal`; on Linux use host IP or host networking).
-- If Ollama is bound only to localhost, configure it to listen on `0.0.0.0` when needed.
+For document ingestion (embedding sync), picture description uses a single VLM endpoint. Configure in `application.properties`:
 
-If you use LM Studio on your host machine:
-- default URL in this CLI is `http://127.0.0.1:1234/v1/chat/completions`
-- if Docling runs inside Docker and cannot resolve host localhost, override with a host-reachable URL (for example `http://host.docker.internal:1234/v1/chat/completions` on Docker Desktop).
+- `document.preprocessing.docling.vlm.do-picture-description=true`: enable VLM for images
+- `document.preprocessing.docling.vlm.url`: API endpoint (e.g. OpenAI or Ollama)
+- `document.preprocessing.docling.vlm.model`: model name
+- `document.preprocessing.docling.vlm.api-key`: optional; for OpenAI use `${OPENAI_API_KEY:}`; for Ollama leave empty
 
-Example:
+**OpenAI:** `url=https://api.openai.com/v1/chat/completions`, `model=gpt-4o-mini`, `api-key=${OPENAI_API_KEY:}`
 
-```bash
-mvn -q -DskipTests compile exec:java \
-  -Dexec.mainClass=com.example.document.tool.DoclingPreviewCli \
-  -Dexec.args="Billing_Payment_Reliability_Report_26.pdf --enable-picture-description --picture-api-model=qwen2.5vl:7b-q4_K_M --picture-api-url=http://host.docker.internal:11434/v1/chat/completions --debug --max-chars=6000"
-```
+**Ollama (local):**
+
+1. Install Ollama: https://ollama.com
+2. Pull a vision model: `ollama pull qwen2.5vl:3b`
+3. Start the server: `ollama serve` (often runs automatically; ensure it listens on port 11434)
+4. Set `url=http://localhost:11434/v1/chat/completions`, `model=qwen2.5vl:3b`, `api-key=` (empty)
+
+
 
 **Important:** 
 - Make sure the Oracle database is running before starting the application, otherwise you'll get connection errors.
@@ -213,12 +198,12 @@ Storage and sync behavior:
 
 ## Document Access Policy
 
-Document access is managed via RBAC (Role-Based Access Control) defined in `src/main/resources/config/document_access_policy.yaml`.
+Document access is managed via RBAC (Role-Based Access Control) stored in `company-documents/config/document_access_policy.yaml` (writable).
 
 - Each document can have a list of teams with read access
 - If no teams are specified (empty list), the document is company-wide accessible
 - The access policy is automatically loaded on startup and updated when documents are added/modified
-- At runtime, you may override the location of this document by providing the absolute path to it in `demo.access.split.location` variable.
+
 
 ## API Endpoints
 
@@ -478,7 +463,7 @@ curl -OJ http://localhost:8084/api/documents/download/Quarterly_Report.pdf
 
 - **Embeddings are stored in Qdrant** and persist across application restarts
 - **Document metadata** (document name, chunk index) is stored in Qdrant payload
-- **Document access policy** is stored in `src/main/resources/config/document_access_policy.yaml`
+- **Document access policy** is stored in `company-documents/config/document_access_policy.yaml` (writable, persisted on RBAC changes)
 - Documents are automatically re-embedded on startup from `company-documents/`
 
 ## Configuration
@@ -538,7 +523,7 @@ quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-3-large
 
 Documents are stored in a writable local folder configured by `demo.dir.location` (default: `company-documents`). The document name (filename) serves as the unique document ID.
 
-The document access policy is stored in `src/main/resources/config/document_access_policy.yaml` with the following format:
+The document access policy is stored in `company-documents/config/document_access_policy.yaml` with the following format:
 
 ```yaml
 Document_Name.txt:
@@ -546,25 +531,3 @@ Document_Name.txt:
     - team1
     - team2
 ```
-
-## Troubleshooting
-
-**OpenAI API Errors:**
-- Verify `OPENAI_API_KEY` is set correctly
-- Check API key has sufficient credits/quota
-- Ensure network can reach OpenAI API
-
-**Documents Not Loading:**
-- Check that documents exist in your `demo.dir.location` folder (default: `company-documents/`)
-- Verify document filenames match the expected format (`.txt` extension)
-- Check application logs for loading errors
-
-**Docling Connection Errors:**
-- Ensure Docling Serve is running: `docker-compose up -d docling`
-- Verify `document.preprocessing.docling.base-url` points to the correct host/port
-- If running with `document.preprocessing.mode=docling`, `.txt` files are always parsed as plain text; `.md` and other docling-targeted formats are sent to Docling and skipped/logged on conversion failure
-
-**RBAC Issues:**
-- Verify `document_access_policy.yaml` is in `src/main/resources/config/`
-- Check YAML syntax is correct
-- Ensure document names in YAML match actual document filenames

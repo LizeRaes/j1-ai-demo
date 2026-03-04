@@ -1,7 +1,7 @@
 let currentTab = 'dispatcher';
 let selectedTicketId = null;
 let selectedRequestId = null;
-let currentUserId = 'demo-user'; // TODO: get from auth
+let currentUserId = 'demo-user';
 
 // Ticket navigation history for back/forward
 let ticketHistory = [];

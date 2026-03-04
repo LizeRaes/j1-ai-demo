@@ -3,19 +3,16 @@ package com.example.document.service;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toCollection;
 
@@ -26,27 +23,27 @@ public class DocumentAccessPolicyService {
 
     private Map<String, List<String>> accessPolicy = new HashMap<>();
 
-    @ConfigProperty(name = "demo.config.access.location")
-    String accessConfigLocation;
+    @ConfigProperty(name = "demo.config.access.path")
+    String accessConfigPath;
+
+    private Path accessPolicyFilePath;
 
     @PostConstruct
     void init() {
         try {
-            List<Path> configLocation = scan(accessConfigLocation);
-            if (configLocation.isEmpty()) {
-                LOGGER.warning("No access policy config file found at: " + accessConfigLocation);
+            accessPolicyFilePath = Path.of(accessConfigPath).toAbsolutePath().normalize();
+
+            if (Files.exists(accessPolicyFilePath) && Files.isRegularFile(accessPolicyFilePath)) {
+                try (InputStream configStream = Files.newInputStream(accessPolicyFilePath)) {
+                    Yaml yaml = new Yaml();
+                    Object loaded = yaml.load(configStream);
+                    accessPolicy = parseAccessPolicy(loaded);
+                }
+                LOGGER.info("Loaded " + accessPolicy.size() + " document access policies from " + accessPolicyFilePath);
+            } else {
                 accessPolicy = new HashMap<>();
-                return;
+                LOGGER.info("No access policy file at " + accessPolicyFilePath + "; all documents visible to all");
             }
-
-            Path configPath = configLocation.getFirst();
-            try (InputStream configStream = Files.newInputStream(configPath)) {
-                Yaml yaml = new Yaml();
-                Object loaded = yaml.load(configStream);
-                accessPolicy = parseAccessPolicy(loaded);
-            }
-
-            LOGGER.info("Loaded " + accessPolicy.size() + " document access policies from " + configPath);
             accessPolicy.forEach((doc, teams) ->
                     LOGGER.info("Access policy loaded: " + doc + " -> " + (teams.isEmpty() ? "[company-wide]" : teams))
             );
@@ -74,7 +71,7 @@ public class DocumentAccessPolicyService {
         } else {
             accessPolicy.put(documentName, new ArrayList<>(teams));
         }
-        // TODO: Persist to YAML file
+        persistToYaml();
     }
 
     /**
@@ -82,6 +79,29 @@ public class DocumentAccessPolicyService {
      */
     public void removeDocument(String documentName) {
         accessPolicy.remove(documentName);
+        persistToYaml();
+    }
+
+    private void persistToYaml() {
+        if (accessPolicyFilePath == null) {
+            return;
+        }
+        try {
+            Files.createDirectories(accessPolicyFilePath.getParent());
+            Map<String, Map<String, List<String>>> yamlRoot = new LinkedHashMap<>();
+            for (Map.Entry<String, List<String>> entry : accessPolicy.entrySet()) {
+                Map<String, List<String>> read = new LinkedHashMap<>();
+                read.put("read", new ArrayList<>(entry.getValue()));
+                yamlRoot.put(entry.getKey(), read);
+            }
+            DumperOptions options = new DumperOptions();
+            options.setIndent(2);
+            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            Yaml yaml = new Yaml(options);
+            Files.writeString(accessPolicyFilePath, yaml.dump(yamlRoot));
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to persist access policy to " + accessPolicyFilePath, e);
+        }
     }
 
     /**
@@ -131,23 +151,5 @@ public class DocumentAccessPolicyService {
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .collect(toCollection(ArrayList::new));
-    }
-
-    private List<Path> scan(String directory) throws URISyntaxException {
-        Path dirPath;
-        if (directory.startsWith("classpath:/")) {
-            String resourceDir = directory.substring("classpath:/".length());
-            URL url = Thread.currentThread().getContextClassLoader().getResource(resourceDir);
-            dirPath = Paths.get(Objects.requireNonNull(url).toURI());
-        } else {
-            dirPath = Path.of(directory);
-        }
-
-        try (Stream<Path> files = Files.walk(dirPath)) {
-            return files.filter(Files::isRegularFile).toList();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error inspect directory path: ", e);
-        }
-        return List.of(dirPath);
     }
 }
