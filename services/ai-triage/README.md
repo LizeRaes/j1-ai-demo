@@ -41,21 +41,29 @@ Edit `src/main/resources/application.properties` to configure:
 # Server port
 quarkus.http.port=8081
 
-# AI Model Configuration
-ai-triage.model.name=gpt-4o-mini
-ai-triage.model.temperature=0.2
-ai-triage.model.timeout=15S
+# AI Triage Model Configuration
+quarkus.langchain4j.openai.api-key=${OPENAI_API_KEY}
+quarkus.langchain4j.openai.chat-model.model-name=gpt-4o-mini
+quarkus.langchain4j.openai.chat-model.temperature=0.2
+quarkus.langchain4j.openai.chat-model.timeout=15s
 
-# Similarity Service Configuration (optional)
-ai-triage.similarity.base-url=http://localhost:8082
-ai-triage.similarity.timeout=5S
+# Similarity Service Configuration
+quarkus.rest-client.similarity.url=http://localhost:8082
 ai-triage.similarity.max-results=5
+ai-triage.similarity.min-score=0.3
 
-# Document Service Configuration (optional)
-ai-triage.documents.base-url=http://localhost:8084
-ai-triage.documents.timeout=5S
+# Document Service Configuration
 ai-triage.documents.max-results=5
 ai-triage.documents.min-score=0.3
+quarkus.rest-client.company-rag-documents.url=http://localhost:8084
+
+# helpdesk
+ai-triage.helpdesk.base-url=http://localhost:8080
+
+# UI Configuration
+ai-triage.ui.default-zoom-percent=100
+ai-triage.ui.polling.enabled=true
+ai-triage.ui.polling.interval-ms=2000
 ```
 
 ## API Endpoint
