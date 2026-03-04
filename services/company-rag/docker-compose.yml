@@ -16,6 +16,7 @@ services:
     container_name: docling-serve
     restart: unless-stopped
     ports:
-      - "8086:5001"
+      - "5001:5001"
     environment:
       - DOCLING_SERVE_ENABLE_UI=1
+      - DOCLING_SERVE_ENABLE_REMOTE_SERVICES=true

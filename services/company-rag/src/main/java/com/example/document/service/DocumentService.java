@@ -2,6 +2,8 @@ package com.example.document.service;
 
 import ai.docling.serve.api.DoclingServeApi;
 import ai.docling.serve.api.convert.request.ConvertDocumentRequest;
+import ai.docling.serve.api.convert.request.options.ConvertDocumentOptions;
+import ai.docling.serve.api.convert.request.options.ImageRefMode;
 import ai.docling.serve.api.convert.request.source.FileSource;
 import ai.docling.serve.api.convert.response.ConvertDocumentResponse;
 import com.example.document.config.VectorDatabaseConfig;
@@ -24,8 +26,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -45,10 +45,6 @@ import static java.util.stream.Collectors.toList;
 public class DocumentService {
 
     private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
-    private static final Pattern INLINE_IMAGE_DATA_URI_PATTERN = Pattern.compile(
-            "!\\[[^\\]]*]\\(data:image/[^;\\)]+;base64,[^\\)]*\\)",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-    );
 
     @Inject
     DataSource dataSource;
@@ -77,16 +73,16 @@ public class DocumentService {
     @ConfigProperty(name = "document.chunking.default.strategy")
     String defaultStrategy;
 
-    @ConfigProperty(name = "document.preprocessing.mode", defaultValue = "pure-text")
+    @ConfigProperty(name = "document.preprocessing.mode")
     String preprocessingMode;
 
-    @ConfigProperty(name = "document.preprocessing.docling.base-url", defaultValue = "http://localhost:8086")
+    @ConfigProperty(name = "document.preprocessing.docling.base-url")
     String doclingBaseUrl;
 
-    @ConfigProperty(name = "document.preprocessing.docling.retry.max-attempts", defaultValue = "3")
+    @ConfigProperty(name = "document.preprocessing.docling.retry.max-attempts")
     int doclingRetryMaxAttempts;
 
-    @ConfigProperty(name = "document.preprocessing.docling.retry.initial-delay-ms", defaultValue = "250")
+    @ConfigProperty(name = "document.preprocessing.docling.retry.initial-delay-ms")
     long doclingRetryInitialDelayMs;
 
     private EmbeddingStore<TextSegment> embeddingStore;
@@ -227,12 +223,14 @@ public class DocumentService {
                         .base64String(base64Source)
                         .filename(path.getFileName().toString())
                         .build())
+                .options(ConvertDocumentOptions.builder()
+                        .imageExportMode(ImageRefMode.PLACEHOLDER)
+                        .build())
                 .build();
 
         String fileName = path.getFileName().toString();
         try {
-            String markdown = convertWithRetry(request, fileName);
-            return stripInlineImageDataBlobs(markdown, fileName);
+            return convertWithRetry(request, fileName);
         } catch (RuntimeException | IOException e) {
             throw new SkipDocumentException(
                     "Docling failed for " + fileName + " after retries; skipped (non-txt file). Reason: " + e.getMessage(),
@@ -277,29 +275,6 @@ public class DocumentService {
             Thread.currentThread().interrupt();
             throw new IOException("Interrupted while waiting to retry Docling for " + fileName, e);
         }
-    }
-
-    String stripInlineImageDataBlobs(String markdown, String documentName) {
-        if (markdown == null || markdown.isEmpty()) {
-            return markdown;
-        }
-
-        Matcher matcher = INLINE_IMAGE_DATA_URI_PATTERN.matcher(markdown);
-        StringBuffer sanitized = new StringBuffer();
-        int removed = 0;
-        while (matcher.find()) {
-            removed++;
-            matcher.appendReplacement(sanitized, "");
-        }
-        matcher.appendTail(sanitized);
-
-        if (removed > 0) {
-            String message = "Removed " + removed + " inline image blob(s) from Docling markdown for " + documentName;
-            LOGGER.info(message);
-            addActivityLog(message, "ingest");
-        }
-
-        return sanitized.toString();
     }
 
     private DoclingServeApi getDocling() {
