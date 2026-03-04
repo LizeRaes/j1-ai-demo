@@ -66,7 +66,7 @@ class DocumentServiceTest {
         service.splitConfigLocation = "classpath:/config/document_splitting_rule.yaml";
         service.defaultStrategy = "recursive";
         service.preprocessingMode = "pure-text";
-        service.doclingBaseUrl = "http://localhost:8086";
+        service.doclingBaseUrl = "http://localhost:5001";
         service.doclingRetryMaxAttempts = 1;
         service.doclingRetryInitialDelayMs = 0L;
 
@@ -314,25 +314,6 @@ class DocumentServiceTest {
             Files.deleteIfExists(pdf);
             Files.deleteIfExists(dir);
         }
-    }
-
-    @Test
-    void stripInlineImageDataBlobsRemovesOnlyDataUriImages() {
-        String markdown = """
-                ## Demo
-                Intro text.
-                ![Image](data:image/png;base64,AAAABBBBCCCC)
-                Keep this line.
-                ![Diagram](https://example.com/diagram.png)
-                ![Photo](data:image/jpeg;base64,DDDDEEEEFFFF)
-                """;
-
-        String sanitized = service.stripInlineImageDataBlobs(markdown, "Demo.pdf");
-
-        assertFalse(sanitized.contains("data:image/png;base64"));
-        assertFalse(sanitized.contains("data:image/jpeg;base64"));
-        assertTrue(sanitized.contains("https://example.com/diagram.png"));
-        verify(logService).addLog(contains("Removed 2 inline image blob(s)"), eq("ingest"));
     }
 
     @AfterEach

@@ -1,134 +1,133 @@
 package com.example.document.tool;
 
 import ai.docling.serve.api.DoclingServeApi;
+import ai.docling.serve.api.convert.request.options.ConvertDocumentOptions;
+import ai.docling.serve.api.convert.request.options.ImageRefMode;
+import ai.docling.serve.api.convert.request.options.PictureDescriptionApi;
 import ai.docling.serve.api.convert.request.ConvertDocumentRequest;
 import ai.docling.serve.api.convert.request.source.FileSource;
 import ai.docling.serve.api.convert.response.ConvertDocumentResponse;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Base64;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
-/**
- * Standalone CLI to preview Docling markdown output for a file in company-documents.
- */
 public final class DoclingPreviewCli {
 
-    private static final String DEFAULT_DOCLING_BASE_URL = "http://localhost:8086";
-    private static final String DEFAULT_DOCUMENTS_DIR = "company-documents";
-    private static final Pattern INLINE_IMAGE_DATA_URI_PATTERN = Pattern.compile(
-            "!\\[[^\\]]*]\\(data:image/[^;\\)]+;base64,[^\\)]*\\)",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-    );
+    private static final String DOCLING_URL = "http://localhost:5001";
+    private static final String DOCUMENTS_DIR = "company-documents";
+    private static final String OUTPUT_FILE = "target/docling-preview.md";
 
-    private DoclingPreviewCli() {
-    }
+    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String OPENAI_MODEL = "gpt-4o-mini";
+
+    private static final String DEFAULT_PROMPT =
+            "Describe the image in detail including visible text, charts, tables and layout.";
+
+    private static final String FLAG_KEEP_IMAGE_BLOBS = "--keep-image-blobs";
+    private static final String FLAG_REMOVE_IMAGE_BLOBS = "--remove-image-blobs";
+
+    private DoclingPreviewCli() {}
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            printUsage();
+
+        List<String> positional = Arrays.stream(args)
+                .filter(a -> !a.equals(FLAG_KEEP_IMAGE_BLOBS) && !a.equals(FLAG_REMOVE_IMAGE_BLOBS))
+                .toList();
+        boolean removeImageBlobs = !Arrays.asList(args).contains(FLAG_KEEP_IMAGE_BLOBS);
+
+        if (positional.size() < 2) {
+            System.err.println("Usage: DoclingPreviewCli <file> <OPENAI_API_KEY> [--keep-image-blobs]");
             System.exit(1);
         }
 
-        String fileName = args[0];
-        boolean keepImageBlobs = false;
-        Integer maxChars = null;
+        String fileName = positional.get(0);
+        String openAiKey = positional.get(1);
 
-        for (int i = 1; i < args.length; i++) {
-            String arg = args[i];
-            if ("--keep-image-blobs".equals(arg)) {
-                keepImageBlobs = true;
-                continue;
-            }
-            if (arg.startsWith("--max-chars=")) {
-                String value = arg.substring("--max-chars=".length()).trim();
-                try {
-                    maxChars = Integer.parseInt(value);
-                    if (maxChars < 1) {
-                        throw new NumberFormatException("must be >= 1");
-                    }
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid --max-chars value: " + value, e);
-                }
-                continue;
-            }
-            throw new IllegalArgumentException("Unknown argument: " + arg);
-        }
-
-        String baseUrl = System.getProperty("docling.base-url", DEFAULT_DOCLING_BASE_URL);
-        Path documentsDir = Path.of(System.getProperty("documents.dir", DEFAULT_DOCUMENTS_DIR)).toAbsolutePath().normalize();
-
-        Path sourcePath = documentsDir.resolve(fileName).normalize();
-        if (!sourcePath.startsWith(documentsDir)) {
-            throw new IllegalArgumentException("Invalid file path (path traversal): " + fileName);
-        }
-        if (!Files.exists(sourcePath)) {
-            throw new IllegalArgumentException("File does not exist: " + sourcePath);
-        }
-
+        Path sourcePath = Path.of(DOCUMENTS_DIR).resolve(fileName).toAbsolutePath();
         byte[] bytes = Files.readAllBytes(sourcePath);
+
         String base64Source = Base64.getEncoder().encodeToString(bytes);
 
-        ConvertDocumentRequest request = ConvertDocumentRequest.builder()
-                .source(FileSource.builder()
-                        .base64String(base64Source)
-                        .filename(sourcePath.getFileName().toString())
-                        .build())
-                .build();
+        ConvertDocumentRequest request =
+                ConvertDocumentRequest.builder()
+                        .source(FileSource.builder()
+                                .base64String(base64Source)
+                                .filename(sourcePath.getFileName().toString())
+                                .build())
+                        .options(
+                                ConvertDocumentOptions.builder()
+                                        .doOcr(true)
+                                        .doTableStructure(true)
+                                        .imageExportMode(removeImageBlobs ? ImageRefMode.PLACEHOLDER : ImageRefMode.EMBEDDED)
+                                        .doPictureDescription(true)
+                                        .pictureDescriptionApi(buildOpenAiApi(openAiKey))
+                                        .build()
+                        )
+                        .build();
 
-        DoclingServeApi docling = DoclingServeApi.builder()
-                .baseUrl(baseUrl)
-                .build();
+        DoclingServeApi docling =
+                DoclingServeApi.builder()
+                        .baseUrl(DOCLING_URL)
+                        .build();
 
-        ConvertDocumentResponse response = docling.convertSource(request);
-        if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
-            throw new IllegalStateException("Docling returned empty markdown for " + sourcePath.getFileName());
+        ConvertDocumentResponse response;
+        try {
+            response = docling.convertSource(request);
+        } catch (RuntimeException e) {
+            String msg = e.getMessage();
+            if (msg != null && msg.contains("enable_remote_services")) {
+                throw new IllegalStateException(
+                        "Docling rejected remote picture-description calls. " +
+                                "Set DOCLING_SERVE_ENABLE_REMOTE_SERVICES=true on the docling-serve container " +
+                                "and retry. Original error: " + msg,
+                        e
+                );
+            }
+            throw e;
+        }
+
+        if (response.getDocument() == null) {
+            throw new RuntimeException("Docling returned empty result");
         }
 
         String markdown = response.getDocument().getMarkdownContent();
-        SanitizedMarkdown sanitized = keepImageBlobs
-                ? new SanitizedMarkdown(markdown, 0)
-                : stripInlineImageDataBlobs(markdown);
+        Path outputPath = Path.of(OUTPUT_FILE).toAbsolutePath();
+        Files.createDirectories(outputPath.getParent());
+        Files.writeString(
+                outputPath,
+                markdown,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE
+        );
 
-        String output = sanitized.content();
-        if (maxChars != null && output.length() > maxChars) {
-            output = output.substring(0, maxChars) + "\n\n... (truncated)";
-        }
-
-        System.out.println("Docling base URL: " + baseUrl);
-        System.out.println("File: " + sourcePath);
-        System.out.println("Original markdown length: " + markdown.length());
-        System.out.println("Inline image blobs removed: " + sanitized.removedBlobs());
-        System.out.println("Output length: " + sanitized.content().length());
-        System.out.println();
         System.out.println("----- BEGIN DOCLING MARKDOWN -----");
-        System.out.println(output);
+        System.out.println(markdown);
         System.out.println("----- END DOCLING MARKDOWN -----");
+        System.out.println("Written to: " + outputPath);
     }
 
-    private static SanitizedMarkdown stripInlineImageDataBlobs(String markdown) {
-        Matcher matcher = INLINE_IMAGE_DATA_URI_PATTERN.matcher(markdown);
-        StringBuffer sanitized = new StringBuffer();
-        int removed = 0;
-        while (matcher.find()) {
-            removed++;
-            matcher.appendReplacement(sanitized, "");
-        }
-        matcher.appendTail(sanitized);
-        return new SanitizedMarkdown(sanitized.toString(), removed);
-    }
+    private static PictureDescriptionApi buildOpenAiApi(String apiKey) {
 
-    private static void printUsage() {
-        System.err.println("Usage:");
-        System.err.println("  DoclingPreviewCli <filename> [--max-chars=<N>] [--keep-image-blobs]");
-        System.err.println();
-        System.err.println("System properties:");
-        System.err.println("  -Ddocling.base-url=http://localhost:8086");
-        System.err.println("  -Ddocuments.dir=company-documents");
-    }
+        Map<String, Object> params = new HashMap<>();
+        params.put("model", OPENAI_MODEL);
 
-    private record SanitizedMarkdown(String content, int removedBlobs) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + apiKey);
+
+        return PictureDescriptionApi.builder()
+                .url(URI.create(OPENAI_API_URL))
+                .params(params)
+                .headers(headers)
+                .prompt(DEFAULT_PROMPT)
+                .timeout(java.time.Duration.ofSeconds(120))
+                .build();
     }
 }

@@ -25,7 +25,12 @@ This RAG system allows you to:
    ```
    This starts:
    - Oracle on `localhost:1522`
-   - Docling Serve on `localhost:8086`
+   - Docling Serve on `localhost:5001`
+
+   If you want to start only Docling server:
+   ```bash
+   docker-compose up -d docling
+   ```
 
 2. **Set your OpenAI API key:**
    ```bash
@@ -69,7 +74,7 @@ If you want PDF/DOCX/PPTX/XLSX preprocessing (including table/figure transcripti
    mvn quarkus:dev \
      -Dsync-demo-data=true \
      -Ddocument.preprocessing.mode=docling \
-     -Ddocument.preprocessing.docling.base-url=http://localhost:8086
+       -Ddocument.preprocessing.docling.base-url=http://localhost:5001
    ```
    - Normal mode:
    ```bash
@@ -77,25 +82,62 @@ If you want PDF/DOCX/PPTX/XLSX preprocessing (including table/figure transcripti
    java \
      -Dsync-demo-data=true \
      -Ddocument.preprocessing.mode=docling \
-     -Ddocument.preprocessing.docling.base-url=http://localhost:8086 \
+     -Ddocument.preprocessing.docling.base-url=http://localhost:5001 \
      -jar target/quarkus-app/quarkus-run.jar
    ```
 
 ### Docling preview CLI (standalone observer)
 
-If you want to inspect what Docling produces for a specific file in `company-documents/` without starting the full app flow, run:
+Start Docling server first:
+
+```bash
+docker-compose up -d docling
+```
+
+Then, if you want to inspect what Docling produces for a specific file in `company-documents/` without starting the full app flow, run:
 
 ```bash
 mvn -q -DskipTests compile exec:java \
   -Dexec.mainClass=com.example.document.tool.DoclingPreviewCli \
-  -Dexec.args="Billing_Payment_Reliability_Report_2026.pdf --max-chars=6000"
+  -Dexec.args="Billing_Payment_Reliability_Report_26.pdf --max-chars=6000"
 ```
 
 Optional flags and properties:
-- `--keep-image-blobs`: keep inline `data:image/...;base64,...` markdown image payloads in output (default is to remove them for readability).
+- `--no-image-parse`: disable Docling image parsing options and keep blobs as returned by Docling.
+- `--no-image-parse-remove-blob`: disable image parsing and replace inline image blobs with `--- image blob removed by CLI tool ---`.
+- `--enable-picture-description`: also enable Docling picture description enrichment (off by default).
+- `--picture-api-model=<MODEL>`: when picture description is enabled, send requests to a remote VLM API with this model name (example: `qwen2.5vl:7b-q4_K_M` for Ollama).
+- `--picture-api-url=<URL>`: remote VLM API endpoint (default when model is set: `http://127.0.0.1:1234/v1/chat/completions` for LM Studio).
+- `--picture-api-timeout-sec=<N>`: timeout for the remote picture description API call (default `120` when model is set).
+- `--picture-api-bearer-token=<TOKEN>`: optional bearer token for remote API auth.
+- `--picture-api-prompt=<TEXT>`: custom prompt for image description.
+- `--debug`: print per-attempt retry logs when Docling result is not ready yet.
+- `--max-attempts=<N>`: max retries when Docling returns "Task result not found" (default `3`).
+- `--max-wait-ms=<N>`: max time to wait for Docling async task result readiness (default `60000`).
 - `--max-chars=<N>`: truncate console output to `N` characters.
-- `-Ddocling.base-url=http://localhost:8086`: override Docling URL.
+- `-Ddocling.base-url=http://localhost:5001`: override Docling URL.
 - `-Ddocuments.dir=company-documents`: override source folder.
+
+Notes on known Docling behavior:
+- This CLI uses OCR + table parsing by default and keeps picture description off unless `--enable-picture-description` is set.
+- If Docling returns `Task result not found`, the CLI retries sync briefly and then falls back to Docling async conversion endpoint automatically.
+
+If you want picture descriptions with LM Studio/Ollama, make sure all of this is true:
+- Ollama is running and a vision model is available (`ollama list`), for example `qwen2.5vl:7b-q4_K_M`.
+- Docling container can reach Ollama endpoint (for Docker Desktop use `host.docker.internal`; on Linux use host IP or host networking).
+- If Ollama is bound only to localhost, configure it to listen on `0.0.0.0` when needed.
+
+If you use LM Studio on your host machine:
+- default URL in this CLI is `http://127.0.0.1:1234/v1/chat/completions`
+- if Docling runs inside Docker and cannot resolve host localhost, override with a host-reachable URL (for example `http://host.docker.internal:1234/v1/chat/completions` on Docker Desktop).
+
+Example:
+
+```bash
+mvn -q -DskipTests compile exec:java \
+  -Dexec.mainClass=com.example.document.tool.DoclingPreviewCli \
+  -Dexec.args="Billing_Payment_Reliability_Report_26.pdf --enable-picture-description --picture-api-model=qwen2.5vl:7b-q4_K_M --picture-api-url=http://host.docker.internal:11434/v1/chat/completions --debug --max-chars=6000"
+```
 
 **Important:** 
 - Make sure the Oracle database is running before starting the application, otherwise you'll get connection errors.
@@ -150,7 +192,7 @@ Edit `src/main/resources/application.properties` to configure default chunking:
 document.chunking.default.strategy=recursive
 document.chunking.default.chunk-size=300
 document.preprocessing.mode=pure-text
-document.preprocessing.docling.base-url=http://localhost:8086
+document.preprocessing.docling.base-url=http://localhost:5001
 ```
 
 `document.preprocessing.mode` options:

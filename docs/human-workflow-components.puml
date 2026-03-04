@@ -1,0 +1,17 @@
+@startuml
+top to bottom direction
+skinparam componentStyle rectangle
+
+component "User App" as UserApp
+component "Helpdesk App" as Helpdesk
+component "Human Triage" as HumanTriage
+
+UserApp --> Helpdesk
+
+' force horizontal alignment
+Helpdesk -[hidden]-> HumanTriage
+
+Helpdesk -right-> HumanTriage : UI
+HumanTriage -left-> Helpdesk : Triaged ticket
+
+@enduml
