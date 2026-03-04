@@ -136,7 +136,6 @@ stop_containers
 # --- Start databases ---
 echo "=== Starting Docker containers ==="
 docker compose up -d
-docker compose -f "$ROOT/services/company-rag/docker-compose.yml" up -d docling
 echo "=== Waiting for dependencies to be ready ==="
 wait_for_port "mysql" 3306 120
 wait_for_port "ticket oracle" 1521 120
