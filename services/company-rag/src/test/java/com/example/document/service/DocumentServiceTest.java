@@ -67,8 +67,10 @@ class DocumentServiceTest {
         service.defaultStrategy = "recursive";
         service.preprocessingMode = "pure-text";
         service.doclingBaseUrl = "http://localhost:5001";
-        service.doclingRetryMaxAttempts = 1;
-        service.doclingRetryInitialDelayMs = 0L;
+        service.doclingVlmDoPictureDescription = false;
+        service.doclingVlmUrl = "https://api.openai.com/v1/chat/completions";
+        service.doclingVlmModel = "gpt-4o-mini";
+        service.doclingVlmApiKey = "";
 
         when(vectorDatabaseConfig.getEmbeddingStore()).thenReturn(embeddingStore);
         when(vectorDatabaseConfig.getEmbeddingTable()).thenReturn("document");
@@ -223,6 +225,7 @@ class DocumentServiceTest {
         try {
             service.preprocessingMode = "docling";
             service.doclingBaseUrl = "http://localhost:1";
+            service.doclingVlmDoPictureDescription = false;
 
             String extracted = service.extractContentForChunking(tmp);
 
@@ -241,6 +244,7 @@ class DocumentServiceTest {
         try {
             service.preprocessingMode = "docling";
             service.doclingBaseUrl = "http://localhost:1";
+            service.doclingVlmDoPictureDescription = false;
 
             DocumentService.SkipDocumentException exception = assertThrows(
                     DocumentService.SkipDocumentException.class,
@@ -264,6 +268,7 @@ class DocumentServiceTest {
             service.documentsDir = dir.toString();
             service.preprocessingMode = "docling";
             service.doclingBaseUrl = "http://localhost:1";
+            service.doclingVlmDoPictureDescription = false;
 
             when(chunkingService.chunkDocument(any(Document.class), eq("ok.txt"), anyString()))
                     .thenReturn(List.of(TextSegment.from("txt content")));

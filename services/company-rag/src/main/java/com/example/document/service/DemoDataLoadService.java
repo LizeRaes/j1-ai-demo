@@ -23,7 +23,7 @@ public class DemoDataLoadService {
     @ConfigProperty(name = "demo.data.load")
     boolean loadDemoData;
 
-    @ConfigProperty(name = "sync-demo-data", defaultValue = "false")
+    @ConfigProperty(name = "sync-demo-data")
     boolean syncDemoData;
 
     void onStart(@Observes @Priority(Interceptor.Priority.APPLICATION + 100) StartupEvent ev) {

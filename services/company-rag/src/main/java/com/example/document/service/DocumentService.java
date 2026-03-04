@@ -4,8 +4,11 @@ import ai.docling.serve.api.DoclingServeApi;
 import ai.docling.serve.api.convert.request.ConvertDocumentRequest;
 import ai.docling.serve.api.convert.request.options.ConvertDocumentOptions;
 import ai.docling.serve.api.convert.request.options.ImageRefMode;
+import ai.docling.serve.api.convert.request.options.PictureDescriptionApi;
 import ai.docling.serve.api.convert.request.source.FileSource;
 import ai.docling.serve.api.convert.response.ConvertDocumentResponse;
+
+import java.net.URI;
 import com.example.document.config.VectorDatabaseConfig;
 import com.example.document.dto.DocumentsResponse;
 import dev.langchain4j.data.document.Document;
@@ -79,11 +82,17 @@ public class DocumentService {
     @ConfigProperty(name = "document.preprocessing.docling.base-url")
     String doclingBaseUrl;
 
-    @ConfigProperty(name = "document.preprocessing.docling.retry.max-attempts")
-    int doclingRetryMaxAttempts;
+    @ConfigProperty(name = "document.preprocessing.docling.vlm.do-picture-description")
+    boolean doclingVlmDoPictureDescription;
 
-    @ConfigProperty(name = "document.preprocessing.docling.retry.initial-delay-ms")
-    long doclingRetryInitialDelayMs;
+    @ConfigProperty(name = "document.preprocessing.docling.vlm.url")
+    String doclingVlmUrl;
+
+    @ConfigProperty(name = "document.preprocessing.docling.vlm.model")
+    String doclingVlmModel;
+
+    @ConfigProperty(name = "document.preprocessing.docling.vlm.api-key")
+    String doclingVlmApiKey;
 
     private EmbeddingStore<TextSegment> embeddingStore;
 
@@ -218,63 +227,65 @@ public class DocumentService {
         }
 
         String base64Source = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+        ConvertDocumentOptions.Builder optionsBuilder = ConvertDocumentOptions.builder()
+                .doOcr(true)
+                .doTableStructure(true)
+                .imageExportMode(ImageRefMode.PLACEHOLDER);
+        if (doclingVlmDoPictureDescription) {
+            optionsBuilder.doPictureDescription(true)
+                    .pictureDescriptionApi(buildPictureDescriptionApi());
+        }
         ConvertDocumentRequest request = ConvertDocumentRequest.builder()
                 .source(FileSource.builder()
                         .base64String(base64Source)
                         .filename(path.getFileName().toString())
                         .build())
-                .options(ConvertDocumentOptions.builder()
-                        .imageExportMode(ImageRefMode.PLACEHOLDER)
-                        .build())
+                .options(optionsBuilder.build())
                 .build();
 
         String fileName = path.getFileName().toString();
         try {
-            return convertWithRetry(request, fileName);
-        } catch (RuntimeException | IOException e) {
+            ConvertDocumentResponse response = getDocling().convertSource(request);
+            if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
+                throw new IOException("Docling returned no markdown content for " + fileName);
+            }
+            return response.getDocument().getMarkdownContent();
+        } catch (RuntimeException e) {
+            String msg = e.getMessage();
+            if (msg != null && msg.contains("enable_remote_services")) {
+                throw new IllegalStateException(
+                        "Docling rejected remote picture-description calls. " +
+                                "Set DOCLING_SERVE_ENABLE_REMOTE_SERVICES=true on the docling-serve container " +
+                                "and retry. Original error: " + msg,
+                        e
+                );
+            }
             throw new SkipDocumentException(
-                    "Docling failed for " + fileName + " after retries; skipped (non-txt file). Reason: " + e.getMessage(),
+                    "Docling failed for " + fileName + "; skipped (non-txt file). Reason: " + msg,
+                    e
+            );
+        } catch (IOException e) {
+            throw new SkipDocumentException(
+                    "Docling failed for " + fileName + "; skipped (non-txt file). Reason: " + e.getMessage(),
                     e
             );
         }
     }
 
-    private String convertWithRetry(ConvertDocumentRequest request, String fileName) throws IOException {
-        int maxAttempts = Math.max(1, doclingRetryMaxAttempts);
-        long delayMs = Math.max(0L, doclingRetryInitialDelayMs);
+    private PictureDescriptionApi buildPictureDescriptionApi() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("model", doclingVlmModel);
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                ConvertDocumentResponse response = getDocling().convertSource(request);
-                if (response.getDocument() == null || response.getDocument().getMarkdownContent() == null) {
-                    throw new IOException("Docling returned no markdown content for " + fileName);
-                }
-                return response.getDocument().getMarkdownContent();
-            } catch (RuntimeException | IOException e) {
-                if (attempt == maxAttempts) {
-                    throw e;
-                }
-                String message = "Docling attempt " + attempt + "/" + maxAttempts + " failed for " + fileName
-                        + "; retrying in " + delayMs + "ms. Reason: " + e.getMessage();
-                LOGGER.warning(message);
-                addActivityLog(message, "warn");
-                sleepBeforeRetry(delayMs, fileName);
-                delayMs = Math.min(2000L, Math.max(1L, delayMs * 2));
-            }
-        }
-        throw new IOException("Docling conversion exhausted retries for " + fileName);
-    }
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + (doclingVlmApiKey != null ? doclingVlmApiKey : ""));
 
-    private void sleepBeforeRetry(long delayMs, String fileName) throws IOException {
-        if (delayMs <= 0) {
-            return;
-        }
-        try {
-            Thread.sleep(delayMs);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("Interrupted while waiting to retry Docling for " + fileName, e);
-        }
+        return PictureDescriptionApi.builder()
+                .url(URI.create(doclingVlmUrl))
+                .params(params)
+                .headers(headers)
+                .prompt("Describe the image in detail including visible text, charts, tables and layout.")
+                .timeout(java.time.Duration.ofSeconds(120))
+                .build();
     }
 
     private DoclingServeApi getDocling() {
