@@ -24,19 +24,21 @@ public class DocumentAccessPolicyServiceTest {
     void loadsCurrentYamlPoliciesWithExpectedTeams() {
         Map<String, List<String>> policies = service.getAllAccessPolicies();
 
-        assertEquals(7, policies.size(), "Expected all current YAML documents to be loaded");
-        assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Approved_Response_Templates.txt"));
-        assertEquals(List.of("billing", "dispatching"), policies.get("Billing_Refund_Policy.txt"));
+        assertEquals(9, policies.size(), "Expected all current YAML documents to be loaded");
+        assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Approved_Response_Templates.md"));
+        assertEquals(List.of("billing", "dispatching"), policies.get("Billing_Refund_Policy.md"));
         assertEquals(List.of("dispatching", "billing", "scheduling"), policies.get("Data_Privacy_User_Data_Handling.txt"));
-        assertEquals(List.of("dispatching", "engineering"), policies.get("Known_Bugs_Limitations.txt"));
+        assertEquals(List.of("dispatching", "engineering"), policies.get("Known_Bugs_Limitations.md"));
         assertEquals(List.of("engineering"), policies.get("MedicalAppointment_Architecture.txt"));
         assertEquals(List.of("billing"), policies.get("Payment_System_Payment_Flow.txt"));
-        assertEquals(List.of("dispatching"), policies.get("Security_Escalation_Policy.txt"));
+        assertEquals(List.of("dispatching"), policies.get("Security_Escalation_Policy.md"));
+        assertEquals(List.of("billing", "dispatching"), policies.get("Billing_Payment_Reliability_Report_26.pdf"));
+        assertEquals(List.of("engineering", "dispatching"), policies.get("Account_Security_Incident_Report_26.pdf"));
     }
 
     @Test
     void getAccessTeamsReturnsConfiguredTeamsForKnownDocument() {
-        List<String> teams = service.getAccessTeams("Known_Bugs_Limitations.txt");
+        List<String> teams = service.getAccessTeams("Known_Bugs_Limitations.md");
         assertEquals(List.of("dispatching", "engineering"), teams);
     }
 
