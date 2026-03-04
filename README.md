@@ -138,14 +138,14 @@ j1-ai-demo/
 
 ## Tech Stack
 
-| Service                            | Framework                   | AI / DB                       |
-|------------------------------------|-----------------------------|-------------------------------|
-| medicapt-user-facing     | Quarkus + Qute              | — / in-memory                 |
-| helpdesk                 | Quarkus + Hibernate/Panache | — / MySQL                     |
-| ai-triage                | Quarkus + LangChain4j       | GPT-4o-mini / —               |
-| similar-tickets          | Helidon + LangChain4j       | OpenAI embeddings / Oracle AI |
-| company-rag              | Quarkus + LangChain4j       | OpenAI embeddings / Oracle AI |
-| coding-assistant         | Quarkus                     | OpenAI Codex / GitHub CLI     |
+| Service                            | Framework                   | AI / DB                            |
+|------------------------------------|-----------------------------|------------------------------------|
+| medicapt-user-facing     | Quarkus + Qute              | — / in-memory                      |
+| helpdesk                 | Quarkus + Hibernate/Panache | — / MySQL                          |
+| ai-triage                | Quarkus + LangChain4j       | GPT-4o-mini / —                    |
+| similar-tickets          | Helidon + LangChain4j       | OpenAI embeddings / Oracle AI 26ai |
+| company-rag              | Quarkus + LangChain4j       | OpenAI embeddings / Oracle AI 26ai |
+| coding-assistant         | Quarkus                     | OpenAI Codex / GitHub CLI          |
 
 ## Demo Notice
 

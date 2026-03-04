@@ -12,12 +12,13 @@ import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class SchedulingService {
+
     private final List<Appointment> appointments = new ArrayList<>();
     private static final String DEFAULT_USER_ID = "u-charlie";
 
     public List<Appointment> getAllAppointments(String userId) {
         return appointments.stream()
-                .filter(a -> a.getUserId().equals(userId))
+                .filter(a -> a.userId().equals(userId))
                 .collect(Collectors.toList());
     }
 
@@ -34,42 +35,45 @@ public class SchedulingService {
         return appointment;
     }
 
-    public Appointment cancelAppointment(String appointmentId, String userId) {
+    public void cancelAppointment(String appointmentId, String userId) {
         Appointment appointment = appointments.stream()
-                .filter(a -> a.getId().equals(appointmentId) && a.getUserId().equals(userId))
+                .filter(        a -> a.id().equals(appointmentId) && a.userId().equals(userId))
                 .findFirst()
                 .orElse(null);
         
         if (appointment != null) {
-            appointment.setStatus(AppointmentStatus.CANCELLED);
+            appointments.remove(appointment);
+            appointments.add(new Appointment(appointmentId, appointment.doctor(), appointment.date(),
+                    appointment.time(), AppointmentStatus.CANCELLED, appointment.userId()));
         }
-        return appointment;
     }
 
-    public Appointment rescheduleAppointment(String appointmentId, LocalDate newDate, LocalTime newTime, String userId) {
+    public void rescheduleAppointment(String appointmentId, LocalDate newDate, LocalTime newTime, String userId) {
         Appointment appointment = appointments.stream()
-                .filter(a -> a.getId().equals(appointmentId) && a.getUserId().equals(userId))
+                .filter(a -> a.id().equals(appointmentId) && a.userId().equals(userId))
                 .findFirst()
                 .orElse(null);
         
         if (appointment != null) {
-            appointment.setDate(newDate);
-            appointment.setTime(newTime);
-            appointment.setStatus(AppointmentStatus.CONFIRMED);
+            appointments.remove(appointment);
+
+            appointment = new Appointment(appointmentId, appointment.doctor(), newDate,
+                    newTime, AppointmentStatus.CONFIRMED, appointment.userId());
+            appointments.add(appointment);
         }
-        return appointment;
     }
 
-    public Appointment confirmAppointment(String appointmentId) {
+    public void confirmAppointment(String appointmentId) {
         Appointment appointment = appointments.stream()
-                .filter(a -> a.getId().equals(appointmentId))
+                .filter(a -> a.id().equals(appointmentId))
                 .findFirst()
                 .orElse(null);
         
         if (appointment != null) {
-            appointment.setStatus(AppointmentStatus.CONFIRMED);
+            appointments.remove(appointment);
+            appointments.add(new Appointment(appointmentId, appointment.doctor(), appointment.date(),
+                    appointment.time(), AppointmentStatus.CONFIRMED, appointment.userId()));
         }
-        return appointment;
     }
 
     public String getDefaultUserId() {

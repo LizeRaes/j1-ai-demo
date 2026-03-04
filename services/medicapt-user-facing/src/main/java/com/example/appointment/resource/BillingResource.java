@@ -10,11 +10,12 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/billing")
 public class BillingResource {
+
     @Inject
     Template payment;
 
     @Inject
-    Template paymentSuccess;
+    Template success;
 
     @Inject
     BillingService billingService;
@@ -51,6 +52,6 @@ public class BillingResource {
     @Path("/pay/success")
     @Produces(MediaType.TEXT_HTML)
     public String paymentSuccess() {
-        return paymentSuccess.render();
+        return success.render();
     }
 }

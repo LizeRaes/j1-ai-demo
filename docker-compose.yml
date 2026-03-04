@@ -6,6 +6,10 @@ services:
     container_name: company
     ports:
       - "1522:1521"
+  docling:
+    extends:
+      service: docling
+      file: services/company-rag/docker-compose.yml
   ticket:
     extends:
       file: services/similar-tickets/docker-compose.yml
