@@ -20,7 +20,7 @@ The system demonstrates how user support requests flow from a user-facing app th
 
 <img src="./system_components.png" alt="System Components" width="50%">
 
-![Sequence Diagram](./sequence_diagram.png)
+![Sequence Diagram](./sequence-diagram.png)
 
 ---
 
@@ -40,9 +40,7 @@ All AI-powered services require an OpenAI API key.
 2. [helpdesk](../services/helpdesk/)  
    ```bash
    docker-compose up -d
-   mvn quarkus:dev -DDemoData=true
-   # or:
-   # mvn quarkus:dev -DKeepData=true
+   mvn quarkus:dev
    ```
 
 3. [ai-triage](../services/ai-triage/)  

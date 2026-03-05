@@ -2,7 +2,7 @@ package com.example.appointment.resource;
 
 import com.example.appointment.domain.constants.EventSeverity;
 import com.example.appointment.domain.constants.EventType;
-import com.example.appointment.external.InternalDocumentClient;
+import com.example.appointment.external.TriageClient;
 import com.example.appointment.service.adapter.EventService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -20,7 +20,8 @@ public class DocumentResource {
 
     @Inject
     @RestClient
-    InternalDocumentClient internalDocumentClient;
+    TriageClient triageClient;
+
 
     @Inject
     EventService eventService;
@@ -31,7 +32,7 @@ public class DocumentResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getDocumentContent(@PathParam("documentName") String documentName) {
         try {
-            Map<String, String> internalDocumentContent = internalDocumentClient.getDocumentContent(documentName);
+            Map<String, String> internalDocumentContent = triageClient.getDocumentContent(documentName);
             if (internalDocumentContent.containsKey("content")) {
                 return Response.ok(internalDocumentContent.get("content"))
                         .type(MediaType.TEXT_PLAIN)
@@ -60,7 +61,7 @@ public class DocumentResource {
     @Path("/download/{documentName}")
     public Response downloadDocument(@PathParam("documentName") String documentName) {
         try {
-            Response upstream = internalDocumentClient.downloadDocument(documentName);
+            Response upstream = triageClient.downloadDocument(documentName);
             if (upstream.getStatus() >= 400) {
                 return Response.status(upstream.getStatus()).build();
             }

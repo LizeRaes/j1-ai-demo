@@ -98,19 +98,17 @@ representatives and engineers use this system to:
 
    **Load Demo Data** (clears database and loads tickets from `demo-tickets.json`):
    ```bash
-   mvn quarkus:dev -DDemoData=true
+   mvn quarkus:dev
    ```
 
    **Start with Empty Database**:
    ```bash
-   mvn quarkus:dev -DEmpty=true
+   mvn quarkus:dev -Ddemo.data.enabled=false -Ddemo.data.empty=true
    ```
 
    **Keep Existing Data** (default):
    ```bash
    mvn quarkus:dev
-   # or explicitly:
-   mvn quarkus:dev -DKeepData=true
    ```
 
 3. **Access the Application**:
@@ -287,19 +285,22 @@ category).
 ## Project Structure
 
 ```
-src/main/java/com/medicalappointment/ticketing/
+src/main/java/com/example/appointment/
+  ├── config/
   ├── domain/
   │   ├── model/          # JPA entities
   │   └── enums/          # Enum types
   ├── persistence/        # Panache repositories
   ├── service/            # Business logic
-  ├── api/                # REST endpoints
+  ├── resource/           # REST endpoints
+  ├── external/           # RESTClients
   ├── dto/                # Data transfer objects
   └── mapper/             # Entity-DTO mappers
 
 src/main/resources/
   └── META-INF/resources/ # Static web files
       ├── index.html
+      ├── intake.html
       ├── css/
       └── js/
 ```
