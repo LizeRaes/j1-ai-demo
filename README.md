@@ -4,12 +4,12 @@ MedicalAppointment is a demonstration platform consisting of multiple microservi
 
 ## System Architecture
 
-<img src="docs/system_components.png" alt="System Components" width="60%">
+<img src="docs/system-components.png" alt="System Components" width="60%">
 
 ### Request Flow
 
 
-![Sequence Diagram](docs/sequence_diagram.png)
+![Sequence Diagram](docs/sequence-diagram.png)
 
 
 
@@ -84,29 +84,29 @@ SIMILAR_TICKETS_DEMO_DATA=false ./start-all.sh
 HELPDESK_DEMO_DATA=false COMPANY_RAG_DEMO_DATA=false SIMILAR_TICKETS_DEMO_DATA=false ./start-all.sh
 ```
 
-Manual startup order:
+Manual startup order for development:
 
 Ensure `OPENAI_API_KEY` is set in your environment variables before starting services that use embeddings/models.
 
 ```bash
-# 0. Start the DB services
+# 0. Start the auxiliary services
 docker compose up
 
 # 1. User-facing app
 cd services/medicapt-user-facing && mvn quarkus:dev
 
-# 2. Helpdesk (needs MySQL via Docker)
-cd services/helpdesk && mvn quarkus:dev -DDemoData=true
+# 2. Helpdesk (needs MySQL connection)
+cd services/helpdesk && mvn quarkus:dev
 
 # 3. AI triage
 cd services/ai-triage && mvn quarkus:dev
 
-# 4. Similar-tickets (needs Oracle AI via Docker)
+# 4. Similar-tickets (needs Oracle AI connection)
 cd services/similar-tickets
 mvn clean verify
 java -DDemoData=true -jar target/similar-tickets.jar
 
-# 5. Company-documents RAG
+# 5. Company-documents RAG (needs Oracle AI connection)
 cd services/company-rag && mvn quarkus:dev -Ddemo.data.load=true
 
 # 6. Headless coding assistant
@@ -126,11 +126,14 @@ j1-ai-demo/
 │   ├── similar-tickets/           # :8082  Ticket similarity
 │   ├── company-rag/               # :8084  Document RAG
 │   └── coding-assistant/          # :8085  Async bug-fix PR assistant
-├── docs/
-│   ├── ARCHITECTURE.md            # Full architecture & quick-start guide
-│   ├── SYSTEM_DIAGRAM.md          # Mermaid + PlantUML diagrams
-│   ├── system_components.png
-│   └── sequence_diagram.png
+docs/
+├── ARCHITECTURE.md   # Architecture overview & quick-start guide
+├── human-workflow-components.png
+├── human-workflow-components.puml
+├── sequence-diagram.png
+├── sequence-diagram.puml
+├── system-components.png
+└── system-components.puml
 └── README.md
 ```
 

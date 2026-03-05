@@ -18,7 +18,7 @@ echo "=== Running tests for all services ==="
 for service in "${SERVICES[@]}"; do
   echo ""
   echo ">>> ${service}"
-  (cd "$ROOT/$service" && mvn test)
+  (cd "$ROOT/$service" && mvn clean test)
 done
 
 echo ""

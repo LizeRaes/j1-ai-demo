@@ -20,11 +20,8 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.InvalidPathException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -111,34 +108,27 @@ public class DocumentService {
         embeddingTable = vectorDatabaseConfig.getEmbeddingTable();
         metadataColumn = vectorDatabaseConfig.getMetadataColumn();
 
-        try {
-            List<Path> configLocation = scan(splitConfigLocation);
-            InputStream configStream = Files.newInputStream(configLocation.getFirst());
+        try (InputStream configStream = openConfiguredInputStream(splitConfigLocation)) {
             splitConfig = new Yaml().load(configStream);
-        } catch (URISyntaxException | IOException e) {
-            LOGGER.log(Level.SEVERE, "Error loading split configuration: ", e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load split configuration from: " + splitConfigLocation, e);
         }
 
         ensureDocumentsDirectoryExists();
 
     }
 
-    private List<Path> scan(String directory) throws URISyntaxException {
-        Path dirPath;
-        if (directory.startsWith("classpath:/")) {
-            String resourceDir = directory.substring("classpath:/".length());
-            URL url = Thread.currentThread().getContextClassLoader().getResource(resourceDir);
-            dirPath = Paths.get(Objects.requireNonNull(url).toURI());
-        } else {
-            dirPath = Path.of(directory);
+    private InputStream openConfiguredInputStream(String location) throws IOException {
+        if (location.startsWith("classpath:/")) {
+            String resourcePath = location.substring("classpath:/".length());
+            InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
+            if (stream == null) {
+                throw new IOException("Classpath resource not found: " + location);
+            }
+            return stream;
         }
 
-        try (Stream<Path> files = Files.walk(dirPath)) {
-            return files.filter(Files::isRegularFile).toList();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error inspect directory path: ", e);
-        }
-        return List.of(dirPath);
+        return Files.newInputStream(Path.of(location));
     }
 
     public void embedLocalDocuments() {

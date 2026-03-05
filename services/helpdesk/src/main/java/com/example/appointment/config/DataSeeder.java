@@ -19,13 +19,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +37,12 @@ public class DataSeeder {
     @ConfigProperty(name = "demo.dir.location")
     String directory;
 
+    @ConfigProperty(name = "demo.data.enabled")
+    boolean demoDataEnabled;
+
+    @ConfigProperty(name = "demo.data.empty")
+    boolean demoDataEmpty;
+
     @Inject
     TicketStateService ticketStateService;
 
@@ -52,17 +52,15 @@ public class DataSeeder {
     @Inject
     IncomingRequestService incomingRequestService;
 
-    @Transactional
-    void onStart(@Observes StartupEvent ev) throws URISyntaxException, IOException {
-        String demoDataMode = System.getProperty("DemoData");
-        String emptyMode = System.getProperty("Empty");
 
+    @Transactional
+    void onStart(@Observes StartupEvent ev) {
         // Priority: DemoData > Empty > KeepData (default)
-        if (demoDataMode != null && !demoDataMode.isEmpty()) {
+        if (demoDataEnabled) {
             clearAllData();
             int totalTickets = loadDemoTicketsFromFiles();
             LOGGER.info("Demo data loaded: " + totalTickets + " tickets from demo-data/*.json files");
-        } else if (emptyMode != null && !emptyMode.isEmpty()) {
+        } else if (demoDataEmpty) {
             clearAllData();
             LOGGER.info("Database cleared (Empty mode)");
         } else {
@@ -83,22 +81,22 @@ public class DataSeeder {
     }
 
     @Transactional
-    int loadDemoTicketsFromFiles() throws URISyntaxException,IOException {
-        URL url = Thread.currentThread().getContextClassLoader().getResource(directory);
-        Path dirPath = Paths.get(Objects.requireNonNull(url).toURI());
+    int loadDemoTicketsFromFiles() {
+        String normalizedDirectory = normalizeDirectory(directory);
 
         int totalTickets = 0;
         ObjectMapper mapper = new ObjectMapper();
         TicketMapper ticketMapper = new TicketMapper();
 
         for (String fileName : DEMO_DATA_FILES) {
-            Path path = dirPath.resolve(fileName);
-            if (!Files.exists(path) || !Files.isRegularFile(path)) {
-                LOGGER.warning("Demo data file missing or not a regular file: " + path);
-                continue;
-            }
+            String resourcePath = normalizedDirectory + "/" + fileName;
 
-            try (InputStream docStream = Files.newInputStream(path)) {
+            try (InputStream docStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
+                if (docStream == null) {
+                    LOGGER.warning("Demo data resource missing on classpath: " + resourcePath);
+                    continue;
+                }
+
                 int fileTicketCount = 0;
                 List<TicketDto> tickets = mapper.readValue(docStream, new TypeReference<>() {
                 });
@@ -125,11 +123,26 @@ public class DataSeeder {
 
                 totalTickets += fileTicketCount;
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "⚠ Error loading " + path + ": ", e);
+                LOGGER.log(Level.SEVERE, "Error loading demo data resource " + resourcePath, e);
             }
         }
 
         return totalTickets;
+    }
+
+    private String normalizeDirectory(String rawDirectory) {
+        if (rawDirectory == null || rawDirectory.isBlank()) {
+            return "demo-data";
+        }
+
+        String normalized = rawDirectory.trim();
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     private void seedDefaultIncomingRequests() {
