@@ -13,7 +13,7 @@ SIMILAR_TICKETS_DEMO_DATA="${SIMILAR_TICKETS_DEMO_DATA:-true}"
 
 HELPDESK_DEMO_FLAG=""
 if [ "$HELPDESK_DEMO_DATA" = "true" ]; then
-  HELPDESK_DEMO_FLAG="-DDemoData=true"
+  HELPDESK_DEMO_FLAG="-Ddemo.data.enabled=true"
 fi
 
 COMPANY_RAG_DEMO_FLAG=""
@@ -27,6 +27,34 @@ if [ "$SIMILAR_TICKETS_DEMO_DATA" = "true" ]; then
 fi
 
 PIDS=()
+
+build_service() {
+  local name=$1 dir=$2
+  echo "=== Building $name ==="
+  (cd "$ROOT/$dir" && mvn -DskipTests clean package)
+}
+
+start_service() {
+  local name=$1 dir=$2 url=$3
+  shift 3
+
+  echo "=== Starting $name ==="
+  (
+    cd "$ROOT/$dir" || exit 1
+    exec "$@"
+  ) &
+  local pid=$!
+  PIDS+=($pid)
+
+  # Fail fast if the service process exits right away
+  sleep 1
+  if ! kill -0 "$pid" 2>/dev/null; then
+    echo "ERROR: $name exited immediately after startup"
+    return 1
+  fi
+
+  wait_for_http "$name" "$url"
+}
 
 # Recursively kill a process and all its descendants
 kill_tree() {
@@ -142,29 +170,27 @@ wait_for_port "ticket oracle" 1521 120
 wait_for_port "company oracle" 1522 120
 wait_for_oracle_sql "ticket oracle" "ticket" 240
 wait_for_oracle_sql "company oracle" "company" 240
-wait_for_http "docling" "http://localhost:8086/openapi.json" 180
+wait_for_http "docling" "http://localhost:5001/openapi.json" 180
 
 # --- Start application services ---
-echo "=== Starting services ==="
+echo "=== Building services ==="
 echo "  demo flags: helpdesk=$HELPDESK_DEMO_DATA company-rag=$COMPANY_RAG_DEMO_DATA similar-tickets=$SIMILAR_TICKETS_DEMO_DATA"
 
-(cd "$ROOT/services/medicapt-user-facing" && exec mvn quarkus:dev) &
-PIDS+=($!)
+build_service "medicapt-user-facing" "services/medicapt-user-facing"
+build_service "helpdesk" "services/helpdesk"
+build_service "ai-triage" "services/ai-triage"
+build_service "company-rag" "services/company-rag"
+build_service "similar-tickets" "services/similar-tickets"
+build_service "coding-assistant" "services/coding-assistant"
 
-(cd "$ROOT/services/helpdesk" && exec mvn quarkus:dev $HELPDESK_DEMO_FLAG) &
-PIDS+=($!)
+echo "=== Starting services (deterministic order) ==="
 
-(cd "$ROOT/services/ai-triage" && exec mvn quarkus:dev) &
-PIDS+=($!)
-
-(cd "$ROOT/services/company-rag" && exec mvn quarkus:dev $COMPANY_RAG_DEMO_FLAG) &
-PIDS+=($!)
-
-(cd "$ROOT/services/similar-tickets" && mvn -Dmaven.test.skip=true clean package && exec java -Dconfig.profile=prod $SIMILAR_TICKETS_DEMO_FLAG -jar target/similar-tickets.jar) &
-PIDS+=($!)
-
-(cd "$ROOT/services/coding-assistant" && exec mvn quarkus:dev) &
-PIDS+=($!)
+start_service "medicapt-user-facing" "services/medicapt-user-facing" "http://localhost:8083" java -jar target/quarkus-app/quarkus-run.jar
+start_service "helpdesk" "services/helpdesk" "http://localhost:8080" java -jar $HELPDESK_DEMO_FLAG target/quarkus-app/quarkus-run.jar
+start_service "ai-triage" "services/ai-triage" "http://localhost:8081" java -jar target/quarkus-app/quarkus-run.jar
+start_service "company-rag" "services/company-rag" "http://localhost:8084" java -jar $COMPANY_RAG_DEMO_FLAG target/quarkus-app/quarkus-run.jar
+start_service "similar-tickets" "services/similar-tickets" "http://localhost:8082" java -Dconfig.profile=prod $SIMILAR_TICKETS_DEMO_FLAG -jar target/similarity.jar
+start_service "coding-assistant" "services/coding-assistant" "http://localhost:8085" java -jar target/quarkus-app/quarkus-run.jar
 
 echo ""
 echo "=== All services starting ==="
@@ -176,13 +202,6 @@ echo "  similar-tickets                  http://localhost:8082"
 echo "  company-rag                      http://localhost:8084"
 echo "  coding-assistant                 http://localhost:8085"
 echo ""
-echo "=== Waiting for services to be reachable ==="
-wait_for_http "medicapt-user-facing" "http://localhost:8083"
-wait_for_http "helpdesk" "http://localhost:8080"
-wait_for_http "ai-triage" "http://localhost:8081"
-wait_for_http "similar-tickets" "http://localhost:8082"
-wait_for_http "company-rag" "http://localhost:8084"
-wait_for_http "coding-assistant" "http://localhost:8085"
 echo "=== All services started ==="
 echo ""
 echo "Press Ctrl+C to stop all services"

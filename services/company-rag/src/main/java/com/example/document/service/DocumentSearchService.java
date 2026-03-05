@@ -18,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,7 +95,7 @@ public class DocumentSearchService {
     }
 
     private String formatPercent(double score) {
-        return String.format("%.1f%%", score * 100.0);
+        return String.format(Locale.ROOT, "%.1f%%", score * 100.0);
     }
 
     private String summarizeQuery(String queryText) {
