@@ -31,9 +31,9 @@ FROM container-registry.oracle.com/java/jdk-no-fee-term:21
 WORKDIR /helidon
 
 # Copy the binary built in the 1st stage
-COPY --from=build /helidon/target/similar-tickets.jar ./
+COPY --from=build /helidon/target/similarity.jar ./
 COPY --from=build /helidon/target/libs ./libs
 
-CMD ["java", "-jar", "similar-tickets.jar"]
+CMD ["java", "-jar", "similarity.jar"]
 
 EXPOSE 8080
