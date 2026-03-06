@@ -51,7 +51,7 @@ All AI-powered services require an OpenAI API key.
 4. [similar-tickets](../services/similar-tickets/)  
    ```bash
    docker-compose up -d
-   mvn clean verify && java -jar target/similar-tickets.jar
+   mvn clean verify && java -jar target/similarity.jar
    ```
 
 5. [company-rag](../services/company-rag/)  
@@ -119,7 +119,7 @@ UI: http://localhost:8082
 Startup  
 ```bash
 docker-compose up -d
-mvn clean verify && java -jar target/similar-tickets.jar
+mvn clean verify && java -jar target/similarity.jar
 ```
 
 ---

@@ -104,7 +104,7 @@ cd services/ai-triage && mvn quarkus:dev
 # 4. Similar-tickets (needs Oracle AI connection)
 cd services/similar-tickets
 mvn clean verify
-java -DDemoData=true -jar target/similar-tickets.jar
+java -DDemoData=true -jar target/similarity.jar
 
 # 5. Company-documents RAG (needs Oracle AI connection)
 cd services/company-rag && mvn quarkus:dev -Ddemo.data.load=true

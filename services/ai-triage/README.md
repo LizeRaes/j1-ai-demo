@@ -37,11 +37,9 @@ The application will run on port **8081**.
 
 The service can run against any OpenAI-compatible API by changing the base URL and model name.
 
-#### Docker Model Runner (Local Model)
+#### Run a Local Model in a Container
 
-**Enable in Docker Desktop** → Settings → AI:
-- Enable Docker Model Runner
-- Enable host-side TCP support
+Enable the local model runtime in your container environment’s settings.
 
 **Pull a model**
 ```bash

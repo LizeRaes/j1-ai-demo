@@ -23,14 +23,14 @@ Configure the OpenAI API key before starting the service:
 With JDK25
 ```bash
 mvn clean verify
-java -DDemoData=true -jar target/similar-tickets.jar
+java -DDemoData=true -jar target/similarity.jar
 ```
 
 `-DDemoData=true` wipes existing vectors and loads demo tickets (about 150), then embeds them.
 
 > [!WARNING]
 > If `OPENAI_API_KEY` is set, startup with demo data triggers embedding API calls and incurs a small cost, approx. `$0.0010-$0.0022` with current embedding model.
-> To start without demo loading/vectorization: `java -jar target/similar-tickets.jar`
+> To start without demo loading/vectorization: `java -jar target/similarity.jar`
 
 The application will run on port **8082**.
 
