@@ -43,7 +43,7 @@
     <dependencies>
         <dependency>
             <groupId>io.quarkiverse.mcp</groupId>
-            <artifactId>quarkus-mcp-server-stdio</artifactId>
+            <artifactId>quarkus-mcp-server-http</artifactId>
         </dependency>
     </dependencies>
 

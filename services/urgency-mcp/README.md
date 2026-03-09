@@ -11,7 +11,7 @@ mvn package
 ## Run
 
 ```bash
-java -jar target/urgency-mcp-1.0.0-SNAPSHOT-runner.jar
+java -jar target/quarkus-app/quarkus-run.jar
 ```
 
 ## Claude Desktop

@@ -1,0 +1,3 @@
+target/
+.quarkus/
+dependency-reduced-pom.xml
