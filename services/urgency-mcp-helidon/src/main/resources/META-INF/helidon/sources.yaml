@@ -1,0 +1,6 @@
+sources:
+  - type: "environment-variables"
+  - type: "system-properties"
+  - type: "classpath"
+    properties:
+      resource: "application.yaml"
