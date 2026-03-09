@@ -1,0 +1,282 @@
+[
+  {
+  "text": "Hi, I was trying to book an appointment through the booking page. I selected Dr. Alice, picked 'tomorrow' and the 10:00 slot, and clicked confirm. The page refreshed but nothing happened and I don't see any appointment in my list. I tried the same thing two more times and now I'm not sure if maybe multiple appointments were created or none at all. Could you please check what actually went through?",
+  "urgency": 0.5
+  },
+  {
+  "text": "This is very frustrating. I just paid for an appointment and the payment page said SUCCESS but when I click 'View My Appointments' the appointment still says PENDING and unpaid. I refreshed the page and it briefly showed confirmed, then went back to pending. My bank already shows the charge. Something seems very wrong with how payments are being recorded.",
+  "urgency": 0.85
+  },
+  {
+  "text": "I'm trying to cancel my appointment from the appointments page. When I press the red cancel button the page loads for a second and then nothing changes. The appointment still shows as confirmed. I tried twice and even logged out and back in but it's still there.",
+  "urgency": 0.6
+  },
+  {
+  "text": "Maybe I'm doing something wrong but the booking interface is confusing. I selected Dr. Bob and 'next week' but there were only three times available and none work for me. Is that normal or are there supposed to be more options?",
+  "urgency": 0.2
+  },
+  {
+  "text": "Something strange happened today. I logged into my account and suddenly there was an appointment listed with Dr. Eve that I definitely did not book. I checked with my family and nobody else used my account. This is worrying because it means someone else might have access.",
+  "urgency": 0.95
+  },
+  {
+  "text": "The help form seems broken. I typed a fairly long message explaining an issue and pressed send. The page said 'submitted' but support told me they never received anything. I tried again and the same thing happened.",
+  "urgency": 0.7
+  },
+  {
+  "text": "Your site is EXTREMELY slow today. It takes 10–15 seconds every time I click anything and sometimes it just hangs completely. I eventually managed to open the appointments page but it took forever.",
+  "urgency": 0.6
+  },
+  {
+  "text": "ok this is getting ridiculous. I tried booking an appointment 4 times now. Every time I pick a doctor and time and press confirm it throws me back to the home page. No error message or anything. Just back to the start.",
+  "urgency": 0.7
+  },
+  {
+  "text": "I used the payment page and it shows my Visa card ending in 4242. I clicked confirm payment and got the success screen, but after that the appointment never appeared. My card was charged though. Did the system lose the booking?",
+  "urgency": 0.85
+  },
+  {
+  "text": "I'm not sure if this is a bug or just how it works. When I scroll the booking calendar it jumps back to today automatically. I can't select dates further out because it keeps resetting.",
+  "urgency": 0.5
+  },
+  {
+  "text": "Hi support, I attempted to reschedule an appointment from tomorrow to next week. When I click reschedule, the dropdown opens but the 'Save' button doesn't seem to do anything. The appointment remains unchanged.",
+  "urgency": 0.6
+  },
+  {
+  "text": "Something is very wrong with payments right now. I tried paying for an appointment and got an error saying payment failed. I tried again and it succeeded. Now my bank shows TWO charges but the appointment still says unpaid.",
+  "urgency": 0.85
+  },
+  {
+  "text": "Your login system seems buggy. I logged in successfully, went to the appointments page, and then suddenly it redirected me back to the login screen again. Now it just keeps looping like that.",
+  "urgency": 0.5
+  },
+  {
+  "text": "Not sure if this is feedback or a bug but the UI is pretty confusing. The booking form looks nice but it's not clear what happens after clicking confirm.",
+  "urgency": 0.2
+  },
+  {
+  "text": "I just noticed something really concerning. When I logged into my account I could briefly see another person's appointment details including their doctor and date. After refreshing it disappeared.",
+  "urgency": 1.0
+  },
+  {
+  "text": "I'm trying to use the site on Safari on my iPhone and half the buttons look greyed out. The cancel button works on my laptop but on the phone it does nothing.",
+  "urgency": 0.6
+  },
+  {
+  "text": "The appointments page is behaving weirdly. When I refresh it, my appointment disappears for a second and then reappears. Not sure if this means the system isn't storing things properly.",
+  "urgency": 0.5
+  },
+  {
+  "text": "Hi, I submitted a help request earlier today explaining an issue with booking, but I never received any confirmation email or message. Did it actually go through?",
+  "urgency": 0.4
+  },
+  {
+  "text": "I think the backend might be having issues. Sometimes the page loads instantly and sometimes it takes forever or fails completely.",
+  "urgency": 0.6
+  },
+  {
+  "text": "I booked an appointment earlier and it showed as confirmed. After refreshing the page it disappeared entirely from the appointments list.",
+  "urgency": 0.7
+  },
+  {
+  "text": "I tried booking an appointment with Dr. Bob just now. I selected tomorrow at 09:00 and clicked confirm. The page went back to the home screen but I never saw any confirmation message. When I go to My Appointments nothing shows up. I tried the same thing twice and still nothing.",
+  "urgency": 0.5
+  },
+  {
+  "text": "This might be a bug: when I cancel an appointment it disappears from the list but if I refresh the page it shows up again as confirmed. I don't know if it's actually canceled or not.",
+  "urgency": 0.6
+  },
+  {
+  "text": "I just paid for an appointment and the payment success page appeared. But when I clicked 'View My Appointments' the appointment still says unpaid. I refreshed several times and the status keeps switching between pending and confirmed.",
+  "urgency": 0.85
+  },
+  {
+  "text": "Is the system down right now? The booking page keeps loading forever and eventually gives me a blank page. I tried from two different browsers.",
+  "urgency": 8.5
+  },
+  {
+  "text": "I'm a bit confused about the booking form. When I select 'next week' the time dropdown sometimes resets back to empty. I had to reselect everything several times.",
+  "urgency": 0.3
+  },
+  {
+  "text": "The help page said my message was submitted successfully but I never received any confirmation. Could you check if it actually arrived?",
+  "urgency": 0.4
+  },
+  {
+  "text": "Your system charged my card but I cannot see any appointment in my account. I tried refreshing the appointments page and even logging out and back in but nothing appears.",
+  "urgency": 0.85
+  },
+  {
+  "text": "Something strange is happening with the appointments table. When I refresh the page, my appointment briefly disappears and then comes back after a second.",
+  "urgency": 0.5
+  },
+  {
+  "text": "I attempted to reschedule my appointment. The form opens and lets me pick another date but after clicking save nothing changes.",
+  "urgency": 0.6
+  },
+  {
+  "text": "This website is extremely slow today. Every click takes several seconds and sometimes the page doesn't load at all.",
+  "urgency": 0.6
+  },
+  {
+  "text": "Not sure if this is intended but the booking page only shows three doctors. I expected more options.",
+  "urgency": 0.2
+  },
+  {
+  "text": "I just logged into my account and saw an appointment that I definitely did not create. Can you please check this because I'm concerned someone else accessed my account.",
+  "urgency": 0.95
+  },
+  {
+  "text": "When trying to pay for my appointment the payment screen loads but the confirm button doesn't respond. I clicked it multiple times.",
+  "urgency": 0.7
+  },
+  {
+  "text": "The cancel button seems to work on desktop but not on my phone. On mobile it just refreshes the page.",
+  "urgency": 0.5
+  },
+  {
+  "text": "Hi, I'm trying to book a slot but the dropdown menus keep resetting when I select the time. I had to start over several times.",
+  "urgency": 0.4
+  },
+  {
+  "text": "The site says my payment failed but my bank shows the charge went through. Now I'm not sure if I should try paying again.",
+  "urgency": 7.0
+  },
+  {
+  "text": "Everything was working earlier today but now every page loads extremely slowly. Even opening my appointments takes 20 seconds.",
+  "urgency": 0.7
+  },
+  {
+  "text": "The booking interface jumps back to the top of the page every time I select a doctor. It's very annoying.",
+  "urgency": 0.4
+  },
+  {
+  "text": "I canceled an appointment but the system still shows it as confirmed after refreshing.",
+  "urgency": 0.6
+  },
+  {
+  "text": "When I open my appointments page the table sometimes loads empty and then fills in after a moment.",
+  "urgency": 0.5
+  },
+  {
+  "text": "I accidentally clicked confirm twice while booking because nothing happened the first time. Now I'm worried two appointments were created.",
+  "urgency": 0.5
+  },
+  {
+  "text": "The help form shows an error message saying 'check console logs'. I'm not sure what that means but it doesn't seem like the message was sent.",
+  "urgency": 0.6
+  },
+  {
+  "text": "Something seems broken with the backend. Several actions take a long time and sometimes fail entirely.",
+  "urgency": 0.7
+  },
+  {
+  "text": "I booked an appointment and paid for it but now the system says there is no appointment associated with my account.",
+  "urgency": 0.85
+  },
+  {
+  "text": "This app is confusing honestly. I'm not sure if my appointment was successfully booked or not.",
+  "urgency": 0.2
+  },
+  {
+  "text": "The reschedule dropdown shows options like 'today' and 'tomorrow' but selecting them doesn't change anything.",
+  "urgency": 0.5
+  },
+  {
+  "text": "When I scroll the booking page it jumps back up to the doctor selection field.",
+  "urgency": 0.4
+  },
+  {
+  "text": "I just tried paying for an appointment but the page returned an error after clicking confirm.",
+  "urgency": 0.7
+  },
+  {
+  "text": "The appointments page is loading but the actions buttons are missing.",
+  "urgency": 0.6
+  },
+  {
+  "text": "I clicked cancel appointment and it redirected me to the home page without confirming anything.",
+  "urgency": 0.6
+  },
+  {
+  "text": "The login system seems unstable today. I keep getting logged out randomly.",
+  "urgency": 0.5
+  },
+  {
+  "text": "I saw another user's appointment briefly appear in my account view before refreshing.",
+  "urgency": 1.0
+  },
+  {
+  "text": "The payment confirmation page appears but the appointment is still marked pending.",
+  "urgency": 7.0
+  },
+  {
+  "text": "I tried booking using Chrome and Safari and both had the same issue where the form resets.",
+  "urgency": 0.5
+  },
+  {
+  "text": "After submitting the help form the page refreshed but there was no success message.",
+  "urgency": 0.4
+  },
+  {
+  "text": "The site sometimes loads normally and sometimes shows an empty white page.",
+  "urgency": 0.7
+  },
+  {
+  "text": "When I cancel an appointment it disappears and then reappears after refreshing.",
+  "urgency": 0.6
+  },
+  {
+  "text": "Booking an appointment seems impossible right now. The confirm button does nothing.",
+  "urgency": 8.5
+  },
+  {
+  "text": "I got charged twice while trying to book an appointment because the page froze.",
+  "urgency": 0.7
+  },
+  {
+  "text": "I'm trying to update my appointment but the reschedule form never submits.",
+  "urgency": 0.5
+  },
+  {
+  "text": "The booking calendar seems stuck on today's date and won't let me choose next week.",
+  "urgency": 0.5
+  },
+  {
+  "text": "My appointment disappeared after refreshing the page.",
+  "urgency": 0.7
+  },
+  {
+  "text": "Something is wrong with the system today. Multiple features aren't working properly.",
+  "urgency": 0.6
+  },
+  {
+  "text": "The cancel button on my appointment page appears but clicking it does nothing.",
+  "urgency": 0.6
+  },
+  {
+  "text": "I cannot access the booking page at all. It just loads forever.",
+  "urgency": 8.0
+  },
+  {
+  "text": "After I confirmed payment the appointment did not appear in my list.",
+  "urgency": 0.7
+  },
+  {
+  "text": "The help form sends duplicate submissions when clicking the button once.",
+  "urgency": 0.5
+  },
+  {
+  "text": "The account page keeps refreshing unexpectedly when I open it.",
+  "urgency": 0.4
+  },
+  {
+  "text": "I tried rescheduling but the new date is never saved.",
+  "urgency": 0.5
+  },
+  {
+  "text": "Appointments are disappearing from my list randomly after refreshing.",
+  "urgency": 0.7
+  }
+]
