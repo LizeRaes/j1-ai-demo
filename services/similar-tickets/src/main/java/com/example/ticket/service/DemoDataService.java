@@ -3,11 +3,16 @@ package com.example.ticket.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class DemoDataService {
+
+    private static final Logger log = Logger.getLogger(DemoDataService.class.getName());
+    private static final int PROGRESS_INTERVAL = 10;
 
     VectorService vectorService;
 
@@ -33,25 +38,33 @@ public class DemoDataService {
         vectorService.deleteAllTickets();
         logService.addLog("Cleared existing Oracle AI Database data", "demo-data");
 
-        int totalLoaded = 0;
-        long nextDemoTicketId = 1L;
+        List<Map<String, Object>> allTickets = new ArrayList<>();
         for (String file : DEMO_DATA_FILES) {
             List<Map<String, Object>> tickets = loadTicketsFromFile(file);
-
-            for (Map<String, Object> ticket : tickets) {
-                Long ticketId = nextDemoTicketId++;
-                String ticketType = ticket.get("ticketType").toString();
-                String originalRequest = ticket.get("originalRequest").toString();
-
-                if (ticketType != null && originalRequest != null) {
-                    float[] embedding = embeddingService.embed(originalRequest);
-                    vectorService.upsertTicket(ticketId, ticketType, originalRequest, embedding);
-                    totalLoaded++;
-                }
-            }
-            logService.addLog("Loaded " + tickets.size() + " tickets from " + file, "demo-data");
+            allTickets.addAll(tickets.stream()
+                    .filter(t -> t.get("ticketType") != null && t.get("originalRequest") != null)
+                    .toList());
         }
-        logService.addLog("Demo data load complete: " + totalLoaded + " tickets loaded", "demo-data");
+        int totalToLoad = allTickets.size();
+
+        long nextDemoTicketId = 1L;
+        for (int i = 0; i < allTickets.size(); i++) {
+            Map<String, Object> ticket = allTickets.get(i);
+            Long ticketId = nextDemoTicketId++;
+            String ticketType = ticket.get("ticketType").toString();
+            String originalRequest = ticket.get("originalRequest").toString();
+
+            float[] embedding = embeddingService.embed(originalRequest);
+            vectorService.upsertTicket(ticketId, ticketType, originalRequest, embedding);
+
+            int processed = i + 1;
+            if (processed % PROGRESS_INTERVAL == 0) {
+                String msg = "Processed tickets " + processed + "/" + totalToLoad;
+                log.info(msg);
+                logService.addLog(msg, "demo-data");
+            }
+        }
+        logService.addLog("Demo data load complete: " + totalToLoad + " tickets loaded", "demo-data");
     }
 
     private List<Map<String, Object>> loadTicketsFromFile(String filePath) {
