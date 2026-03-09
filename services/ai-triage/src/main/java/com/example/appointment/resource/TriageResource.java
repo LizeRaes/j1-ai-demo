@@ -1,15 +1,17 @@
 package com.example.appointment.resource;
 
 import com.example.appointment.dto.*;
-import com.example.appointment.service.AiService;
+import com.example.appointment.service.AiTriageAssistant;
 import com.example.appointment.service.DocumentService;
 import com.example.appointment.service.EventLogService;
 import com.example.appointment.service.SimilarityService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.jboss.logging.Logger;
 
+import java.time.temporal.ChronoUnit;
 import java.time.Instant;
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class TriageResource {
     private static final Logger LOG = Logger.getLogger(TriageResource.class);
 
     @Inject
-    AiService aiService;
+    AiTriageAssistant aiTriageAssistant;
 
     @Inject
     SimilarityService similarityService;
@@ -34,25 +36,21 @@ public class TriageResource {
     @Path("/classify")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Timeout(value = 10, unit = ChronoUnit.SECONDS)
     public TriageResponse classify(TriageRequest request) {
         Long ticketId = request.ticketId();
 
         try {
             eventLogService.addEvent("INFO", "Received triage request for ticket " + ticketId, ticketId);
 
-            // Call AI service
             eventLogService.addEvent("INFO", "Calling AI service for ticket " + ticketId, ticketId);
-            AiTriageResult aiResult = aiService.triage(request.message(), request.allowedTicketTypes());
+            AiTriageResult aiResult = aiTriageAssistant.triage(request.message(), request.allowedTicketTypes());
 
-            // Validate and enforce constraints
             validateAiResult(aiResult, request.allowedTicketTypes());
 
-            // Clamp values (already done in AiService, but double-check)
-            int urgencyScore = Math.max(1, Math.min(10, aiResult.urgencyScore()));
-            int confidence = Math.max(0, Math.min(100, aiResult.aiConfidencePercent()));
+            int urgencyScore = aiResult.urgencyScore();
+            int confidence = aiResult.aiConfidencePercent();
 
-            // Call similarity service to find related tickets
-            // Capture any errors but don't fail the request
             List<Long> relatedTicketIds;
             try {
                 eventLogService.addEvent("INFO", "Searching for similar tickets for ticket " + ticketId, ticketId);
@@ -97,6 +95,10 @@ public class TriageResource {
             return response;
 
         } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("MCP")) {
+                LOG.warn("MCP server not responding");
+                eventLogService.addEvent("WARN", "MCP server not responding (localhost:9000). Start urgency-mcp-helidon.", ticketId);
+            }
             LOG.errorf(e, "Error processing triage request");
             String failReason = extractFailReason(e);
 
