@@ -27,7 +27,7 @@ Canonical runtime map for local startup via `./start-all.sh`.
 
 | Component | Port/Transport | Endpoint | Notes |
 |---|---|---|---|
-| `urgency-mcp-helidon` | 9090 | `http://localhost:9090/urgency` | MCP over HTTP/SSE for ai-triage MCP mode |
+| `urgency-mcp` | 9090 | `http://localhost:9090/urgency` | MCP over HTTP/SSE for ai-triage MCP mode |
 
 ## Source of truth
 

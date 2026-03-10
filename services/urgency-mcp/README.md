@@ -13,7 +13,7 @@ mvn clean package
 ## Run
 
 ```bash
-java -jar target/urgency-mcp-helidon.jar
+java -jar target/urgency-mcp.jar
 ```
 
 Server listens at `http://localhost:9090/urgency`.

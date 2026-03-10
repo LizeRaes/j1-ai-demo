@@ -11,11 +11,9 @@
     </parent>
 
     <groupId>com.example.appointment</groupId>
-    <artifactId>urgency-mcp-helidon</artifactId>
+    <artifactId>urgency-mcp</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>urgency-mcp-helidon</name>
-    <description>MCP server exposing urgency inference over HTTP transport</description>
-
+    
     <properties>
         <mainClass>com.example.urgency.Main</mainClass>
         <maven.compiler.release>25</maven.compiler.release>
@@ -49,7 +47,7 @@
     </dependencies>
 
     <build>
-        <finalName>urgency-mcp-helidon</finalName>
+        <finalName>urgency-mcp</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

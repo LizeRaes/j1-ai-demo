@@ -130,7 +130,7 @@ To switch to MCP, where the LLM calls urgency when it thinks it's necessary (but
    - Uncomment `urgencyScore` field
 4. In `pom.xml`:
    - Uncomment `quarkus-langchain4j-mcp` dependency
-5. Start `services/urgency-mcp-helidon` (port `9090`)
+5. Start `services/urgency-mcp` (port `9090`)
 
 ## API Endpoint
 
