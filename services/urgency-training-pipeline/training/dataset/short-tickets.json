@@ -1,362 +1,362 @@
 [
   {
-    "text": "I can’t log in anymore. My password suddenly stopped working.",
-    "urgency": 0.5
+    "text": "I can't log in anymore. My password suddenly stopped working.",
+    "urgency": 6.0
   },
   {
     "text": "I tried to reset my password but never got the reset email.",
-    "urgency": 0.4
+    "urgency": 5.0
   },
   {
-    "text": "I think someone else logged into my account. I see appointments I didn’t book.",
-    "urgency": 0.95
+    "text": "I think someone else logged into my account. I see appointments I didn't book.",
+    "urgency": 10.0
   },
   {
     "text": "I accidentally gave my login details to someone claiming to be support. What should I do?",
-    "urgency": 0.9
+    "urgency": 10.0
   },
   {
-    "text": "My account seems locked. I can’t access anything.",
-    "urgency": 0.5
+    "text": "My account seems locked. I can't access anything.",
+    "urgency": 6.0
   },
   {
-    "text": "Why do I see another person’s appointment under my account?",
-    "urgency": 1.0
+    "text": "Why do I see another person's appointment under my account?",
+    "urgency": 10.0
   },
   {
     "text": "Password reset page just reloads and does nothing.",
-    "urgency": 0.5
+    "urgency": 6.0
   },
   {
-    "text": "I’m logged in but can’t see my account details.",
-    "urgency": 0.4
+    "text": "I'm logged in but can't see my account details.",
+    "urgency": 5.0
   },
   {
     "text": "Someone changed my appointment without my permission.",
-    "urgency": 0.9
+    "urgency": 10.0
   },
   {
-    "text": "I’m stuck in a login loop and can’t access my account.",
-    "urgency": 0.5
+    "text": "I'm stuck in a login loop and can't access my account.",
+    "urgency": 6.0
   },
   {
     "text": "How do I contact the clinic directly?",
-    "urgency": 0.1
+    "urgency": 2.0
   },
   {
     "text": "Do you offer phone support?",
-    "urgency": 0.1
+    "urgency": 2.0
   },
   {
     "text": "Is this app HIPAA compliant?",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
     "text": "Where can I see your privacy policy?",
-    "urgency": 0.1
+    "urgency": 2.0
   },
   {
     "text": "Why does the app look different today?",
-    "urgency": 0.1
+    "urgency": 1.0
   },
   {
     "text": "Is there a mobile app or just the website?",
-    "urgency": 0.1
+    "urgency": 1.0
   },
   {
     "text": "How far in advance can I book appointments?",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
     "text": "Can I use this service outside the US?",
-    "urgency": 0.1
+    "urgency": 2.0
   },
   {
     "text": "Just wanted to say the app is pretty confusing.",
-    "urgency": 0.1
+    "urgency": 1.0
   },
   {
     "text": "Is there a way to give feedback on the app?",
-    "urgency": 0.1
+    "urgency": 1.0
   },
   {
     "text": "This system feels unsafe.",
-    "urgency": 0.3
+    "urgency": 2.0
   },
   {
-    "text": "Everything is broken and I don’t know who to talk to.",
-    "urgency": 0.2
+    "text": "Everything is broken and I don't know who to talk to.",
+    "urgency": 3.0
   },
   {
-    "text": "I’m very unhappy with this service.",
-    "urgency": 0.2
+    "text": "I'm very unhappy with this service.",
+    "urgency": 2.0
   },
   {
     "text": "Why is healthcare so complicated?",
-    "urgency": 0.1
+    "urgency": 0.0
   },
   {
-    "text": "Something happened but I’m not sure what.",
-    "urgency": 0.2
+    "text": "Something happened but I'm not sure what.",
+    "urgency": 2.0
   },
   {
     "text": "Your system charged me and lost my appointment.",
     "urgency": 7.0
   },
   {
-    "text": "I don’t trust this app with my data.",
-    "urgency": 0.2
+    "text": "I don't trust this app with my data.",
+    "urgency": 2.0
   },
   {
     "text": "Please just fix whatever is wrong.",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
-    "text": "This doesn’t feel professional.",
-    "urgency": 0.1
+    "text": "This doesn't feel professional.",
+    "urgency": 1.0
   },
   {
-    "text": "I need help but don’t know what category to choose.",
-    "urgency": 0.2
+    "text": "I need help but don't know what category to choose.",
+    "urgency": 3.0
   },
   {
-    "text": "The reschedule button is disabled on my appointment even though it’s next week.",
-    "urgency": 0.5
+    "text": "The reschedule button is disabled on my appointment even though it's next week.",
+    "urgency": 5.0
   },
   {
     "text": "Cancel button does nothing when I click it. No error, no confirmation.",
-    "urgency": 0.6
+    "urgency": 6.0
   },
   {
-    "text": "This app is broken. Buttons just don’t work.",
-    "urgency": 0.3
+    "text": "This app is broken. Buttons just don't work.",
+    "urgency": 6.0
   },
   {
     "text": "After I cancel an appointment it still shows up until I refresh.",
-    "urgency": 0.4
+    "urgency": 5.0
   },
   {
     "text": "The booking calendar jumps back to today when I scroll.",
-    "urgency": 0.4
+    "urgency": 5.0
   },
   {
     "text": "Payment success page shows but appointment still says unpaid.",
-    "urgency": 0.85
+    "urgency": 6.5
   },
   {
     "text": "UI looks fine but clicking submit on help form sends it twice.",
-    "urgency": 0.5
+    "urgency": 5.0
   },
   {
     "text": "On Safari, half the buttons are greyed out.",
-    "urgency": 0.6
+    "urgency": 6.0
   },
   {
     "text": "After a page reload my appointment list is empty.",
-    "urgency": 0.5
+    "urgency": 6.0
   },
   {
     "text": "Everything worked yesterday. Today the UI feels completely unstable.",
-    "urgency": 0.4
+    "urgency": 6.0
   },
   {
-    "text": "My help request was submitted but I don’t see anything on the backend.",
-    "urgency": 0.6
+    "text": "My help request was submitted but I don't see anything on the backend.",
+    "urgency": 6.0
   },
   {
     "text": "Support said they never received my help request.",
-    "urgency": 0.7
+    "urgency": 6.0
   },
   {
     "text": "Appointments disappear after the app restarts.",
-    "urgency": 0.4
+    "urgency": 6.0
   },
   {
     "text": "Payment status flips back to unpaid after refresh.",
-    "urgency": 0.85
+    "urgency": 6.5
   },
   {
     "text": "Backend feels slow and sometimes requests just hang.",
-    "urgency": 0.6
+    "urgency": 6.0
   },
   {
     "text": "I submitted a help request but got no confirmation.",
-    "urgency": 0.5
+    "urgency": 5.0
   },
   {
     "text": "Helpdesk integration seems flaky. Sometimes tickets go through, sometimes not.",
-    "urgency": 0.8
+    "urgency": 3.0
   },
   {
     "text": "Backend error occurred when trying to reschedule.",
-    "urgency": 0.6
+    "urgency": 6.0
   },
   {
-    "text": "The app works but support tickets don’t always get logged.",
-    "urgency": 0.7
+    "text": "The app works but support tickets don't always get logged.",
+    "urgency": 6.0
   },
   {
     "text": "Something is wrong with the backend. Too many weird issues at once.",
-    "urgency": 0.3
+    "urgency": 6.0
   },
   {
-    "text": "I was charged for an appointment that never happened because the app wouldn’t let me cancel it. I tried the night before.",
-    "urgency": 0.6
+    "text": "I was charged for an appointment that never happened because the app wouldn't let me cancel it. I tried the night before.",
+    "urgency": 6.0
   },
   {
     "text": "You charged me twice for the same appointment. I only booked once.",
-    "urgency": 0.7
+    "urgency": 7.0
   },
   {
     "text": "My appointment was canceled by the clinic but I still see a charge. Can you refund this?",
-    "urgency": 0.6
+    "urgency": 5.0
   },
   {
-    "text": "I missed my appointment and now I see I was charged. This doesn’t seem fair.",
-    "urgency": 0.3
+    "text": "I missed my appointment and now I see I was charged. This doesn't seem fair.",
+    "urgency": 4.0
   },
   {
     "text": "The app showed a payment error, but my bank says I was charged. Please refund.",
-    "urgency": 0.7
+    "urgency": 7.0
   },
   {
     "text": "I canceled more than a day before, but I still got billed.",
-    "urgency": 0.6
+    "urgency": 5.0
   },
   {
     "text": "Please refund the appointment from last Friday. The doctor never showed up.",
-    "urgency": 0.6
+    "urgency": 5.0
   },
   {
     "text": "I think I was billed even though I never completed the booking.",
-    "urgency": 0.5
+    "urgency": 5.0
   },
   {
-    "text": "This is the second time I’ve had to ask for a refund because of app issues.",
-    "urgency": 0.6
+    "text": "This is the second time I've had to ask for a refund because of app issues.",
+    "urgency": 6.0
   },
   {
     "text": "I was charged for an appointment that disappeared after the app refreshed.",
-    "urgency": 0.7
+    "urgency": 7.0
   },
   {
     "text": "Can you explain why my card was charged immediately when booking?",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
-    "text": "What payment methods do you support? I didn’t see an option for invoice.",
-    "urgency": 0.2
+    "text": "What payment methods do you support? I didn't see an option for invoice.",
+    "urgency": 2.0
   },
   {
     "text": "Is it normal that my payment says successful but the appointment still shows unpaid?",
-    "urgency": 0.7
+    "urgency": 6.5
   },
   {
-    "text": "This billing page feels broken. I’m not sure if I actually paid.",
-    "urgency": 0.3
+    "text": "This billing page feels broken. I'm not sure if I actually paid.",
+    "urgency": 6.0
   },
   {
     "text": "Why does the app say payment completed if no receipt was sent?",
-    "urgency": 0.3
+    "urgency": 3.0
   },
   {
     "text": "Is my card information stored in your system?",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
     "text": "I see a payment pending but no appointment confirmation.",
-    "urgency": 0.7
+    "urgency": 6.5
   },
   {
-    "text": "Billing just feels off. Something isn’t right but I can’t tell what.",
-    "urgency": 0.2
+    "text": "Billing just feels off. Something isn't right but I can't tell what.",
+    "urgency": 2.0
   },
   {
     "text": "Do you support refunds to the original payment method?",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
-    "text": "I’m confused about when exactly my card gets charged.",
-    "urgency": 0.2
+    "text": "I'm confused about when exactly my card gets charged.",
+    "urgency": 2.0
   },
   {
-    "text": "I tried to cancel my appointment but it says it’s too late, even though it’s still more than a day away.",
-    "urgency": 0.5
+    "text": "I tried to cancel my appointment but it says it's too late, even though it's still more than a day away.",
+    "urgency": 5.0
   },
   {
     "text": "The cancel button is completely missing on my appointment page.",
-    "urgency": 0.6
+    "urgency": 6.0
   },
   {
     "text": "I canceled yesterday but the appointment still shows up as active.",
-    "urgency": 0.4
+    "urgency": 5.0
   },
   {
     "text": "I need to cancel my appointment for tomorrow morning due to an emergency.",
-    "urgency": 0.3
+    "urgency": 3.0
   },
   {
-    "text": "Cancel doesn’t work on mobile, but it works on my laptop.",
-    "urgency": 0.5
+    "text": "Cancel doesn't work on mobile, but it works on my laptop.",
+    "urgency": 5.0
   },
   {
     "text": "I canceled within the allowed time but still got a warning that I might be charged.",
-    "urgency": 0.5
+    "urgency": 5.0
   },
   {
-    "text": "This app won’t let me cancel anything at all.",
-    "urgency": 0.7
+    "text": "This app won't let me cancel anything at all.",
+    "urgency": 7.0
   },
   {
     "text": "Can you cancel my appointment for me? The site keeps timing out.",
-    "urgency": 0.6
+    "urgency": 6.0
   },
   {
     "text": "I canceled my appointment but I never got a confirmation.",
-    "urgency": 0.4
+    "urgency": 4.0
   },
   {
     "text": "Canceling feels confusing. Did it actually go through?",
-    "urgency": 0.3
+    "urgency": 3.0
   },
   {
     "text": "I want to reschedule but there are no other times available.",
-    "urgency": 0.3
+    "urgency": 4.0
   },
   {
     "text": "Why does the app only show a few doctors? Are there more available?",
-    "urgency": 0.2
+    "urgency": 2.0
   },
   {
-    "text": "I can’t tell which timezone the appointment times are in.",
-    "urgency": 0.4
+    "text": "I can't tell which timezone the appointment times are in.",
+    "urgency": 3.0
   },
   {
     "text": "The reschedule option is greyed out even though the appointment is next week.",
-    "urgency": 0.5
+    "urgency": 5.0
   },
   {
-    "text": "Why can’t I book recurring appointments?",
-    "urgency": 0.2
+    "text": "Why can't I book recurring appointments?",
+    "urgency": 2.0
   },
   {
     "text": "I accidentally booked the wrong doctor. Can I change just the doctor?",
-    "urgency": 0.3
+    "urgency": 3.0
   },
   {
-    "text": "It’s unclear how far in advance I’m allowed to reschedule.",
-    "urgency": 0.2
+    "text": "It's unclear how far in advance I'm allowed to reschedule.",
+    "urgency": 2.0
   },
   {
     "text": "The booking calendar jumps back to today every time I try to scroll.",
-    "urgency": 0.5
+    "urgency": 5.0
   },
   {
-    "text": "I’m not sure if my appointment was actually booked.",
-    "urgency": 0.3
+    "text": "I'm not sure if my appointment was actually booked.",
+    "urgency": 3.0
   },
   {
     "text": "Scheduling in general feels broken and confusing.",
-    "urgency": 0.2
+    "urgency": 3.0
   }
 ]

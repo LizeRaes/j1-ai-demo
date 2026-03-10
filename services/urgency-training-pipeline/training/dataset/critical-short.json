@@ -1,0 +1,198 @@
+[
+    {
+    "text": "Since about an hour ago I cannot book any appointments anymore. I select a doctor and time slot, click confirm, and the page just reloads without creating anything. I tried this at least six times and even switched browsers. Nothing ever appears in my appointments list. It looks like booking is completely broken.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Something seems very wrong with the payment flow right now. I tried paying for an appointment twice and both times the payment screen said there was an error. My colleague tried at the same time and had the exact same issue. It looks like payments might not be working.",
+    "urgency": 9.0
+    },
+    {
+    "text": "After logging in I briefly saw an appointment that definitely does not belong to me. It showed a different doctor's name and time slot. When I refreshed the page it disappeared. This looks like another patient's data showing in my account.",
+    "urgency": 10.0
+    },
+    {
+    "text": "The booking system appears unusable at the moment. Every time I confirm a booking the page just reloads and no appointment is created. I have tried multiple times over the past 20 minutes.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I think something is seriously wrong with the appointments system. I had two appointments earlier today but now the appointments page is completely empty even after refreshing several times.",
+    "urgency": 6.0
+    },
+    {
+    "text": "Right now I cannot reach the booking page at all. It loads for a long time and then just shows a blank screen. I tried from two browsers and another device with the same result.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The booking form lets me choose a doctor and time but when I click confirm the request fails silently. I tried five times and none of the bookings were created.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The system allowed me to submit a payment but afterwards the appointment was not recorded. This seems like the payment system is not properly connected to the booking system.",
+    "urgency": 7.0
+    },
+    {
+    "text": "Every time I try to create an appointment today the booking fails. The page reloads but nothing ever shows up in my appointments list.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointments page shows data that clearly belongs to another patient. I can see a doctor's name and time slot that I never booked.",
+    "urgency": 10.0
+    },
+    {
+    "text": "Booking an appointment appears to be impossible right now. The confirm button reloads the page but nothing happens.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The system processed my payment but then the appointment disappeared from the system completely.",
+    "urgency": 7.0
+    },
+    {
+    "text": "The booking workflow seems broken. I fill out the form correctly but after clicking confirm the system does not create an appointment.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointments list suddenly shows bookings that I never created. After refreshing they disappear again.",
+    "urgency": 10.0
+    },
+    {
+    "text": "The site appears to be down. I cannot access the appointments page and the booking page fails to load.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Booking appointments fails every time today. I tried repeatedly and nothing gets recorded.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The booking system seems completely unusable. Every booking attempt results in the page reloading without confirmation.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointment I booked earlier vanished from the system entirely. It was confirmed earlier but now it is gone.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The booking confirmation step appears broken. The page reloads but the appointment never appears in the list.",
+    "urgency": 6.5
+    },
+    {
+    "text": "I attempted to create several appointments today but none of them appear in the system afterwards.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The booking page loads but submitting the form does nothing. No confirmation and no appointment created.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Appointments that existed earlier today are now missing from the appointments list.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The payment process succeeded but the appointment was not saved in the system.",
+    "urgency": 7.0
+    },
+    {
+    "text": "The booking confirmation page appears but the appointment never shows up in my account.",
+    "urgency": 7.0
+    },
+    {
+    "text": "The system seems to allow payments but fails to record the associated appointment.",
+    "urgency": 7.0
+    },
+    {
+    "text": "Every attempt to confirm a booking today fails without any error message.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I cannot create any appointments today. The confirm button reloads the page but nothing gets recorded.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointment system appears unstable. Bookings disappear after refreshing the page.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The booking system is not saving any appointments right now even though the form submission seems to succeed.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointments page is empty even though I had confirmed appointments earlier.",
+    "urgency": 6.0
+    },
+    {
+    "text": "I tried booking several times and each attempt silently failed.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The system appears to accept booking requests but does not create any appointments.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Appointments that were previously confirmed have disappeared from my account.",
+    "urgency": 6.0
+    },
+    {
+    "text": "Booking confirmation appears broken across multiple attempts.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The booking process fails every time I try to confirm an appointment.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointment list sometimes shows incorrect entries that disappear after refresh.",
+    "urgency": 5.0
+    },
+    {
+    "text": "I attempted to book an appointment several times today and none were recorded.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The booking system is not functioning. No appointments can be created.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Appointments vanish after being confirmed.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The booking confirmation does not appear and the appointment is never created.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointment list shows unexpected entries belonging to other patients.",
+    "urgency": 10.0
+    },
+    {
+    "text": "The system appears unable to record any bookings at the moment.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Confirmed appointments are disappearing from the system.",
+    "urgency": 6.0
+    },
+    {
+    "text": "Booking an appointment fails every time I attempt it.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The booking page allows submission but the system does not create the appointment.",
+    "urgency": 6.0
+    },
+    {
+    "text": "Previously booked appointments are missing from the system.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The appointment system seems to be malfunctioning and losing bookings.",
+    "urgency": 6.0
+    },
+    {
+    "text": "Booking confirmations do not result in an appointment being created.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointment list briefly shows other patients' bookings before refreshing.",
+    "urgency": 10.0
+    }
+    ]

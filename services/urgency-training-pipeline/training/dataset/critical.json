@@ -1,0 +1,82 @@
+[
+    {
+    "text": "I think something is seriously wrong with the booking system right now. I tried to schedule an appointment about 10 minutes ago with Dr. Bob for tomorrow afternoon. The booking page loads normally and lets me select the doctor, date and time slot without any problem. But when I press the confirm button the page just refreshes and nothing happens. There is no confirmation message and nothing appears in the appointments list. I repeated this process several times because I thought maybe I had clicked something wrong the first time, but every attempt behaves exactly the same way.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I'm reporting what looks like a major issue with appointments disappearing. Earlier today I booked an appointment for next week and it showed up as confirmed in my account. When I logged in again this evening the appointment was completely gone. I refreshed the page several times and even logged out and back in again but the appointment never came back. I'm concerned that bookings might be getting lost in the system.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The booking workflow appears broken for me right now. I go through the normal process of selecting a doctor, picking a date and time, and clicking confirm. Instead of showing a confirmation message the page simply reloads and returns to the same form. I tried this at least four times with different time slots and the result is always the same.",
+    "urgency": 9.0
+    },
+    {
+    "text": "While checking my appointments page I briefly saw an entry that definitely does not belong to me. It showed a doctor and appointment time that I never booked. After refreshing the page the entry disappeared again, but it was visible long enough that I could clearly read the details.",
+    "urgency": 10.0
+    },
+    {
+    "text": "I tried to create an appointment earlier today and the system behaves as if the request succeeded, but nothing actually gets saved. The page refreshes after clicking confirm but the appointment list remains empty.",
+    "urgency": 7.0
+    },
+    {
+    "text": "The appointments page suddenly stopped showing my bookings. I had at least two confirmed appointments earlier today. When I logged in again just now the list was empty. Refreshing the page and logging out and back in did not change anything.",
+    "urgency": 6.0
+    },
+    {
+    "text": "I attempted to schedule an appointment multiple times tonight and every attempt fails in the same way. The booking form loads correctly and accepts all selections, but after confirming the page simply reloads with no confirmation and no appointment created.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The booking confirmation step appears completely broken. I select the doctor and time slot and confirm the appointment, but the page reloads without saving anything.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I noticed something very worrying while checking the appointments page. For a brief moment I could see an appointment that clearly wasn't mine. After refreshing the page it disappeared.",
+    "urgency": 10.0
+    },
+    {
+    "text": "The booking system seems unable to record new appointments right now. I have attempted to create the same appointment several times but nothing appears in my account afterwards.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I booked an appointment earlier today and it was visible in the system for several hours. Now when I log in again the appointment is gone.",
+    "urgency": 7.0
+    },
+    {
+    "text": "Every time I try to confirm a booking the system reloads the page without any confirmation message. I have repeated the process several times.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointments list briefly displayed another person's booking information before refreshing automatically.",
+    "urgency": 10.0
+    },
+    {
+    "text": "The booking page itself loads fine, but confirming an appointment does nothing. The system never creates the appointment.",
+    "urgency": 9.0
+    },
+    {
+    "text": "A confirmed appointment disappeared from my account after refreshing the page.",
+    "urgency": 6.0
+    },
+    {
+    "text": "Multiple booking attempts today failed silently with no confirmation and no saved appointment.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The appointments page briefly showed another patient's booking details before refreshing.",
+    "urgency": 10.0
+    },
+    {
+    "text": "The booking process appears to accept submissions but does not create any appointments.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Previously confirmed appointments are missing from my account.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The appointment list briefly displayed entries belonging to another patient before refreshing.",
+    "urgency": 10.0
+    }
+    ]

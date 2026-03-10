@@ -17,7 +17,7 @@
     },
     {
     "text": "I tried to pay for an appointment and the payment page froze after clicking confirm. After refreshing, the system now shows the appointment as unpaid but my credit card has already been charged.",
-    "urgency": 9.0
+    "urgency": 6.5
     },
     {
     "text": "The booking page seems completely unusable right now. Every time I try to confirm a new appointment it just reloads the page without creating anything.",
@@ -25,7 +25,7 @@
     },
     {
     "text": "My payment went through successfully but the appointment does not exist in the system. I refreshed several times and checked again later but it's still missing.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "I tried booking on two different browsers and both show the same problem where the booking confirmation never happens. This looks like the entire booking system might be down.",
@@ -37,15 +37,15 @@
     },
     {
     "text": "I think your payment system is broken. I got a payment confirmation but the appointment still says unpaid and now I don't know if I should try again or not.",
-    "urgency": 8.5
+    "urgency": 6.5
     },
     {
     "text": "I attempted to cancel an appointment and the page froze. After refreshing the appointment disappeared entirely from the list.",
-    "urgency": 8.0
+    "urgency": 6.0
     },
     {
     "text": "This is unacceptable. I paid for an appointment and the system took the money but never created the booking.",
-    "urgency": 9.5
+    "urgency": 6.0
     },
     {
     "text": "Every time I click confirm appointment the page refreshes but nothing happens. This has happened five times already.",
@@ -53,7 +53,7 @@
     },
     {
     "text": "I tried to book an appointment and the system returned an error after payment was processed. Now my card shows a charge but the appointment does not exist.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "When logging in I briefly saw another user's appointment details before the page refreshed.",
@@ -61,11 +61,11 @@
     },
     {
     "text": "The appointments page is currently loading completely empty even though I had several bookings earlier today.",
-    "urgency": 8.5
+    "urgency": 6.0
     },
     {
     "text": "The payment page allowed me to pay but the system never confirmed the appointment.",
-    "urgency": 9.0
+    "urgency": 7.0
     },
     {
     "text": "This website appears to be down. The booking page loads but submitting the form fails every time.",
@@ -73,7 +73,7 @@
     },
     {
     "text": "After completing payment the system redirected me to the home page and the appointment disappeared.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "The booking system seems broken. I cannot create appointments at all.",
@@ -85,7 +85,7 @@
     },
     {
     "text": "I was charged for an appointment but the appointment is not present in my account.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "The appointment confirmation process is failing every time I try it.",
@@ -93,11 +93,11 @@
     },
     {
     "text": "The payment page processed my card but the system says the appointment was never booked.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "Appointments disappear after refreshing the page.",
-    "urgency": 8.5
+    "urgency": 6.0
     },
     {
     "text": "I saw another patient's appointment information in my account for a moment before refreshing.",
@@ -113,7 +113,7 @@
     },
     {
     "text": "After payment the appointment list is empty.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "The booking system currently seems completely broken.",
@@ -125,11 +125,11 @@
     },
     {
     "text": "My card was charged but the appointment never appeared.",
-    "urgency": 9.5
+    "urgency": 6.0
     },
     {
     "text": "The payment page shows success but the booking was not created.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "The booking system fails every time I try to create an appointment.",
@@ -141,7 +141,7 @@
     },
     {
     "text": "The system took payment but the booking does not exist.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "The booking confirmation seems broken.",
@@ -149,7 +149,7 @@
     },
     {
     "text": "Appointments are disappearing randomly from the list.",
-    "urgency": 8.5
+    "urgency": 6.0
     },
     {
     "text": "The payment system is charging cards without creating bookings.",
@@ -161,7 +161,7 @@
     },
     {
     "text": "Payment succeeded but the appointment is not in my account.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "I tried to create an appointment five times and none worked.",
@@ -177,11 +177,11 @@
     },
     {
     "text": "I paid for an appointment but it never appeared.",
-    "urgency": 9.5
+    "urgency": 6.0
     },
     {
     "text": "The payment page confirmed payment but the appointment was not recorded.",
-    "urgency": 9.5
+    "urgency": 6.5
     },
     {
     "text": "Booking appointments is currently impossible.",
@@ -193,10 +193,10 @@
     },
     {
     "text": "Payment succeeded but no appointment exists.",
-    "urgency": 9.5
+    "urgency": 7.0
     },
     {
     "text": "Appointments disappear after refresh.",
-    "urgency": 8.5
+    "urgency": 5.0
     }
     ]

@@ -1,93 +1,78 @@
 # Urgency Training Pipeline
 
-CLI pipeline for training an urgency classifier: **DJL** (sentence-transformers/all-MiniLM-L6-v2) for 384-dim embeddings + **DeepNetts** MLP for binary classification.
+Trains two DeepNetts MLP models from ticket JSON: a **regression scorer** (urgency 0–10) and a **binary classifier** (critical vs non-critical).
 
-## Architecture
+[Train](#train) | [Predict](#predict) | [Models](#models) | [Embeddings](#embeddings) | [Output](#output-preview)
 
-- **Embedding**: sentence-transformers/all-MiniLM-L6-v2 (384 dim) via DJL PyTorch
-- **MLP**: 384 → 64 (ReLU) → 16 (ReLU) → 1 (Sigmoid)
-- **Output**: `model.bin` (DeepNetts serialized format)
-
-## Run from CLI
-
-**With bundled demo data** (loads all `*.json` under `training/dataset/`):
+## Train
 
 ```bash
-mvn exec:java -Dexec.args="--demo-data"
+# Local embeddings (MiniLM, 384 dim) – default
+mvn compile exec:java -Dexec.args="--dataset training/dataset --export training/export/model.dnet"
+
+# OpenAI embeddings (1536 dim) – requires OPENAI_API_KEY
+mvn compile exec:java -Dexec.args="--embedding-provider openai --dataset training/dataset"
 ```
 
-Or with an explicit directory/file path:
+Outputs: `training/export/model-scorer.dnet`, `training/export/model-binary.dnet`
+
+## Predict
 
 ```bash
-mvn exec:java -Dexec.args="--demo-data training/dataset"
+mvn compile exec:java@predict -Dexec.args="Stripe refused my payment 3x"
 ```
 
-**With custom tickets.json**:
+With custom model dir: `-Dexec.args="--model-dir training/export Your text here"`
+
+**Note:** `predict` fails on loaded models (DeepNetts NPE: inputTensor null). `predict2` uses setInput+forward+getOutput workaround but hits "Index 384 out of bounds" – both worth reporting to maintainers:
 
 ```bash
-mvn exec:java -Dexec.args="--dataset training/dataset/tickets.json --export training/export/model.bin"
+mvn compile exec:java@predict -Dexec.args="Stripe refused my payment 3x"   # NPE
+mvn compile exec:java@predict2 -Dexec.args="Stripe refused my payment 3x"    # Index OOB
 ```
 
-## Predict (test the model)
+---
 
-```bash
-mvn exec:java -Dexec.mainClass="com.example.urgency.Predict" -Dexec.args="Stripe refused my payment 3x"
+## Models
+
+Both are MLPs (feed-forward): `inputDim → 64 → 32 → 1`. Hidden layers: Tanh; output: Sigmoid.
+
+- **Scorer** (regression): MSE loss, predicts urgency 0–1 (scale to 0–10).
+- **Binary** (classifier): BCE loss, predicts P(critical); threshold 0.8 → critical. Samples with urgency 7.0 or 7.5 (gray zone) are excluded from binary training but kept in validation, so the model learns a clearer critical/non-critical boundary.
+
+## Embeddings
+
+- **local** (default): sentence-transformers/all-MiniLM-L6-v2 via DJL
+- **openai**: text-embedding-3-small via LangChain4j (takes some time to create the first time)
+
+Cached under `training/embeddings/{provider}/`. When embeddings exist already and no changes were made to `training/dataset`, then embeddings are not recalculated.
+
+## Output preview
+
+Data is split 80% train / 20% validation. Samples are shuffled before each run, so no two training runs produce the exact same model.
+
+After training you get validation metrics and sample predictions:
+
+```
+  1. Scorer (regression) – goal: low MAE/MSE
+     MAE                   0.1234
+     MSE                   0.0456
+     Derived (round(score,0.5)≥8 → critical):
+       Recall               0.95   (X/Y critical detected)
+       Precision            0.90   (predicted critical, correct)
+       Precision-applied    0.85   (predicted critical had actual ≥7.0)
+
+  2. Binary classifier – P(critical) >= 0.8 → critical
+     Recall               0.92   (X/Y critical detected)
+     Precision            0.88   (predicted critical, correct)
+     Precision-applied    0.82   (predicted critical had actual ≥7.0)
+
+  First 10 validation samples (scorer: 0-10; binary: critical/non-critical):
+    score 8.5 [CRITICAL] (actual 9.0) Patient data visible to wrong user...
+    score 4.0 (actual 3.5) Can't find the reset password link...
 ```
 
-With custom model path:
-
-```bash
-mvn exec:java -Dexec.mainClass="com.example.urgency.Predict" -Dexec.args="--model training/export/model.bin Your complaint here"
-```
-
-Output: `Urgency: 0.7234 (72%)` and `Critical (>= 0.8)` if applicable.
-
-## Directory layout
-
-```
-training/
-├── dataset/
-│   └── tickets.json       # Placeholder demo data
-├── embedding/
-│   └── DJLEmbeddingGenerator.java   (in src/main/java/.../embedding/)
-├── training/
-│   └── UrgencyTrainer.java         (in src/main/java/.../training/)
-├── evaluation/
-│   └── Metrics.java                (in src/main/java/.../evaluation/)
-└── export/
-    └── model.bin                   # Produced by training
-```
-
-
-## Metrics
-
-- **Critical recall**: Recall for urgency ≥ 0.8 (critical events that must be detected)
-- **MAE**: Mean absolute error between predicted and actual urgency
-
-Or after `mvn package`:
-
-```bash
-java -cp "target/urgency-training-pipeline-1.0.0-SNAPSHOT.jar:target/lib/*" com.example.urgency.Main
-```
-
-## ONNX export (training)
-
-Training exports weights to JSON, then runs `weights_to_onnx.py` to produce `model.onnx`. One-time setup:
-
-```bash
-cd services/urgency-training-pipeline
-./training/export/setup_venv.sh
-```
-
-## Placeholders
-
-- **Demo data**: `tickets.json` has 3 placeholder tickets; replace when real data arrives
-- **Embedding model**: DJL pulls `all-MiniLM-L6-v2` from Hugging Face on first run (requires network)
-- **MLP hyperparams**: epochs, learning rate, etc. are placeholders; tune for your data
-- **Metrics**: basic validation loss/acc; precision/recall/F1 stubs for later
-
-## Dependencies
-
-- **DJL** (api, pytorch-engine, tokenizers) – text embeddings
-- **DeepNetts** (deepnetts-core) – MLP training
-- **Jackson** – JSON parsing for tickets
+- **MAE/MSE**: Scorer error (lower = better).
+- **Recall**: Of all actual critical tickets, how many we flagged as critical indeed (goal: high).
+- **Precision**: Of all we flagged critical, how many were truly critical (goal: high)
+- **Precision-applied**: Same but we accept predicted critical if actual ≥7.0 (we don't find that so bad and rather err on the side of not missing a critical ticket).

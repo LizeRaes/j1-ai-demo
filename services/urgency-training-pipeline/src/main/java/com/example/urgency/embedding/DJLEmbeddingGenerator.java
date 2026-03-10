@@ -8,23 +8,19 @@ import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Generates 384-dim embeddings using DJL + sentence-transformers/all-MiniLM-L6-v2.
  * Model is pulled from Hugging Face via djl:// URL on first use.
  */
-public class DJLEmbeddingGenerator implements AutoCloseable {
+public class DJLEmbeddingGenerator implements EmbeddingGenerator, AutoCloseable {
 
     private static final String MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2";
-    private static final int EMBEDDING_DIM = 384;
 
     private ZooModel<String, float[]> model;
     private Predictor<String, float[]> predictor;
 
     public DJLEmbeddingGenerator() {
-        // Lazy init on first embed() call
     }
 
     private void ensureLoaded() {
@@ -44,9 +40,6 @@ public class DJLEmbeddingGenerator implements AutoCloseable {
         }
     }
 
-    /**
-     * Embed a single text. Returns 384-dim float array (MiniLM).
-     */
     public float[] embed(String text) {
         ensureLoaded();
         try {
@@ -54,17 +47,6 @@ public class DJLEmbeddingGenerator implements AutoCloseable {
         } catch (Exception e) {
             throw new RuntimeException("Embedding failed for: " + text, e);
         }
-    }
-
-    /**
-     * Embed multiple texts. Placeholder: sequential for now; batching can be added later.
-     */
-    public List<float[]> embedAll(List<String> texts) {
-        return texts.stream().map(this::embed).collect(Collectors.toList());
-    }
-
-    public static int embeddingDimension() {
-        return EMBEDDING_DIM;
     }
 
     @Override

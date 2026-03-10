@@ -1,28 +1,27 @@
 package com.example.urgency;
 
+import com.example.urgency.data.DatasetLoader;
+import com.example.urgency.embedding.CachedEmbedding;
 import com.example.urgency.embedding.DJLEmbeddingGenerator;
+import com.example.urgency.embedding.EmbeddingCache;
+import com.example.urgency.embedding.EmbeddingGenerator;
+import com.example.urgency.embedding.OpenAIEmbeddingGenerator;
 import com.example.urgency.evaluation.Metrics;
 import com.example.urgency.model.Ticket;
 import com.example.urgency.training.UrgencyTrainer;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import deepnetts.data.TabularDataSet;
 import deepnetts.net.FeedForwardNetwork;
 import deepnetts.util.FileIO;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 
 public class Main {
 
     private static final String DEFAULT_DATASET = "training/dataset";
     private static final String DEFAULT_EXPORT = "training/export/model.dnet";
-    /** Default demo-data path (all *.json files in training dataset folder). */
-    private static final String DEFAULT_DEMO_DATA = DEFAULT_DATASET;
+    private static final String DEFAULT_TRAINING_DIR = "training";
 
     public static void main(String[] args) {
         try {
@@ -32,92 +31,102 @@ public class Main {
             t.printStackTrace(System.err);
             System.exit(1);
         }
+        Runtime.getRuntime().halt(0);  // exit without shutdown hooks to avoid Log4j async error
     }
 
     private static void run(String[] args) throws Exception {
         String datasetPath = DEFAULT_DATASET;
         String exportPath = DEFAULT_EXPORT;
+        String trainingDir = DEFAULT_TRAINING_DIR;
+        String embeddingProvider = "local";
+
         for (int i = 0; i < args.length; i++) {
             if ("--dataset".equals(args[i]) && i + 1 < args.length) {
                 datasetPath = args[++i];
             } else if ("--export".equals(args[i]) && i + 1 < args.length) {
                 exportPath = args[++i];
-            } else if ("--demo-data".equals(args[i])) {
-                datasetPath = (i + 1 < args.length && !args[i + 1].startsWith("-"))
-                        ? args[++i] : DEFAULT_DEMO_DATA;
+            } else if ("--training-dir".equals(args[i]) && i + 1 < args.length) {
+                trainingDir = args[++i];
+            } else if ("--embedding-provider".equals(args[i]) && i + 1 < args.length) {
+                embeddingProvider = "openai".equals(args[++i].toLowerCase()) ? "openai" : "local";
             }
         }
 
         System.out.println("Urgency Training Pipeline");
         System.out.println("  dataset: " + datasetPath);
         System.out.println("  export:  " + exportPath);
+        System.out.println("  embedding: " + embeddingProvider);
 
-        List<Ticket> tickets = loadTickets(Path.of(datasetPath));
-        System.out.println("  loaded " + tickets.size() + " tickets");
-
-        Collections.shuffle(tickets, new java.util.Random(42));
-        int splitIdx = (int) (tickets.size() * 0.8);
-        var trainTickets = tickets.subList(0, splitIdx);
-        var testTickets = tickets.subList(splitIdx, tickets.size());
-
-        try (DJLEmbeddingGenerator embeddingGen = new DJLEmbeddingGenerator()) {
-            UrgencyTrainer trainer = new UrgencyTrainer();
-
-            var trainSet = trainer.buildDataSet(trainTickets, embeddingGen);
-            var testSet = trainer.buildDataSet(testTickets, embeddingGen);
-
-            FeedForwardNetwork net = trainer.train(trainSet, testSet);
-
-            System.out.println("\nValidating...");
-            var result = Metrics.evaluateWithTickets(net, testTickets, embeddingGen);
-            result.printSummary();
-
-            // First 10 validation samples with predicted score (0-10 scale)
-            System.out.println("\n  First 10 validation samples (urgency 0-10):");
-            for (int i = 0; i < Math.min(10, testTickets.size()); i++) {
-                Ticket t = testTickets.get(i);
-                float[] emb = embeddingGen.embed(t.text());
-                float[] predArr = net.predict(emb);
-                float pred01 = predArr[0];
-                float pred10 = pred01 * 10;
-                double actual10 = t.urgency() > 1 ? t.urgency() : t.urgency() * 10;
-                System.out.printf("    [%.1f] (actual %.1f) %s%n", pred10, actual10, t.text());
-            }
-
-            // Save last, so you see metrics/output even if save fails
-            String dnetPath = exportPath.endsWith(".dnet") ? exportPath : Path.of(exportPath).getParent().resolve("model.dnet").toString();
-            Path.of(dnetPath).getParent().toFile().mkdirs();
-            FileIO.writeToFile(net, dnetPath);
-            System.out.println("\nModel saved to " + dnetPath);
-        }
-
-        System.out.println("Done.");
+        runWithCachedEmbeddings(datasetPath, exportPath, trainingDir, embeddingProvider);
+        System.out.println("Finished");
     }
 
-    private static List<Ticket> loadTickets(Path path) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        List<Ticket> all = new ArrayList<>();
-        if (Files.isDirectory(path)) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, "*.json")) {
-                for (Path f : stream) {
-                    List<Ticket> batch = mapper.readValue(f.toFile(), new TypeReference<>() {});
-                    all.addAll(batch);
-                }
-            }
-        } else {
-            all.addAll(mapper.readValue(path.toFile(), new TypeReference<>() {}));
-        }
-        return all;
-    }
+    private static void runWithCachedEmbeddings(String datasetPath, String exportPath, String trainingDir,
+                                                String provider) throws Exception {
+        var loadResult = DatasetLoader.load(Path.of(datasetPath));
+        List<Ticket> tickets = loadResult.tickets();
+        List<Path> sourceFiles = loadResult.sourceFiles();
+        System.out.println("  loaded " + tickets.size() + " tickets from " + sourceFiles.size() + " files");
 
-    /** Manual split to avoid DataSets.trainTestSplit NPE (columnNames null). */
-    private static TabularDataSet<TabularDataSet.Item> split(
-            TabularDataSet<TabularDataSet.Item> data, int from, int to) {
-        TabularDataSet<TabularDataSet.Item> out = new TabularDataSet<>(384, 1);
-        for (int i = from; i < to; i++) {
-            var item = data.get(i);
-            out.add(item);
+        EmbeddingCache cache = new EmbeddingCache(Path.of(trainingDir), provider);
+        List<CachedEmbedding> cached;
+        EmbeddingGenerator embeddingGen = "openai".equals(provider)
+                ? new OpenAIEmbeddingGenerator()
+                : new DJLEmbeddingGenerator();
+        try {
+            cached = cache.loadOrCompute(tickets, sourceFiles, embeddingGen);
+        } finally {
+            if (embeddingGen instanceof AutoCloseable ac) {
+                try { ac.close(); } catch (Exception ignored) {}
+            }
         }
-        return out;
+
+        // Pair tickets with cached embeddings (same order), shuffle, split
+        record Pair(Ticket t, CachedEmbedding c) {}
+        List<Pair> pairs = new ArrayList<>();
+        for (int i = 0; i < tickets.size(); i++) {
+            pairs.add(new Pair(tickets.get(i), cached.get(i)));
+        }
+        Collections.shuffle(pairs, new java.util.Random());
+        int splitIdx = (int) (pairs.size() * 0.8);
+        var trainPairs = pairs.subList(0, splitIdx);
+        var testPairs = pairs.subList(splitIdx, pairs.size());
+
+        List<CachedEmbedding> trainCached = trainPairs.stream().map(p -> p.c).toList();
+        List<CachedEmbedding> testCached = testPairs.stream().map(p -> p.c).toList();
+
+        UrgencyTrainer trainer = new UrgencyTrainer(provider);
+        var trainScorerSet = trainer.buildScorerDataSetFromCache(trainCached, "training data (scorer)");
+        var trainBinarySet = trainer.buildBinaryDataSetFromCache(trainCached, "training data (binary)");
+
+        FeedForwardNetwork scorerNet = trainer.trainScorer(trainScorerSet);
+        FeedForwardNetwork binaryNet = trainer.trainBinary(trainBinarySet);
+
+        System.out.println("\nValidating...");
+        System.out.println("Validation results (round to 0.5 before binary critical assessment)");
+        System.out.println("────────────────────────────────────────");
+        Metrics.evaluateScorer(scorerNet, testCached).printSummary();
+        var binaryResult = Metrics.evaluateBinary(binaryNet, testCached);
+        binaryResult.printSummary();
+        System.out.println("────────────────────────────────────────");
+
+        System.out.println("\n  First 10 validation samples (scorer: 0-10; binary: critical/non-critical):");
+        for (int i = 0; i < Math.min(10, testCached.size()); i++) {
+            CachedEmbedding c = testCached.get(i);
+            float score01 = scorerNet.predict(c.embedding())[0];
+            float score10 = (float) (Math.round(score01 * 20) / 2.0);
+            float pCritical = binaryNet.predict(c.embedding())[0];
+            boolean critical = pCritical >= Metrics.CRITICAL_THRESHOLD;
+            double actual10 = c.urgency();
+            System.out.printf("    score %.1f %s (actual %.1f) %s%n", score10, critical ? "[CRITICAL]" : "", actual10, c.text());
+        }
+
+        binaryResult.printMisclassifications();
+
+        Path basePath = Path.of(exportPath).getParent();
+        basePath.toFile().mkdirs();
+        FileIO.writeToFile(scorerNet, basePath.resolve("model-scorer.dnet").toString());
+        FileIO.writeToFile(binaryNet, basePath.resolve("model-binary.dnet").toString());
+        System.out.println("\nModels saved to " + basePath.resolve("model-scorer.dnet") + " and " + basePath.resolve("model-binary.dnet"));
     }
 }
