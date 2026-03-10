@@ -153,7 +153,7 @@
     },
     {
     "text": "The payment system is charging cards without creating bookings.",
-    "urgency": 9.5
+    "urgency": 7
     },
     {
     "text": "The confirm booking button does nothing.",
@@ -198,5 +198,89 @@
     {
     "text": "Appointments disappear after refresh.",
     "urgency": 5.0
+    },
+    {
+    "text": "Payment failed three times in a row on the same card while trying to book one appointment. I retried with a second card and it also failed with the same error.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I attempted checkout four times and got payment failed each time. I also tried two different credit cards and both were rejected by your system.",
+    "urgency": 9.0
+    },
+    {
+    "text": "The payment step is broken right now. I tried Visa and then MasterCard, both failed repeatedly, and now I still cannot book urgent care for today.",
+    "urgency": 9.5
+    },
+    {
+    "text": "Every payment attempt fails. I have tried multiple cards and each one returns a generic payment error without creating the booking.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I retried payment five times and it failed every single time. Switched cards, same outcome, and I still cannot secure the appointment slot.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Payment keeps failing no matter what card I use. This blocked me from booking an appointment that I need tomorrow morning.",
+    "urgency": 8.5
+    },
+    {
+    "text": "Your checkout is rejecting all cards. I tried two banks and multiple retries and the booking never completes.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Critical issue: payment failed repeatedly on two separate cards, and there is no way to complete appointment booking.",
+    "urgency": 9.5
+    },
+    {
+    "text": "I have now attempted payment six times. The system reports payment failed each time, including after changing card details.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Payment failure appears systemic. Multiple retries and two different cards both fail, so appointments cannot be booked.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Booking is blocked because payment fails on every attempt. I tested two cards and both are declined by your platform only.",
+    "urgency": 8.5
+    },
+    {
+    "text": "I cannot complete booking because payment has failed repeatedly on multiple cards over the last hour.",
+    "urgency": 8.5
+    },
+    {
+    "text": "Payment failed three times with one card and twice with another. I still cannot create the appointment.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I need this appointment urgently, but payment fails every time. I used two cards and retried several times with no success.",
+    "urgency": 9.5
+    },
+    {
+    "text": "The payment processor in your app seems down. All attempts failed across multiple cards, so booking is impossible right now.",
+    "urgency": 9.0
+    },
+    {
+    "text": "Short version: payment fails on both of my cards and I cannot book.",
+    "urgency": 8.5
+    },
+    {
+    "text": "Payment error on every attempt, even after switching cards.",
+    "urgency": 8.5
+    },
+    {
+    "text": "Tried multiple cards, multiple retries, payment always fails.",
+    "urgency": 8.5
+    },
+    {
+    "text": "Checkout keeps returning payment failed and no appointment is created.",
+    "urgency": 8.5
+    },
+    {
+    "text": "Repeated payment failures across two cards are preventing all bookings.",
+    "urgency": 9.0
+    },
+    {
+    "text": "I cannot pay with any card right now; all attempts fail and I cannot schedule care.",
+    "urgency": 9.0
     }
     ]

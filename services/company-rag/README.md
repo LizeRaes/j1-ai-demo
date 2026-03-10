@@ -1,6 +1,6 @@
 # Company Internal Documents RAG
 
-A Quarkus application for storing and searching company internal documents using RAG (Retrieval-Augmented Generation) with LangChain4j and Qdrant.
+A Quarkus application for storing and searching company internal documents using RAG (Retrieval-Augmented Generation) with LangChain4j and Oracle AI vector storage.
 
 ## Overview
 
@@ -461,16 +461,16 @@ curl -OJ http://localhost:8084/api/documents/download/Quarterly_Report.pdf
 
 ## Data Persistence
 
-- **Embeddings are stored in Qdrant** and persist across application restarts
-- **Document metadata** (document name, chunk index) is stored in Qdrant payload
+- **Embeddings are stored in Oracle AI 26ai** and persist across application restarts
+- **Document metadata** (document name, chunk index) is stored in Oracle embedding table metadata
 - **Document access policy** is stored in `company-documents/config/document_access_policy.yaml` (writable, persisted on RBAC changes)
 - Documents are automatically re-embedded on startup from `company-documents/`
 
 ## Configuration
 
 Edit `src/main/resources/application.properties` to configure:
-- Qdrant host and port (default: localhost:6334)
-- Collection name (default: document-embeddings)
+- Oracle datasource URL/credentials (default: `jdbc:oracle:thin:@localhost:1522/freepdb1`)
+- Oracle embedding table and metadata column (`oracleai.embedding.*`)
 - OpenAI API key (required for embeddings)
 - Default chunking strategy and chunk size
 - Documents storage folder (`demo.dir.location`, default `company-documents`)
@@ -479,7 +479,7 @@ Edit `src/main/resources/application.properties` to configure:
 
 - **Quarkus 3.30.8** - Java framework
 - **Quarkus LangChain4J Extension** - Automatic EmbeddingModel configuration via BOM
-- **LangChain4j** - Embedding generation and QdrantEmbeddingStore (versions managed by BOM)
+- **LangChain4j** - Embedding generation and Oracle embedding store integration (versions managed by BOM)
 - **OpenAI text-embedding-3-large** - Embedding model (3072-dimensional vectors)
 - **Oracle AI 26ai** - Vector database for similarity search
 - **SnakeYAML** - YAML parsing for document access policy
@@ -490,7 +490,7 @@ The service uses **OpenAI's text-embedding-3-large** model to generate embedding
 - **Dimensions**: 3072
 - **Model**: text-embedding-3-large
 - **Provider**: OpenAI (requires API key)
-- **Distance Metric**: Cosine similarity (configured in Qdrant)
+- **Distance Metric**: Cosine similarity (configured via Oracle vector index settings)
 
 ### Configuration
 
@@ -509,8 +509,8 @@ quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-3-large
 ## Architecture Notes
 
 - **Embedding Generation**: Document chunks are embedded using OpenAI's API when documents are loaded or updated
-- **Vector Storage**: 3072-dimensional vectors stored in Qdrant with cosine similarity
-- **Metadata Storage**: Document name, chunk index, and text are stored in Qdrant payload for retrieval
+- **Vector Storage**: 3072-dimensional vectors stored in Oracle AI 26ai with cosine similarity
+- **Metadata Storage**: Document name, chunk index, and text are stored in Oracle embedding table metadata for retrieval
 - **Search**: Returns the most similar document chunks based on ticket text queries
 - **RBAC**: Document access is controlled via YAML configuration file
 - **Idempotency**: All operations (upsert, delete, RBAC update) are idempotent - safe to retry

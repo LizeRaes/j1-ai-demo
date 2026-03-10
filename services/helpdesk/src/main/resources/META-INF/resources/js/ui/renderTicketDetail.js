@@ -29,6 +29,13 @@ export function renderTicketDetail(ticket) {
     const title = createElement('h2', 'ticket-title', `Ticket #${ticket.id}`);
     header.appendChild(title);
 
+    const urgencyScore = Number(ticket.urgencyScore);
+    const hasUrgencyScore = Number.isFinite(urgencyScore);
+    const isCriticalUrgency = hasUrgencyScore && urgencyScore >= 8;
+    const isUrgent = hasUrgencyScore && urgencyScore >= 6 && urgencyScore < 8;
+    const urgencyLabel = isCriticalUrgency
+        ? '<span class="text-critical-urgency"><strong>CRITICAL</strong></span>'
+        : (isUrgent ? '<span class="text-urgent"><strong>URGENT</strong></span>' : '');
     const meta = createElement('div', 'ticket-meta');
     meta.innerHTML = `
         <span><strong>Type:</strong> ${ticket.ticketType}</span>
@@ -36,8 +43,8 @@ export function renderTicketDetail(ticket) {
         <span><strong>Source:</strong> ${ticket.source}</span>
         <span><strong>Team:</strong> <span style="color: #666; font-style: italic;">${ticket.assignedTeam}</span> <small style="color: #999;">(auto-assigned)</small></span>
         ${ticket.assignedTo ? `<span><strong>Assigned to:</strong> ${ticket.assignedTo}</span>` : ''}
-        ${ticket.urgencyFlag ? '<span><strong>URGENT</strong></span>' : ''}
-        ${ticket.urgencyScore ? `<span><strong>Urgency Score:</strong> ${ticket.urgencyScore}/10</span>` : ''}
+        ${urgencyLabel}
+        ${ticket.urgencyScore ? `<span class="${isCriticalUrgency ? 'text-critical-urgency' : ''}"><strong>Urgency Score:</strong> ${ticket.urgencyScore}/10</span>` : ''}
         ${ticket.aiConfidence ? `<span><strong>AI Confidence:</strong> ${(ticket.aiConfidence * 100).toFixed(1)}%</span>` : ''}
         <span><strong>Created:</strong> ${formatDateTime(ticket.createdAt)}</span>
     `;
@@ -78,21 +85,18 @@ export function renderTicketDetail(ticket) {
         rollbackBtn.style.background = '#ff9800';
         rollbackBtn.style.color = 'white';
         rollbackBtn.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to convert this AI ticket back to an incoming request? The ticket will be hidden from normal views.')) {
-                try {
-                    await rollbackToRequest(ticket.id);
-                    alert('Ticket converted back to request! It will reappear in the dispatcher inbox.');
-                    // Refresh the view
-                    const {renderTickets} = await import('./renderTickets.js');
-                    await renderTickets('inbox');
-                    // Clear detail pane since ticket is now hidden
-                    const container = $('#detail-pane');
-                    if (container) {
-                        container.innerHTML = '<div class="detail-placeholder"><p>Ticket converted back to request. Select another item to view details.</p></div>';
-                    }
-                } catch (error) {
-                    alert('Error converting ticket: ' + error.message);
+            try {
+                await rollbackToRequest(ticket.id);
+                // Refresh the view
+                const {renderTickets} = await import('./renderTickets.js');
+                await renderTickets('inbox');
+                // Clear detail pane since ticket is now hidden
+                const container = $('#detail-pane');
+                if (container) {
+                    container.innerHTML = '<div class="detail-placeholder"><p>Ticket converted back to request. Select another item to view details.</p></div>';
                 }
+            } catch (error) {
+                alert('Error converting ticket: ' + error.message);
             }
         });
         actionsDiv.appendChild(rollbackBtn);
@@ -201,34 +205,9 @@ export function renderTicketDetail(ticket) {
         relatedTicketIds.forEach(ticketId => {
             const relatedItem = createElement('div', 'related-item');
             const relatedLink = createElement('a', 'related-link', `Ticket #${ticketId}`);
-            relatedLink.href = '#';
-            relatedLink.addEventListener('click', async (e) => {
-                e.preventDefault();
-                // Switch to inbox tab first
-                const {switchTab} = await import('./router.js');
-                switchTab('inbox');
-                // Wait a bit for the list to render, then select and load the ticket
-                setTimeout(async () => {
-                    // Select the ticket in the list
-                    const listItem = document.querySelector(`.list-item[data-ticket-id="${ticketId}"]`);
-                    if (listItem) {
-                        document.querySelectorAll('.list-item').forEach(el => {
-                            el.classList.remove('selected');
-                        });
-                        listItem.classList.add('selected');
-                        state.selectedTicketId = ticketId;
-                        // Scroll to the selected item
-                        listItem.scrollIntoView({behavior: 'smooth', block: 'center'});
-                    }
-                    // Add to navigation history
-                    state.addTicketToHistory(ticketId);
-                    if (window.updateNavButtons) {
-                        window.updateNavButtons();
-                    }
-                    // Load the ticket detail
-                    await loadTicketDetail(ticketId);
-                }, 100);
-            });
+            relatedLink.href = `/?tab=inbox&ticketId=${ticketId}`;
+            relatedLink.target = '_blank';
+            relatedLink.rel = 'noopener noreferrer';
             relatedItem.appendChild(relatedLink);
             relatedTicketsList.appendChild(relatedItem);
         });
@@ -243,7 +222,7 @@ export function renderTicketDetail(ticket) {
     // Related Company Docs
     const relatedDocsSection = createElement('div', 'ticket-section related-section');
     relatedDocsSection.innerHTML = '<h4>Related Company Docs</h4>';
-    const relatedDocsList = createElement('div', 'related-list');
+    const relatedDocsList = createElement('div', 'related-list related-docs-list');
 
     // Parse aiPayloadJson to extract policyCitations
     let policyCitations = [];
@@ -264,7 +243,7 @@ export function renderTicketDetail(ticket) {
 
     if (policyCitations.length > 0) {
         policyCitations.forEach(citation => {
-            const relatedItem = createElement('div', 'related-item');
+            const relatedItem = createElement('div', 'related-item related-doc-item');
 
             // Check RBAC: only show document link if user's team is in rbacTeams
             const hasAccess = citation.rbacTeams &&
@@ -312,15 +291,11 @@ export function renderTicketDetail(ticket) {
                 relatedItem.appendChild(docName);
             }
 
-            // Show citation preview
+            // Show full citation (wrapped, no truncation)
             if (citation.citation) {
-                const quote = createElement('div', 'related-quote');
-                quote.style.fontSize = '0.85rem';
-                quote.style.color = '#666';
-                quote.style.marginTop = '0.25rem';
-                quote.style.fontStyle = 'italic';
-                quote.textContent = `"${citation.citation.substring(0, 100)}${citation.citation.length > 100 ? '...' : ''}"`;
-                relatedItem.appendChild(quote);
+                const citationText = createElement('div', 'related-citation');
+                citationText.textContent = citation.citation;
+                relatedItem.appendChild(citationText);
             }
 
             // Show relevance score if available

@@ -1,5 +1,7 @@
 package com.example.appointment.resource;
 
+import com.example.appointment.service.UrgencyInferenceService;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -11,11 +13,13 @@ import jakarta.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class UrgencyResource {
 
+    @Inject
+    UrgencyInferenceService urgencyInferenceService;
+
     @POST
     @Path("/score")
     public UrgencyScoreResponse score(UrgencyScoreRequest request) {
-        // TODO Placeholder until urgency model bug is fixed.
-        return new UrgencyScoreResponse(0.7);
+        return new UrgencyScoreResponse(urgencyInferenceService.score(request.complaint()));
     }
 
     public record UrgencyScoreRequest(String complaint) {

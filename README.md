@@ -36,7 +36,7 @@ MedicalAppointment is a demonstration platform consisting of multiple microservi
 | [helpdesk](services/helpdesk/)                                                      | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle                     |
 | [ai-triage](services/ai-triage/)                                                    | 8081 | LLM-powered classification, urgency scoring, enrichment                          |
 | [similar-tickets](services/similar-tickets/)                                        | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings) |
-| [company-rag](services/company-rag/)                                                | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
+| [company-rag](services/company-rag/)                                                | 8084 | Company-document RAG with RBAC-controlled citations (Oracle AI + OpenAI embeddings) |
 | [coding-assistant](services/coding-assistant/)                                      | 8085 | Async bug-fix assistant that prepares PRs and callbacks to helpdesk              |
 
 Each service is independently deployable with its own `pom.xml`, `README.md`, and `CONTRACTS.md`.
