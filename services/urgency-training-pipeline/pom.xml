@@ -5,11 +5,11 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example.urgency</groupId>
+    <groupId>com.example.appointment</groupId>
     <artifactId>urgency-training-pipeline</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Urgency Training Pipeline</name>
+    <name>urgency-training-pipeline</name>
     <description>CLI pipeline for training urgency classifier: DJL embeddings + DeepNetts MLP</description>
 
     <properties>

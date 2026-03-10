@@ -1,6 +1,5 @@
 package com.example.urgency;
 
-import com.example.urgency.data.HelpdeskDemoLoader;
 import com.example.urgency.embedding.DJLEmbeddingGenerator;
 import com.example.urgency.evaluation.Metrics;
 import com.example.urgency.model.Ticket;
@@ -22,8 +21,8 @@ public class Main {
 
     private static final String DEFAULT_DATASET = "training/dataset";
     private static final String DEFAULT_EXPORT = "training/export/model.dnet";
-    /** Path to helpdesk demo-data (relative to project root or absolute). */
-    private static final String DEFAULT_DEMO_DATA = "../helpdesk/src/main/resources/demo-data";
+    /** Default demo-data path (all *.json files in training dataset folder). */
+    private static final String DEFAULT_DEMO_DATA = DEFAULT_DATASET;
 
     public static void main(String[] args) {
         try {
@@ -38,15 +37,12 @@ public class Main {
     private static void run(String[] args) throws Exception {
         String datasetPath = DEFAULT_DATASET;
         String exportPath = DEFAULT_EXPORT;
-        boolean useDemoData = false;
-
         for (int i = 0; i < args.length; i++) {
             if ("--dataset".equals(args[i]) && i + 1 < args.length) {
                 datasetPath = args[++i];
             } else if ("--export".equals(args[i]) && i + 1 < args.length) {
                 exportPath = args[++i];
             } else if ("--demo-data".equals(args[i])) {
-                useDemoData = true;
                 datasetPath = (i + 1 < args.length && !args[i + 1].startsWith("-"))
                         ? args[++i] : DEFAULT_DEMO_DATA;
             }
@@ -56,9 +52,7 @@ public class Main {
         System.out.println("  dataset: " + datasetPath);
         System.out.println("  export:  " + exportPath);
 
-        List<Ticket> tickets = useDemoData
-                ? HelpdeskDemoLoader.loadFromDirectory(Path.of(datasetPath))
-                : loadTickets(Path.of(datasetPath));
+        List<Ticket> tickets = loadTickets(Path.of(datasetPath));
         System.out.println("  loaded " + tickets.size() + " tickets");
 
         Collections.shuffle(tickets, new java.util.Random(42));
@@ -67,12 +61,12 @@ public class Main {
         var testTickets = tickets.subList(splitIdx, tickets.size());
 
         try (DJLEmbeddingGenerator embeddingGen = new DJLEmbeddingGenerator()) {
-            UrgencyTrainer trainer = new UrgencyTrainer(datasetPath, exportPath);
+            UrgencyTrainer trainer = new UrgencyTrainer();
 
-            var trainSet = trainer.buildDataSet(trainTickets, embeddingGen, "training data");
-            var testSet = trainer.buildDataSet(testTickets, embeddingGen, "validation data");
+            var trainSet = trainer.buildDataSet(trainTickets, embeddingGen);
+            var testSet = trainer.buildDataSet(testTickets, embeddingGen);
 
-            FeedForwardNetwork net = trainer.train(trainSet);
+            FeedForwardNetwork net = trainer.train(trainSet, testSet);
 
             System.out.println("\nValidating...");
             var result = Metrics.evaluateWithTickets(net, testTickets, embeddingGen);
@@ -84,14 +78,11 @@ public class Main {
                 Ticket t = testTickets.get(i);
                 float[] emb = embeddingGen.embed(t.text());
                 float[] predArr = net.predict(emb);
-                float pred01 = predArr.length > 1 ? predArr[1] : predArr[0];
+                float pred01 = predArr[0];
                 float pred10 = pred01 * 10;
                 double actual10 = t.urgency() > 1 ? t.urgency() : t.urgency() * 10;
                 System.out.printf("    [%.1f] (actual %.1f) %s%n", pred10, actual10, t.text());
             }
-
-            // False positives (non-critical said critical) and false negatives (critical missed)
-            result.printMisclassifications();
 
             // Save last, so you see metrics/output even if save fails
             String dnetPath = exportPath.endsWith(".dnet") ? exportPath : Path.of(exportPath).getParent().resolve("model.dnet").toString();

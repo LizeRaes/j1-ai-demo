@@ -10,16 +10,16 @@ CLI pipeline for training an urgency classifier: **DJL** (sentence-transformers/
 
 ## Run from CLI
 
-**With helpdesk demo data** (links to `services/helpdesk/src/main/resources/demo-data/`):
+**With bundled demo data** (loads all `*.json` under `training/dataset/`):
 
 ```bash
 mvn exec:java -Dexec.args="--demo-data"
 ```
 
-Or with explicit path:
+Or with an explicit directory/file path:
 
 ```bash
-mvn exec:java -Dexec.args="--demo-data ../helpdesk/src/main/resources/demo-data"
+mvn exec:java -Dexec.args="--demo-data training/dataset"
 ```
 
 **With custom tickets.json**:

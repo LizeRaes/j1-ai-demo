@@ -5,6 +5,7 @@ import com.example.appointment.service.AiTriageAssistant;
 import com.example.appointment.service.DocumentService;
 import com.example.appointment.service.EventLogService;
 import com.example.appointment.service.SimilarityService;
+import com.example.appointment.service.UrgencyService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -19,6 +20,7 @@ import java.util.List;
 public class TriageResource {
 
     private static final Logger LOG = Logger.getLogger(TriageResource.class);
+    private static final int HUMAN_REVIEW_CONFIDENCE_THRESHOLD_PERCENT = 40;
 
     @Inject
     AiTriageAssistant aiTriageAssistant;
@@ -31,6 +33,9 @@ public class TriageResource {
 
     @Inject
     EventLogService eventLogService;
+
+    @Inject
+    UrgencyService urgencyService;
 
     @POST
     @Path("/classify")
@@ -47,9 +52,31 @@ public class TriageResource {
             AiTriageResult aiResult = aiTriageAssistant.triage(request.message(), request.allowedTicketTypes());
 
             validateAiResult(aiResult, request.allowedTicketTypes());
-
-            int urgencyScore = aiResult.urgencyScore();
             int confidence = aiResult.aiConfidencePercent();
+            if (confidence < HUMAN_REVIEW_CONFIDENCE_THRESHOLD_PERCENT) {
+                String reason = "Ai Triage failed: confidence below threshold (" + confidence + "% < "
+                        + HUMAN_REVIEW_CONFIDENCE_THRESHOLD_PERCENT + "%)";
+                eventLogService.addEvent("ERROR", "Low confidence for ticket " + ticketId + ": " + reason
+                        + ". Returning to human review.", ticketId);
+                throw new RuntimeException(reason);
+            }
+
+            eventLogService.addEvent("INFO", "Scoring urgency for ticket " + ticketId, ticketId);
+            double urgency;
+            try {
+                urgency = urgencyService.score(request.message());
+            } catch (Exception e) {
+                String urgencyError = java.util.Optional.ofNullable(e.getMessage()).orElse("no response");
+                String reason = "Ai Triage failed: Urgency scoring failed: " + urgencyError;
+                eventLogService.addEvent("ERROR", "Urgency scoring failed for ticket " + ticketId + ": " + urgencyError
+                        + ". Returning to human review.", ticketId);
+                throw new RuntimeException(reason);
+            }
+
+            if (urgency > 7.5) {
+                notifyOnCall(aiResult.ticketType());
+            }
+            int urgencyScore = (int) Math.round(urgency);
 
             List<Long> relatedTicketIds;
             try {
@@ -95,11 +122,7 @@ public class TriageResource {
             return response;
 
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains("MCP")) {
-                LOG.warn("MCP server not responding");
-                eventLogService.addEvent("WARN", "MCP server not responding (localhost:9000). Start urgency-mcp-helidon.", ticketId);
-            }
-            LOG.errorf(e, "Error processing triage request");
+            LOG.errorf(e, "Error processing triage request for ticket %s", ticketId);
             String failReason = extractFailReason(e);
 
             TriageResponse response = new TriageResponse("FAILED", null, null, null, List.of(), List.of(), failReason);
@@ -131,6 +154,10 @@ public class TriageResource {
         return eventLogService.getTickets();
     }
 
+    private void notifyOnCall(String teamName) {
+        // to be implemented in real system
+    }
+
     private void validateAiResult(AiTriageResult result, List<TriageRequest.TicketTypeInfo> allowedTypes) {
         if (result == null) {
             throw new RuntimeException("AI service returned null result");
@@ -146,11 +173,6 @@ public class TriageResource {
         if (!allowedTypeNames.contains(result.ticketType())) {
             throw new RuntimeException("CONTRACT_VIOLATION: AI returned ticket type '" +
                     result.ticketType() + "' which is not in the allowed list: " + allowedTypeNames);
-        }
-
-        if (result.urgencyScore() == null || result.urgencyScore() < 1 || result.urgencyScore() > 10) {
-            throw new RuntimeException("CONTRACT_VIOLATION: Urgency score must be between 1 and 10, got: " +
-                    result.urgencyScore());
         }
 
         if (result.aiConfidencePercent() == null ||
