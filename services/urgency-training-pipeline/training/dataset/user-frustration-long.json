@@ -1,0 +1,202 @@
+[
+    {
+    "text": "I'm honestly not sure if I'm using the booking page correctly. I selected Dr. Bob and picked a time slot, then clicked confirm, and the page just kind of refreshed without any explanation. I eventually saw the appointment in my list but it wasn't clear that the booking actually succeeded.",
+    "urgency": 3.0
+    },
+    {
+    "text": "The interface is pretty confusing. When I go to the appointments page I see a table with statuses like CONFIRMED and PENDING but it's not obvious what those mean or what I should do next.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I spent like ten minutes trying to figure out how to reschedule an appointment. The reschedule button opens a form but it wasn't clear that I needed to click save again afterwards.",
+    "urgency": 3.0
+    },
+    {
+    "text": "Maybe I'm missing something obvious but the cancel button placement is weird. I kept looking for it near the appointment details but it was hidden inside the table actions.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The booking page works but it feels clunky. Every time I pick a doctor the rest of the form resets and I have to select the date again.",
+    "urgency": 3.0
+    },
+    {
+    "text": "I'm a bit annoyed because I couldn't tell if my appointment was actually booked. There wasn't any obvious confirmation message after submitting the form.",
+    "urgency": 3.0
+    },
+    {
+    "text": "Why does the system only show three doctors? I assumed there would be more options but the dropdown is very limited.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The help page asked me to describe my issue but after submitting it I had no idea whether the message actually went through.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I tried to cancel an appointment and it technically worked but the page didn't show any confirmation so I kept refreshing just to make sure.",
+    "urgency": 3.0
+    },
+    {
+    "text": "Honestly the UI is pretty confusing. I'm never sure what step I'm currently in when booking.",
+    "urgency": 2.0
+    },
+    {
+    "text": "Not sure if this is just me but the booking form looks very minimal and doesn't explain the process well.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The system works but it feels unfinished. There are a lot of small things that make it confusing to use.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The appointments page is a bit hard to read. I wish it had clearer labels or instructions.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I tried rescheduling an appointment and wasn't sure if the change was saved or not.",
+    "urgency": 3.0
+    },
+    {
+    "text": "I accidentally booked the wrong doctor and it took me a while to figure out how to change it.",
+    "urgency": 3.0
+    },
+    {
+    "text": "The payment page was confusing because it shows card details but doesn't explain whether payment happens immediately or later.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I'm a bit frustrated because I had to reload the appointments page multiple times just to see the updated status.",
+    "urgency": 3.0
+    },
+    {
+    "text": "I couldn't immediately figure out how to go back from the booking page to the main menu.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The booking form doesn't explain what happens if you cancel an appointment later.",
+    "urgency": 2.0
+    },
+    {
+    "text": "Honestly the site just feels confusing overall. I'm never quite sure where to click next.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I was trying to help my parents use this booking system and they were completely lost. The workflow is not very intuitive.",
+    "urgency": 3.0
+    },
+    {
+    "text": "The layout of the appointments table is a bit cramped and hard to read.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The booking flow technically works but it's not obvious what steps come next.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I had to guess what the status labels meant because there was no explanation.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I clicked confirm appointment and waited because I wasn't sure if the system was processing or stuck.",
+    "urgency": 3.0
+    },
+    {
+    "text": "Maybe it's just me but the system feels confusing for first time users.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The booking form is simple but almost too simple. I kept wondering if I missed a step.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The cancel appointment button worked but I wish there was a clearer confirmation message.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I couldn't tell whether the payment page was secure or not because there wasn't much explanation.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The interface feels inconsistent. Some buttons say confirm while others say save.",
+    "urgency": 3.0
+    },
+    {
+    "text": "The site is usable but definitely not very user friendly.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I had to refresh the page a few times before I felt confident that my booking worked.",
+    "urgency": 3.0
+    },
+    {
+    "text": "It's hard to tell what actions are available on the appointments page.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I accidentally opened the reschedule form and couldn't figure out how to close it again.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The booking page could really use some instructions for first time users.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The interface is a bit confusing and I wasn't sure which buttons were important.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The system technically works but the workflow is not very clear.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I spent a while trying to understand how rescheduling works.",
+    "urgency": 3.0
+    },
+    {
+    "text": "The booking form resets some fields when I change a selection which is a bit annoying.",
+    "urgency": 3.0
+    },
+    {
+    "text": "I had trouble figuring out how to navigate back to the home page.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The help page could probably explain things better because I wasn't sure what category to choose.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The interface feels a bit unfinished and confusing.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I kept second guessing whether my appointment was actually booked.",
+    "urgency": 3.0
+    },
+    {
+    "text": "The workflow between booking and payment wasn't very clear to me.",
+    "urgency": 3.0
+    },
+    {
+    "text": "Honestly the system just feels harder to use than it should be.",
+    "urgency": 2.0
+    },
+    {
+    "text": "I wish the app gave clearer feedback when something is completed.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The navigation could definitely be simpler.",
+    "urgency": 2.0
+    },
+    {
+    "text": "It took me a while to understand how the appointment table works.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The booking flow feels confusing and not very intuitive.",
+    "urgency": 3.0
+    },
+    {
+    "text": "I'm sure the system works fine but it's not very easy to understand at first glance.",
+    "urgency": 2.0
+    }
+    ]

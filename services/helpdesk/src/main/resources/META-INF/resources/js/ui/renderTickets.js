@@ -45,13 +45,26 @@ export async function renderTickets(view) {
 function createTicketListItem(ticket) {
     const item = createElement('div', 'list-item');
     item.dataset.ticketId = ticket.id;
+    const urgencyScore = Number(ticket.urgencyScore);
+    const hasUrgencyScore = Number.isFinite(urgencyScore);
+    const isCriticalUrgency = hasUrgencyScore && urgencyScore >= 8;
+    const isUrgent = hasUrgencyScore && urgencyScore >= 6 && urgencyScore < 8;
+    if (isCriticalUrgency) {
+        item.classList.add('list-item-critical-urgency');
+    }
 
     const header = createElement('div', 'list-item-header');
     const title = createElement('div', 'list-item-title', `#${ticket.id} - ${ticket.ticketType}`);
+    if (isCriticalUrgency) {
+        title.classList.add('text-critical-urgency');
+    }
     header.appendChild(title);
 
     const badges = createElement('div');
-    if (ticket.urgencyFlag) {
+    if (isCriticalUrgency) {
+        const criticalBadge = createElement('span', 'list-item-badge badge-urgency-critical', 'CRITICAL');
+        badges.appendChild(criticalBadge);
+    } else if (isUrgent) {
         const urgentBadge = createElement('span', 'list-item-badge badge-urgent', 'URGENT');
         badges.appendChild(urgentBadge);
     }

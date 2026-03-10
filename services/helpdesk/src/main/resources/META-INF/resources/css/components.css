@@ -84,6 +84,16 @@
     color: #d4d4d4;
 }
 
+.log-entry.log-entry-coding-highlight {
+    border-left-color: #ff9800;
+    background: rgba(255, 152, 0, 0.08);
+}
+
+.log-entry.log-entry-coding-highlight .log-entry-message {
+    color: #ffb74d;
+    font-weight: 700;
+}
+
 /* List Items */
 .list-item {
     padding: 1rem;
@@ -126,8 +136,27 @@
 }
 
 .badge-urgent {
-    background: #ffebee;
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffb74d;
+}
+
+.badge-urgency-critical {
+    background: #ffcdd2;
+    color: #b71c1c;
+    border: 1px solid #e57373;
+}
+
+.list-item-critical-urgency {
+    border-left: 3px solid #d32f2f;
+}
+
+.text-critical-urgency {
     color: #c62828;
+}
+
+.text-urgent {
+    color: #ef6c00;
 }
 
 .list-item-meta {
@@ -325,6 +354,27 @@
     border-left: 3px solid #2196f3;
     white-space: nowrap;
     flex-shrink: 0;
+}
+
+.related-docs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.related-doc-item {
+    white-space: normal;
+    max-width: 100%;
+    flex-shrink: 1;
+}
+
+.related-citation {
+    margin-top: 0.25rem;
+    color: #666;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .related-link {

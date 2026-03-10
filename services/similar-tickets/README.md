@@ -4,7 +4,7 @@
 
 - Java 25
 - Maven 3.8+
-- Docker (for Qdrant)
+- Docker (for Oracle 26ai)
 
 ## Setup
 
@@ -264,15 +264,15 @@ curl -X POST http://localhost:8082/api/similarity/tickets/delete \
 ## Data Persistence
 
 - **Embeddings are stored in the Oracle database** and persist across application restarts
-- **Ticket metadata** (ticketId, ticketType, and original text) is stored in Qdrant payload
+- **Ticket metadata** (ticketId, ticketType, and original text) is stored in Oracle embedding table metadata
 - The in-memory `TicketStore` is used for fast access but data is always loaded from the database on startup
 - Data is persisted in Docker volumes (see `docker-compose.yml`)
 
 ## Configuration
 
 Edit `src/main/resources/application.yaml` to configure:
-- Qdrant host and port (default: localhost:6334)
-- Collection name (default: ticket-embeddings)
+- Oracle datasource URL/credentials (default: `jdbc:oracle:thin:@localhost:1521/freepdb1`)
+- Oracle embedding table/index settings under `langchain4j.oracle.embedding-store`
 - OpenAI API key (required for embeddings)
 
 ## Technology Stack
@@ -289,7 +289,7 @@ The service uses **OpenAI's text-embedding-3-large** model to generate embedding
 - **Dimensions**: 3072
 - **Model**: text-embedding-3-large
 - **Provider**: OpenAI (requires API key)
-- **Distance Metric**: Cosine similarity (configured in Qdrant)
+- **Distance Metric**: Cosine similarity (configured via Oracle vector store index settings)
 
 The model embeds only the `text` field from ticket requests. No comments or metadata are included in the embeddings.
 
@@ -311,16 +311,16 @@ openai:
 
 - **API key behavior**: read framework config value first (including optional `config/config-prod.yaml` when profile `prod` is active); if empty or `demo`, fallback to `OPENAI_API_KEY`; if still missing/`demo`, startup fails fast.
 - **Embedding Generation**: Text is embedded on-the-fly using OpenAI's API when upserting or searching
-- **Vector Storage**: 3072-dimensional vectors stored in Qdrant with cosine similarity
-- **Metadata Storage**: Ticket ID, type, and original text are stored in Qdrant payload for retrieval
+- **Vector Storage**: 3072-dimensional vectors stored in Oracle AI 26ai with cosine similarity
+- **Metadata Storage**: Ticket ID, type, and original text are stored in Oracle embedding table metadata for retrieval
 - **Search**: Returns the most similar tickets across all ticket types, excluding only the specified ticket
 - **Idempotency**: All operations (upsert, delete) are idempotent - safe to retry
 
 ## Troubleshooting
 
-**Qdrant Connection Errors:**
+**Oracle Connection Errors:**
 - Ensure the database is running: `docker-compose ps`
-- Check Qdrant logs: `docker-compose logs oracle`
+- Check Oracle container logs: `docker-compose logs oracle`
 - Verify port 1521 is accessible: `telnet localhost 1521`
 
 **OpenAI API Errors:**

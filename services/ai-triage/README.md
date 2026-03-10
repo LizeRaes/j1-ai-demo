@@ -5,7 +5,7 @@ A Quarkus application that uses AI to automatically classify and triage customer
 ## Features
 
 - **AI-Powered Classification**: Uses OpenAI GPT-4o-mini to classify tickets into predefined categories
-- **Urgency Scoring**: Assigns urgency scores (1-10) based on request criticality
+- **Urgency Scoring**: Calls urgency service (custom ML model trained on domain data) and maps score to urgency 1-10
 - **Confidence Metrics**: Provides AI confidence scores (0-100) for classification decisions
 - **Similar Ticket Discovery**: Integrates with similarity service to find related historical tickets
 - **Policy Document Search**: Integrates with document service to find relevant company policy documents and citations
@@ -100,6 +100,9 @@ ai-triage.documents.max-results=5
 ai-triage.documents.min-score=0.3
 quarkus.rest-client.company-rag-documents.url=http://localhost:8084
 
+# Urgency Service Configuration (default)
+quarkus.rest-client.urgency.url=http://localhost:8086
+
 # helpdesk
 ai-triage.helpdesk.base-url=http://localhost:8080
 
@@ -108,6 +111,26 @@ ai-triage.ui.default-zoom-percent=100
 ai-triage.ui.polling.enabled=true
 ai-triage.ui.polling.interval-ms=2000
 ```
+
+## Optional MCP Variant (Helidon)
+
+Default mode calls urgency directly over HTTP (`services/urgency`, port `8086`).
+
+To switch to MCP, where the LLM calls urgency when it thinks it's necessary (but is about 3s slower depending on LLM used):
+
+1. In `src/main/resources/application.properties`:
+   - Comment out: `quarkus.rest-client.urgency.url=...`
+   - Uncomment:
+     - `quarkus.langchain4j.mcp.urgency.transport-type=http`
+     - `quarkus.langchain4j.mcp.urgency.url=http://localhost:9090/urgency`
+     - `quarkus.langchain4j.mcp.urgency.tool-execution-timeout=4s`
+2. In `src/main/java/com/example/appointment/service/AiTriageAssistant.java`:
+   - Uncomment `@McpToolBox("urgency")` and its import
+3. In `src/main/java/com/example/appointment/dto/AiTriageResult.java`:
+   - Uncomment `urgencyScore` field
+4. In `pom.xml`:
+   - Uncomment `quarkus-langchain4j-mcp` dependency
+5. Start `services/urgency-mcp` (port `9090`)
 
 ## API Endpoint
 
@@ -281,10 +304,11 @@ curl -X POST http://localhost:8084/api/documents/search \
 
 1. **Request Validation**: Validates that message, ticketId, and allowed ticket types are provided
 2. **AI Classification**: Calls OpenAI GPT-4o-mini with system prompt describing MedicalAppointment and classification rules
-3. **Result Validation**: Ensures AI response matches allowed types and value constraints
-4. **Similarity Search**: Queries similarity service to find related historical tickets (non-blocking), passing the ticketId
-5. **Document Search**: Queries document service to find relevant policy/company documents (non-blocking) based on the message text
-6. **Response Assembly**: Returns classification with urgency, confidence, related ticket IDs, and policy citations with RBAC team permissions
+3. **Urgency Scoring**: Calls urgency service using ML model to determine urgency score
+4. **Result Validation**: Ensures AI response matches allowed types and value constraints
+5. **Similarity Search**: Queries similarity service to find related historical tickets (non-blocking), passing the ticketId
+6. **Document Search**: Queries document service to find relevant policy/company documents (non-blocking) based on the message text
+7. **Response Assembly**: Returns classification with urgency, confidence, related ticket IDs, and policy citations with RBAC team permissions
 
 ## Error Handling
 

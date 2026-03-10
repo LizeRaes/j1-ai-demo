@@ -1,0 +1,5 @@
+target/
+*.bin
+training/export/
+logs/
+nbactions.xml

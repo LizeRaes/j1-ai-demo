@@ -68,18 +68,65 @@ public class DocumentChunkingService {
      * Chunks text using recursive splitting strategy (splits by paragraphs, then sentences, then words).
      */
     private List<TextSegment> chunkRecursive(String text, String documentName, int chunkSize) {
-        Document doc = Document.from(text);
-        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, 0);
-
-        List<TextSegment> segments = splitter.split(doc);
+        List<String> packedChunks = packParagraphsIntoChunks(text, chunkSize);
 
         List<TextSegment> segmentsWithMetadata = new ArrayList<>();
-        for (int i = 0; i < segments.size(); i++) {
-            TextSegment original = segments.get(i);
+        for (int i = 0; i < packedChunks.size(); i++) {
             Metadata metadata = Metadata.from(Map.of("documentName", documentName, "chunkIndex", i));
-            segmentsWithMetadata.add(TextSegment.from(original.text(), metadata));
+            segmentsWithMetadata.add(TextSegment.from(packedChunks.get(i), metadata));
         }
 
         return segmentsWithMetadata;
+    }
+
+    private List<String> packParagraphsIntoChunks(String text, int chunkSize) {
+        List<String> chunks = new ArrayList<>();
+        String[] paragraphs = text.split("\\R\\s*\\R+");
+        StringBuilder current = new StringBuilder();
+
+        for (String rawParagraph : paragraphs) {
+            String paragraph = rawParagraph.trim();
+            if (paragraph.isEmpty()) {
+                continue;
+            }
+
+            if (paragraph.length() > chunkSize) {
+                if (!current.isEmpty()) {
+                    chunks.add(current.toString());
+                    current.setLength(0);
+                }
+                chunks.addAll(splitOversizedBlock(paragraph, chunkSize));
+                continue;
+            }
+
+            if (current.isEmpty()) {
+                current.append(paragraph);
+                continue;
+            }
+
+            String candidate = current + "\n\n" + paragraph;
+            if (candidate.length() <= chunkSize) {
+                current.append("\n\n").append(paragraph);
+            } else {
+                chunks.add(current.toString());
+                current.setLength(0);
+                current.append(paragraph);
+            }
+        }
+
+        if (!current.isEmpty()) {
+            chunks.add(current.toString());
+        }
+        return chunks;
+    }
+
+    private List<String> splitOversizedBlock(String text, int chunkSize) {
+        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, 0);
+        List<TextSegment> segments = splitter.split(Document.from(text));
+        List<String> out = new ArrayList<>(segments.size());
+        for (TextSegment segment : segments) {
+            out.add(segment.text());
+        }
+        return out;
     }
 }

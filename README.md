@@ -15,15 +15,18 @@ MedicalAppointment is a demonstration platform consisting of multiple microservi
 
 1. Patient submits a help request via the **user-facing web app** (:8083)
 2. Request arrives at the **helpdesk** (:8080) as an incoming request
-3. Helpdesk asynchronously calls the **AI triage** service (:8081) to classify the ticket
-4. AI triage enriches the classification in parallel:
-   - **Similar-tickets** service (:8082) — vector search over historical tickets
-   - **Company-documents RAG** service (:8084) — policy/knowledge-base citations with RBAC
-5. Classified ticket (type, urgency, confidence, related tickets, policy docs) returns to the helpdesk
-6. Helpdesk assigns the ticket to the appropriate team based on ticket type
+3. Helpdesk asynchronously calls the **AI triage** service (:8081) to classify and route the ticket with an AI confidence score.
+4. If AI confidence is below **0.4**, the request is returned to the human review/dispatch queue.
+5. AI triage enriches the result in parallel:
+   - **Urgency service** (:8086) - urgency score from a domain-trained ML model
+   - **Similar-tickets** service (:8082) - vector search over historical tickets
+   - **Company-documents RAG** service (:8084) - policy/knowledge-base citations with RBAC
+6. AI triage returns classification (ticket type), urgency, confidence, and enrichments to helpdesk, which dispatches to the mapped team.
+   - tickets with urgency score >= 0.8 are considered critical and are escalated to an on-call employee
 
 > For detailed diagrams (Mermaid + PlantUML) see [docs/SYSTEM_DIAGRAM.md](docs/SYSTEM_DIAGRAM.md).  
 > For full architecture notes and quick-start order see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> For a canonical local runtime port map (services, DBs, MCP variants), see [PORTS.md](PORTS.md).
 
 ## Services
 
@@ -33,7 +36,7 @@ MedicalAppointment is a demonstration platform consisting of multiple microservi
 | [helpdesk](services/helpdesk/)                                                      | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle                     |
 | [ai-triage](services/ai-triage/)                                                    | 8081 | LLM-powered classification, urgency scoring, enrichment                          |
 | [similar-tickets](services/similar-tickets/)                                        | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings) |
-| [company-rag](services/company-rag/)                                                | 8084 | Company-document RAG with RBAC-controlled citations (Qdrant + OpenAI embeddings) |
+| [company-rag](services/company-rag/)                                                | 8084 | Company-document RAG with RBAC-controlled citations (Oracle AI + OpenAI embeddings) |
 | [coding-assistant](services/coding-assistant/)                                      | 8085 | Async bug-fix assistant that prepares PRs and callbacks to helpdesk              |
 
 Each service is independently deployable with its own `pom.xml`, `README.md`, and `CONTRACTS.md`.

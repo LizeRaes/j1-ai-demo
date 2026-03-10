@@ -1,0 +1,614 @@
+[
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. I just tried to book an appointment for tomorrow with Dr. Alice. The booking form looked normal so I selected the doctor, picked tomorrow at 09:00 and confirmed. The page reloaded but the appointment never appeared in my appointments list. I tried again two more times and now I have no idea whether multiple appointments were created or none at all. This seems like the booking system is not recording appointments correctly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: something is seriously wrong with payments right now. I completed payment and the success page appeared, but when I clicked 'View My Appointments' there is no appointment there. My bank shows the charge already. This means the system is taking payments but not creating bookings.",
+        "urgency": 9.5
+    },
+    {
+        "text": "Multiple family members are having the same issue. I attempted to book an appointment four times in a row and each time the confirm button simply reloads the booking page. There is no error message and no appointment appears in my account. It looks like booking is completely broken.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is extremely concerning. When I logged into my account today I briefly saw another person's appointment in my list, including the doctor's name and the time. After refreshing the page it disappeared. That should absolutely not be possible. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The booking page seems completely unusable right now. Every time I try to confirm a new appointment it just reloads the page without creating anything.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Neither I nor my spouse can load the booking page. I tried booking on two different browsers and both show the same problem where the booking confirmation never happens. This looks like the entire booking system might be down.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. Every time I click confirm appointment the page refreshes but nothing happens. This has happened five times already.",
+        "urgency": 9.0
+    },
+    {
+        "text": "When logging in I briefly saw another user's appointment details before the page refreshed. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. This website appears to be down. The booking page loads but submitting the form fails every time.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. The booking system seems broken. I cannot create appointments at all.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple attempts to confirm a booking fail silently with no confirmation. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. The appointment confirmation process is failing every time I try it.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I saw another patient's appointment information in my account for a moment before refreshing. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. I attempted to book an appointment several times and nothing is being recorded.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to report that the booking confirmation button does not work anymore.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. The booking system currently seems completely broken.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. The booking system fails every time I try to create an appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. The booking confirmation seems broken.",
+        "urgency": 6.0
+    },
+    {
+        "text": "There's an urgent issue: the payment system is charging cards without creating bookings.",
+        "urgency": 9.5
+    },
+    {
+        "text": "Multiple family members are having the same issue. The confirm booking button does nothing.",
+        "urgency": 6.5
+    },
+    {
+        "text": "I need to report that i tried to create an appointment five times and none worked.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list shows someone else's booking. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to report that the booking system seems completely unusable.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. booking appointments is currently impossible.",
+        "urgency": 7.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. The booking confirmation fails every time.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. I tried to book an appointment about 20 minutes ago and something is definitely wrong with the booking system. I selected Dr. Alice, chose tomorrow at 09:00, and clicked confirm like usual. The page refreshed but no confirmation appeared and nothing showed up in my appointments list. I assumed I might have done something wrong, so I tried again three more times with the same result. At this point it looks like the system is simply not recording bookings at all.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. right now it seems impossible to create a new appointment. I fill out the booking form completely, choose the doctor and time slot, and click confirm. The page reloads but the appointment never appears anywhere in my account. I repeated this process multiple times and even tried using a different browser, but the result is always the same.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. there appears to be a serious issue with the booking flow. I tried to schedule an appointment several times and each time the confirmation step fails silently. The page refreshes but there is no confirmation message and no appointment listed afterwards.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I just noticed something very concerning while checking my appointments. For a brief moment I could see an appointment with a doctor and time that I definitely did not create. After refreshing the page it disappeared again, but this looked like another patients booking appearing in my account. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. I tried to book an appointment multiple times this morning and every attempt fails in the same way. After pressing confirm the page reloads but the system never creates the appointment. I\u2019ve now tried at least five times.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. The booking process seems completely broken right now. I can fill out the form and click confirm, but nothing actually happens afterwards. There is no confirmation message and the appointment does not appear in the list.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: the appointments page is showing information that clearly doesn\u2019t belong to me. I briefly saw an appointment with a doctor I never selected before the page refreshed again.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. Every attempt to create a new booking today fails. I select a doctor and time slot and confirm the appointment, but the system simply reloads the page without saving anything.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The booking confirmation step appears to be malfunctioning. I submit the booking form and the page reloads, but no appointment is created and there is no confirmation.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Please look into this: i tried scheduling an appointment repeatedly but every attempt silently fails. The form submission appears to go through, but the appointment never shows up afterwards.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: the booking interface loads correctly but submitting the form doesn\u2019t result in a booking. I\u2019ve tried multiple times and the system never creates the appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. something is clearly broken in the booking pipeline. The form submission step does not result in an appointment being created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. The booking system currently seems unusable. I cannot create any appointments even though the form itself loads normally.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to report that the appointment list briefly showed entries that didn\u2019t belong to me. After refreshing the page they disappeared again.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. booking attempts appear to go through but nothing gets recorded. The system behaves as if the submission succeeded, but there is no appointment afterwards.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. when trying to create an appointment the confirm step simply reloads the page. I\u2019ve tried several times and no booking ever appears in the system.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. The booking confirmation process appears to be broken entirely. Every attempt fails silently.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: the system seems to accept booking submissions but does not actually create the appointments.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. several booking attempts today have failed without any explanation. The page refreshes but nothing gets saved.",
+        "urgency": 9.0
+    },
+    {
+        "text": "My appointment list briefly displayed a booking belonging to another patient before the page refreshed. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to report that the booking workflow appears to be malfunctioning because the confirmation step never results in a saved appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: the system seems unable to record new bookings right now even though the booking form itself works.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. Every attempt to confirm a booking fails silently with no confirmation or saved appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I'm writing because the appointment list briefly showed bookings that were clearly not mine before refreshing.",
+        "urgency": 10.0
+    },
+    {
+        "text": "There's an urgent issue: the booking confirmation does not create an appointment even though the form submission appears successful.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. The booking system is clearly malfunctioning because new appointments cannot be created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list briefly showed another patient's booking information. I've reported it to my family in case it affects our accounts.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm writing because submitting the booking form never results in a saved appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Please look into this: the appointment list contains entries that do not belong to me.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm writing because the booking system currently does not save new appointments.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple attempts to confirm a booking all failed in the same way. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment page briefly displayed someone else\u2019s booking. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The booking process fails every time I attempt to confirm an appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to report that booking confirmations do not result in an appointment being created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Another patient\u2019s appointment appeared briefly in my account view. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. since about an hour ago I cannot book any appointments anymore. I select a doctor and time slot, click confirm, and the page just reloads without creating anything. I tried this at least six times and even switched browsers. Nothing ever appears in my appointments list. It looks like booking is completely broken.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Something seems very wrong with the payment flow right now. I tried paying for an appointment twice and both times the payment screen said there was an error. My colleague tried at the same time and had the exact same issue. It looks like payments might not be working. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "After logging in I briefly saw an appointment that definitely does not belong to me. It showed a different doctor's name and time slot. When I refreshed the page it disappeared. This looks like another patient's data showing in my account. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The booking system appears unusable at the moment. Every time I confirm a booking the page just reloads and no appointment is created. I have tried multiple times over the past 20 minutes.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Right now I cannot reach the booking page at all. It loads for a long time and then just shows a blank screen. I tried from two browsers and another device with the same result. This seems like a serious security issue that needs to be looked at right away.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. The booking form lets me choose a doctor and time but when I click confirm the request fails silently. I tried five times and none of the bookings were created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. Every time I try to create an appointment today the booking fails. The page reloads but nothing ever shows up in my appointments list.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments page shows data that clearly belongs to another patient. I can see a doctor's name and time slot that I never booked. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. booking an appointment appears to be impossible right now. The confirm button reloads the page but nothing happens.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. The booking workflow seems broken. I fill out the form correctly but after clicking confirm the system does not create an appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I'm writing because the appointments list suddenly shows bookings that I never created. After refreshing they disappear again.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. The site appears to be down. I cannot access the appointments page and the booking page fails to load.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. booking appointments fails every time today. I tried repeatedly and nothing gets recorded.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. The booking system seems completely unusable. Every booking attempt results in the page reloading without confirmation.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. The booking confirmation step appears broken. The page reloads but the appointment never appears in the list.",
+        "urgency": 6.5
+    },
+    {
+        "text": "This has been going on since this morning. The booking page loads but submitting the form does nothing. No confirmation and no appointment created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. Every attempt to confirm a booking today fails without any error message.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. I cannot create any appointments today. The confirm button reloads the page but nothing gets recorded.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: the booking system is not saving any appointments right now even though the form submission seems to succeed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. I tried booking several times and each attempt silently failed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: the system appears to accept booking requests but does not create any appointments.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. booking confirmation appears broken across multiple attempts.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The booking process fails every time I try to confirm an appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Please look into this: i attempted to book an appointment several times today and none were recorded.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to report that the booking system is not functioning. No appointments can be created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to report that the booking confirmation does not appear and the appointment is never created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list shows unexpected entries belonging to other patients. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Please look into this: the system appears unable to record any bookings at the moment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. booking an appointment fails every time I attempt it.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to report that booking confirmations do not result in an appointment being created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list briefly shows other patients' bookings before refreshing. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. I think something is seriously wrong with the booking system right now. I tried to schedule an appointment about 10 minutes ago with Dr. Bob for tomorrow afternoon. The booking page loads normally and lets me select the doctor, date and time slot without any problem. But when I press the confirm button the page just refreshes and nothing happens. There is no confirmation message and nothing appears in the appointments list. I repeated this process several times because I thought maybe I had clicked something wrong the first time, but every attempt behaves exactly the same way.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. The booking workflow appears broken for me right now. I go through the normal process of selecting a doctor, picking a date and time, and clicking confirm. Instead of showing a confirmation message the page simply reloads and returns to the same form. I tried this at least four times with different time slots and the result is always the same.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While checking my appointments page I briefly saw an entry that definitely does not belong to me. It showed a doctor and appointment time that I never booked. After refreshing the page the entry disappeared again, but it was visible long enough that I could clearly read the details. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. I attempted to schedule an appointment multiple times tonight and every attempt fails in the same way. The booking form loads correctly and accepts all selections, but after confirming the page simply reloads with no confirmation and no appointment created.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. The booking confirmation step appears completely broken. I select the doctor and time slot and confirm the appointment, but the page reloads without saving anything.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This is urgent: i noticed something very worrying while checking the appointments page. For a brief moment I could see an appointment that clearly wasn't mine. After refreshing the page it disappeared.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. The booking system seems unable to record new appointments right now. I have attempted to create the same appointment several times but nothing appears in my account afterwards.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I need to book something for tomorrow. Every time I try to confirm a booking the system reloads the page without any confirmation message. I have repeated the process several times.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments list briefly displayed another person's booking information before refreshing automatically. This seems like a serious security issue that needs to be looked at right away.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. The booking page itself loads fine, but confirming an appointment does nothing. The system never creates the appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Multiple booking attempts today failed silently with no confirmation and no saved appointment. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments page briefly showed another patient's booking details before refreshing. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm writing because the booking process appears to accept submissions but does not create any appointments.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list briefly displayed entries belonging to another patient before refreshing. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "While reviewing my appointments this morning I briefly saw an appointment entry that I absolutely did not create. It showed a doctor name and time slot that does not match anything I booked. After refreshing the page the entry disappeared again. This makes me worried that I may be seeing someone else's appointment information. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "When opening my appointments page today I briefly saw an appointment belonging to another patient. It included a doctor's name and appointment time that I definitely did not book. After refreshing the page it disappeared, but the fact that it appeared at all is very concerning. This seems like a serious security issue that needs to be looked at right away.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. I tried paying for an appointment several times but the payment screen keeps failing. Each time I click confirm it either shows an error or reloads the page. I am not sure whether the payment went through or not because there is no clear confirmation and the appointment still shows as pending.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While checking my account earlier today I saw appointment details that clearly belong to another patient. The entry was visible for a few seconds before disappearing after I refreshed the page. I could see the doctor name and time slot which were not mine. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Something very concerning happened on the appointments page. For a brief moment I saw what appeared to be another person's appointment including the doctor's name and time. After refreshing the page it disappeared again. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I noticed an appointment entry in my account that I did not create. It showed a doctor and appointment time that do not match anything I scheduled. After refreshing the page the entry disappeared. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've been trying to schedule an appointment for the past 30 minutes. when trying to pay for my appointment the payment page repeatedly failed after clicking confirm. The page reloads or shows an error but the appointment never becomes confirmed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I briefly saw appointment information for another patient in my account dashboard. The details disappeared after refreshing the page but it clearly showed a booking that was not mine. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "There's an urgent issue: while viewing my appointment list today I noticed an entry that did not belong to me. It included a doctor and appointment time that I had never scheduled. Refreshing the page removed it.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. The payment page appears to be malfunctioning. I clicked confirm payment and the page froze before eventually showing an error. My appointment remains unpaid and I cannot complete the payment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I briefly saw someone else's appointment details when loading my appointments page. It included information about a doctor and time that I never booked. The entry disappeared after refreshing. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. I attempted to complete payment for an appointment but the process keeps failing. The page shows an error each time and the appointment never becomes confirmed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "When opening the appointments page I saw a booking that clearly belongs to another patient. It included the doctor name and appointment time. After refreshing the page it disappeared. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The payment confirmation step seems broken. After clicking confirm the page reloads but the appointment remains unpaid and no confirmation appears.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While checking my appointments I noticed another patient's booking appear briefly in the list. The entry disappeared after refreshing the page. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The appointments page briefly displayed another person's appointment information including a doctor's name and time slot before refreshing. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I noticed an appointment in my account that clearly does not belong to me. After refreshing the page the entry disappeared again. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm stuck at the payment step. each time I try to complete payment for my appointment the system fails and shows an error message.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments list briefly showed another patient's booking details before refreshing automatically. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "This is urgent: the payment confirmation page appears but the appointment never becomes confirmed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While viewing my appointments I briefly saw booking information belonging to someone else. This seems like a serious security issue that needs to be looked at right away.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment process keeps failing and the appointment remains unpaid. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments page briefly showed details of another patient's appointment. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment page returns an error whenever I attempt to confirm payment. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Another patient's booking information appeared in my account view for a moment. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "This has been going on since this morning. payment confirmation fails each time I attempt to complete the booking.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list briefly displayed another patient's appointment details. I've reported it to my family in case it affects our accounts.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I need to book something for tomorrow. The payment process fails and prevents me from completing the appointment booking.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Someone else's appointment appeared in my account dashboard for a few seconds. Could someone from the technical team please investigate?",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm stuck at the payment step. I cannot complete payment for my appointment because the payment process keeps failing.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments page briefly showed another patient's booking entry. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. payment confirmation repeatedly fails when trying to complete my appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Another patient's appointment information appeared briefly in my account. I've reported it to my family in case it affects our accounts.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Multiple family members are having the same issue. hi, I was trying to book an appointment through the booking page. I selected Dr. Alice, picked 'tomorrow' and the 10:00 slot, and clicked confirm. The page refreshed but nothing happened and I don't see any appointment in my list. I tried the same thing two more times and now I'm not sure if maybe multiple appointments were created or none at all. Could you please check what actually went through?",
+        "urgency": 9.0
+    },
+    {
+        "text": "Something strange happened today. I logged into my account and suddenly there was an appointment listed with Dr. Eve that I definitely did not book. I checked with my family and nobody else used my account. This is worrying because it means someone else might have access. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Please look into this: ok this is getting ridiculous. I tried booking an appointment 4 times now. Every time I pick a doctor and time and press confirm it throws me back to the home page. No error message or anything. Just back to the start.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Something is very wrong with payments right now. I tried paying for an appointment and got an error saying payment failed. I tried again and it succeeded. Now my bank shows TWO charges but the appointment still says unpaid. I'm hoping this can be resolved quickly.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I just noticed something really concerning. When I logged into my account I could briefly see another person's appointment details including their doctor and date. After refreshing it disappeared. This seems like a serious security issue that needs to be looked at right away.",
+        "urgency": 10
+    },
+    {
+        "text": "I can't get through to the booking system at all. is the system down right now? The booking page keeps loading forever and eventually gives me a blank page. I tried from two different browsers.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I just logged into my account and saw an appointment that I definitely did not create. Can you please check this because I'm concerned someone else accessed my account. This seems like a serious security issue that needs to be looked at right away.",
+        "urgency": 10.0
+    },
+    {
+        "text": "There's an urgent issue: when trying to pay for my appointment the payment screen loads but the confirm button doesn't respond. I clicked it multiple times.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I saw another user's appointment briefly appear in my account view before refreshing. I didn't take a screenshot but it was clearly visible for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I've tried on both my phone and computer. booking an appointment seems impossible right now. The confirm button does nothing.",
+        "urgency": 9.0
+    },
+    {
+        "text": "This has been going on since this morning. I cannot access the booking page at all. It just loads forever.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I think someone else logged into my account. I see appointments I didn't book. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm writing because i accidentally gave my login details to someone claiming to be support. What should I do?",
+        "urgency": 10.0
+    },
+    {
+        "text": "Why do I see another person's appointment under my account?. I'm very concerned about data privacy.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I'm writing because someone changed my appointment without my permission.",
+        "urgency": 10.0
+    }
+]

@@ -1,0 +1,162 @@
+[
+    {
+        "text": "I just finished going through the booking flow and something went very wrong when trying to pay. I selected my appointment normally, went to the payment page, and entered my card details. After clicking confirm the page seemed to process for a moment and then showed an error. I assumed the payment didn\u2019t go through, but when I checked my bank app a few minutes later the charge was actually there. When I returned to the appointments page the appointment still showed as unpaid and was not confirmed.",
+        "urgency": 6.5
+    },
+    {
+        "text": "While reviewing my appointments this morning I briefly saw an appointment entry that I absolutely did not create. It showed a doctor name and time slot that does not match anything I booked. After refreshing the page the entry disappeared again. This makes me worried that I may be seeing someone else's appointment information.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I attempted to pay for my appointment earlier today but the payment process failed in a strange way. The payment page said something went wrong and suggested trying again. However when I checked my credit card statement the payment had already been processed. The system still shows the appointment as unpaid even though the charge clearly went through.",
+        "urgency": 6.5
+    },
+    {
+        "text": "When opening my appointments page today I briefly saw an appointment belonging to another patient. It included a doctor's name and appointment time that I definitely did not book. After refreshing the page it disappeared, but the fact that it appeared at all is very concerning.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I tried paying for an appointment several times but the payment screen keeps failing. Each time I click confirm it either shows an error or reloads the page. I am not sure whether the payment went through or not because there is no clear confirmation and the appointment still shows as pending.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While checking my account earlier today I saw appointment details that clearly belong to another patient. The entry was visible for a few seconds before disappearing after I refreshed the page. I could see the doctor name and time slot which were not mine.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I attempted to pay for an appointment but the system behaved oddly. The payment page froze for a moment and then showed an error message. When I refreshed the page the appointment still appeared unpaid but my bank shows the charge as completed.",
+        "urgency": 6.5
+    },
+    {
+        "text": "Something very concerning happened on the appointments page. For a brief moment I saw what appeared to be another person's appointment including the doctor's name and time. After refreshing the page it disappeared again.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment system seems broken. I tried completing payment for my appointment but the process failed and returned an error message. When I checked my bank account the payment had actually gone through.",
+        "urgency": 6.5
+    },
+    {
+        "text": "I noticed an appointment entry in my account that I did not create. It showed a doctor and appointment time that do not match anything I scheduled. After refreshing the page the entry disappeared.",
+        "urgency": 10.0
+    },
+    {
+        "text": "When trying to pay for my appointment the payment page repeatedly failed after clicking confirm. The page reloads or shows an error but the appointment never becomes confirmed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I briefly saw appointment information for another patient in my account dashboard. The details disappeared after refreshing the page but it clearly showed a booking that was not mine.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I tried to pay for my appointment and the system processed for several seconds before returning an error message. The appointment still shows as unpaid but I cannot tell whether the payment actually went through.",
+        "urgency": 6.5
+    },
+    {
+        "text": "While viewing my appointment list today I noticed an entry that did not belong to me. It included a doctor and appointment time that I had never scheduled. Refreshing the page removed it.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment page appears to be malfunctioning. I clicked confirm payment and the page froze before eventually showing an error. My appointment remains unpaid and I cannot complete the payment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "I briefly saw someone else's appointment details when loading my appointments page. It included information about a doctor and time that I never booked. The entry disappeared after refreshing.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I attempted to complete payment for an appointment but the process keeps failing. The page shows an error each time and the appointment never becomes confirmed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "When opening the appointments page I saw a booking that clearly belongs to another patient. It included the doctor name and appointment time. After refreshing the page it disappeared.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment confirmation step seems broken. After clicking confirm the page reloads but the appointment remains unpaid and no confirmation appears.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While checking my appointments I noticed another patient's booking appear briefly in the list. The entry disappeared after refreshing the page.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I tried paying for my appointment and the system showed an error after submitting the payment. The appointment still appears unpaid and I cannot complete the booking.",
+        "urgency": 6.0
+    },
+    {
+        "text": "The appointments page briefly displayed another person's appointment information including a doctor's name and time slot before refreshing.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment process failed after I clicked confirm. The page returned an error and my appointment remains unconfirmed.",
+        "urgency": 6.0
+    },
+    {
+        "text": "I noticed an appointment in my account that clearly does not belong to me. After refreshing the page the entry disappeared again.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Each time I try to complete payment for my appointment the system fails and shows an error message.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments list briefly showed another patient's booking details before refreshing automatically.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment confirmation page appears but the appointment never becomes confirmed.",
+        "urgency": 9.0
+    },
+    {
+        "text": "While viewing my appointments I briefly saw booking information belonging to someone else.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment process keeps failing and the appointment remains unpaid.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments page briefly showed details of another patient's appointment.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment page returns an error whenever I attempt to confirm payment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Another patient's booking information appeared in my account view for a moment.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Payment confirmation fails each time I attempt to complete the booking.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointment list briefly displayed another patient's appointment details.",
+        "urgency": 10.0
+    },
+    {
+        "text": "The payment process fails and prevents me from completing the appointment booking.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Someone else's appointment appeared in my account dashboard for a few seconds.",
+        "urgency": 10.0
+    },
+    {
+        "text": "I cannot complete payment for my appointment because the payment process keeps failing.",
+        "urgency": 9.0
+    },
+    {
+        "text": "The appointments page briefly showed another patient's booking entry.",
+        "urgency": 10.0
+    },
+    {
+        "text": "Payment confirmation repeatedly fails when trying to complete my appointment.",
+        "urgency": 9.0
+    },
+    {
+        "text": "Another patient's appointment information appeared briefly in my account.",
+        "urgency": 10.0
+    }
+]

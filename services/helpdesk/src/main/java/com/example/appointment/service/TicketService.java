@@ -495,6 +495,15 @@ public class TicketService {
         );
 
         try {
+            eventService.logEvent(
+                    EventType.SYSTEM_STEP,
+                    EventSeverity.INFO,
+                    "ticketing-api",
+                    "NEW JOB CAME IN: " + ticket.getOriginalRequest(),
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
             CodingAssistantSubmitJobResponseDto response = codingAssistantClient.submitJob(request);
             String status = response != null && response.status() != null ? response.status() : "UNKNOWN";
             String message = response != null && response.message() != null ? response.message() : "";

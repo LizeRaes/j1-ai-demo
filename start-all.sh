@@ -178,6 +178,9 @@ echo "  demo flags: helpdesk=$HELPDESK_DEMO_DATA company-rag=$COMPANY_RAG_DEMO_D
 
 build_service "medicapt-user-facing" "services/medicapt-user-facing"
 build_service "helpdesk" "services/helpdesk"
+build_service "urgency" "services/urgency"
+# Optional MCP demo variant:
+# build_service "urgency-mcp" "services/urgency-mcp"
 build_service "ai-triage" "services/ai-triage"
 build_service "company-rag" "services/company-rag"
 build_service "similar-tickets" "services/similar-tickets"
@@ -187,6 +190,9 @@ echo "=== Starting services (deterministic order) ==="
 
 start_service "medicapt-user-facing" "services/medicapt-user-facing" "http://localhost:8083" java -jar target/quarkus-app/quarkus-run.jar
 start_service "helpdesk" "services/helpdesk" "http://localhost:8080" java -jar $HELPDESK_DEMO_FLAG target/quarkus-app/quarkus-run.jar
+start_service "urgency" "services/urgency" "http://localhost:8086" java -jar target/quarkus-app/quarkus-run.jar
+# Optional MCP demo variant:
+# start_service "urgency-mcp" "services/urgency-mcp" "http://localhost:9090/urgency" java -jar target/urgency-mcp.jar
 start_service "ai-triage" "services/ai-triage" "http://localhost:8081" java -jar target/quarkus-app/quarkus-run.jar
 start_service "company-rag" "services/company-rag" "http://localhost:8084" java -jar $COMPANY_RAG_DEMO_FLAG target/quarkus-app/quarkus-run.jar
 start_service "similar-tickets" "services/similar-tickets" "http://localhost:8082" java -Dconfig.profile=prod $SIMILAR_TICKETS_DEMO_FLAG -jar target/similarity.jar
@@ -198,6 +204,7 @@ echo ""
 echo "  medicapt-user-facing             http://localhost:8083"
 echo "  helpdesk                         http://localhost:8080"
 echo "  ai-triage                        http://localhost:8081"
+echo "  urgency                          http://localhost:8086"
 echo "  similar-tickets                  http://localhost:8082"
 echo "  company-rag                      http://localhost:8084"
 echo "  coding-assistant                 http://localhost:8085"

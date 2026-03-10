@@ -1,0 +1,202 @@
+[
+    {
+    "text": "I tried canceling my appointment from the appointments page earlier tonight. The first time I clicked cancel nothing seemed to happen, the page just refreshed and the appointment was still there. I tried again and it finally disappeared. I'm not sure whether the first request actually failed or just didn't update properly.",
+    "urgency": 6.5
+    },
+    {
+    "text": "I attempted to reschedule an appointment and the form appeared correctly. I selected a new date and time and clicked save, but the appointment didn't change until I refreshed the page manually.",
+    "urgency": 6.3
+    },
+    {
+    "text": "When booking an appointment the page sometimes returns me to the home screen after clicking confirm. The appointment eventually shows up in my list but it’s not clear whether the booking succeeded or not.",
+    "urgency": 6.7
+    },
+    {
+    "text": "I tried submitting a help request explaining a bug with the booking page. After pressing send the page reloaded but there was no confirmation message, so I submitted the same request again just in case.",
+    "urgency": 6.2
+    },
+    {
+    "text": "The appointments page occasionally shows outdated status information. My appointment still appeared as pending even though the booking had already been confirmed.",
+    "urgency": 6.4
+    },
+    {
+    "text": "I attempted to cancel an appointment but the cancel button didn't respond the first time. After clicking again it worked, but the delay made it unclear whether the request was being processed.",
+    "urgency": 6.6
+    },
+    {
+    "text": "When using the reschedule feature the dropdown selections sometimes reset after choosing a time slot.",
+    "urgency": 6.1
+    },
+    {
+    "text": "The booking form occasionally clears previously selected fields when I switch doctors.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The help page sometimes reloads without showing any confirmation after submitting a message.",
+    "urgency": 6.4
+    },
+    {
+    "text": "When I open the appointments page the table loads empty for a few seconds before showing the correct information.",
+    "urgency": 6.2
+    },
+    {
+    "text": "I tried to reschedule my appointment and it required two attempts before the change was reflected in the system.",
+    "urgency": 6.7
+    },
+    {
+    "text": "The booking confirmation takes a long time to appear after clicking confirm. I wasn't sure if the system was processing or stuck.",
+    "urgency": 6.5
+    },
+    {
+    "text": "The cancel button worked but it took several seconds for the appointment list to update.",
+    "urgency": 6.3
+    },
+    {
+    "text": "When submitting the help form the page sometimes shows an error but the request still appears to go through.",
+    "urgency": 6.6
+    },
+    {
+    "text": "The booking page occasionally scrolls back to the top after selecting a time slot.",
+    "urgency": 6.1
+    },
+    {
+    "text": "I had to refresh the appointments page to see the correct status after booking.",
+    "urgency": 2.0
+    },
+    {
+    "text": "The reschedule form closed unexpectedly while selecting a new time.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The appointments page occasionally displays duplicate entries until I reload the page.",
+    "urgency": 6.6
+    },
+    {
+    "text": "The booking process worked but returned an error message before showing the appointment in my list.",
+    "urgency": 6.7
+    },
+    {
+    "text": "When trying to cancel an appointment the page froze briefly before updating.",
+    "urgency": 6.5
+    },
+    {
+    "text": "The help form submission sometimes appears to fail but works after trying again.",
+    "urgency": 6.3
+    },
+    {
+    "text": "The booking page resets the selected date if I change the doctor field.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The reschedule button occasionally requires multiple clicks before the form opens.",
+    "urgency": 6.2
+    },
+    {
+    "text": "The appointments table flickers briefly while loading data.",
+    "urgency": 6.1
+    },
+    {
+    "text": "I attempted to cancel an appointment and the system didn't update until I refreshed the page.",
+    "urgency": 6.4
+    },
+    {
+    "text": "The booking page sometimes behaves inconsistently when selecting time slots.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The reschedule feature seems unreliable and required several attempts before saving.",
+    "urgency": 6.7
+    },
+    {
+    "text": "The help request page occasionally reloads unexpectedly after submission.",
+    "urgency": 6.2
+    },
+    {
+    "text": "The payment page displayed an error but worked after refreshing.",
+    "urgency": 6.6
+    },
+    {
+    "text": "The appointments page sometimes shows incorrect ordering until refreshed.",
+    "urgency": 6.1
+    },
+    {
+    "text": "Canceling an appointment took longer than expected before updating the list.",
+    "urgency": 6.3
+    },
+    {
+    "text": "The booking page occasionally refreshes unexpectedly while filling out the form.",
+    "urgency": 6.4
+    },
+    {
+    "text": "The reschedule form sometimes ignores the selected date until the page is refreshed.",
+    "urgency": 6.5
+    },
+    {
+    "text": "The help form required two submissions before the request seemed to go through.",
+    "urgency": 6.6
+    },
+    {
+    "text": "The booking confirmation sometimes takes a long time to appear.",
+    "urgency": 6.2
+    },
+    {
+    "text": "The cancel button appears to work but the page update is delayed.",
+    "urgency": 6.3
+    },
+    {
+    "text": "The reschedule process required refreshing the page to see the updated appointment.",
+    "urgency": 6.5
+    },
+    {
+    "text": "The appointments page occasionally loads incomplete information.",
+    "urgency": 6.1
+    },
+    {
+    "text": "The booking form resets fields when navigating between selections.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The payment page showed a temporary error before allowing the transaction.",
+    "urgency": 6.7
+    },
+    {
+    "text": "The help page sometimes reloads without displaying the success message.",
+    "urgency": 6.4
+    },
+    {
+    "text": "The reschedule form occasionally closes unexpectedly.",
+    "urgency": 6.2
+    },
+    {
+    "text": "The booking page jumps to the top when selecting a time slot.",
+    "urgency": 6.1
+    },
+    {
+    "text": "The appointments page needed multiple reloads to display the correct data.",
+    "urgency": 6.6
+    },
+    {
+    "text": "Canceling an appointment required multiple clicks before working.",
+    "urgency": 6.7
+    },
+    {
+    "text": "The booking form sometimes resets selections unexpectedly.",
+    "urgency": 6.0
+    },
+    {
+    "text": "The help request page occasionally shows inconsistent behavior when submitting messages.",
+    "urgency": 6.5
+    },
+    {
+    "text": "The appointments table briefly displays incorrect data until refreshed.",
+    "urgency": 6.4
+    },
+    {
+    "text": "The booking confirmation sometimes appears after a noticeable delay.",
+    "urgency": 6.3
+    },
+    {
+    "text": "The reschedule feature seems slightly unstable and occasionally requires retries.",
+    "urgency": 6.7
+    }
+    ]

@@ -1,15 +1,18 @@
 package com.example.appointment.resource;
 
 import com.example.appointment.dto.*;
-import com.example.appointment.service.AiService;
+import com.example.appointment.service.AiTriageAssistant;
 import com.example.appointment.service.DocumentService;
 import com.example.appointment.service.EventLogService;
 import com.example.appointment.service.SimilarityService;
+import com.example.appointment.service.UrgencyService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.jboss.logging.Logger;
 
+import java.time.temporal.ChronoUnit;
 import java.time.Instant;
 import java.util.List;
 
@@ -17,9 +20,10 @@ import java.util.List;
 public class TriageResource {
 
     private static final Logger LOG = Logger.getLogger(TriageResource.class);
+    private static final int HUMAN_REVIEW_CONFIDENCE_THRESHOLD_PERCENT = 40;
 
     @Inject
-    AiService aiService;
+    AiTriageAssistant aiTriageAssistant;
 
     @Inject
     SimilarityService similarityService;
@@ -30,29 +34,50 @@ public class TriageResource {
     @Inject
     EventLogService eventLogService;
 
+    @Inject
+    UrgencyService urgencyService;
+
     @POST
     @Path("/classify")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Timeout(value = 10, unit = ChronoUnit.SECONDS)
     public TriageResponse classify(TriageRequest request) {
         Long ticketId = request.ticketId();
 
         try {
             eventLogService.addEvent("INFO", "Received triage request for ticket " + ticketId, ticketId);
 
-            // Call AI service
             eventLogService.addEvent("INFO", "Calling AI service for ticket " + ticketId, ticketId);
-            AiTriageResult aiResult = aiService.triage(request.message(), request.allowedTicketTypes());
+            AiTriageResult aiResult = aiTriageAssistant.triage(request.message(), request.allowedTicketTypes());
 
-            // Validate and enforce constraints
             validateAiResult(aiResult, request.allowedTicketTypes());
+            int confidence = aiResult.aiConfidencePercent();
+            if (confidence < HUMAN_REVIEW_CONFIDENCE_THRESHOLD_PERCENT) {
+                String reason = "Ai Triage failed: confidence below threshold (" + confidence + "% < "
+                        + HUMAN_REVIEW_CONFIDENCE_THRESHOLD_PERCENT + "%)";
+                eventLogService.addEvent("ERROR", "Low confidence for ticket " + ticketId + ": " + reason
+                        + ". Returning to human review.", ticketId);
+                throw new RuntimeException(reason);
+            }
 
-            // Clamp values (already done in AiService, but double-check)
-            int urgencyScore = Math.max(1, Math.min(10, aiResult.urgencyScore()));
-            int confidence = Math.max(0, Math.min(100, aiResult.aiConfidencePercent()));
+            eventLogService.addEvent("INFO", "Scoring urgency for ticket " + ticketId, ticketId);
+            double urgency;
+            try {
+                urgency = urgencyService.score(request.message());
+            } catch (Exception e) {
+                String urgencyError = java.util.Optional.ofNullable(e.getMessage()).orElse("no response");
+                String reason = "Ai Triage failed: Urgency scoring failed: " + urgencyError;
+                eventLogService.addEvent("ERROR", "Urgency scoring failed for ticket " + ticketId + ": " + urgencyError
+                        + ". Returning to human review.", ticketId);
+                throw new RuntimeException(reason);
+            }
 
-            // Call similarity service to find related tickets
-            // Capture any errors but don't fail the request
+            if (urgency > 7.5) {
+                notifyOnCall(aiResult.ticketType());
+            }
+            int urgencyScore = (int) Math.round(urgency);
+
             List<Long> relatedTicketIds;
             try {
                 eventLogService.addEvent("INFO", "Searching for similar tickets for ticket " + ticketId, ticketId);
@@ -97,7 +122,7 @@ public class TriageResource {
             return response;
 
         } catch (Exception e) {
-            LOG.errorf(e, "Error processing triage request");
+            LOG.errorf(e, "Error processing triage request for ticket %s", ticketId);
             String failReason = extractFailReason(e);
 
             TriageResponse response = new TriageResponse("FAILED", null, null, null, List.of(), List.of(), failReason);
@@ -129,6 +154,10 @@ public class TriageResource {
         return eventLogService.getTickets();
     }
 
+    private void notifyOnCall(String teamName) {
+        // to be implemented in real system
+    }
+
     private void validateAiResult(AiTriageResult result, List<TriageRequest.TicketTypeInfo> allowedTypes) {
         if (result == null) {
             throw new RuntimeException("AI service returned null result");
@@ -144,11 +173,6 @@ public class TriageResource {
         if (!allowedTypeNames.contains(result.ticketType())) {
             throw new RuntimeException("CONTRACT_VIOLATION: AI returned ticket type '" +
                     result.ticketType() + "' which is not in the allowed list: " + allowedTypeNames);
-        }
-
-        if (result.urgencyScore() == null || result.urgencyScore() < 1 || result.urgencyScore() > 10) {
-            throw new RuntimeException("CONTRACT_VIOLATION: Urgency score must be between 1 and 10, got: " +
-                    result.urgencyScore());
         }
 
         if (result.aiConfidencePercent() == null ||

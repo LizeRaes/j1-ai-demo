@@ -3,6 +3,7 @@ package com.example.appointment.config;
 import com.example.appointment.domain.model.Ticket;
 import com.example.appointment.domain.model.Comment;
 import com.example.appointment.dto.CreateIncomingRequestDto;
+import com.example.appointment.dto.IncomingRequestDto;
 import com.example.appointment.dto.TicketDto;
 import com.example.appointment.mapper.TicketMapper;
 import com.example.appointment.service.adapter.CommentService;
@@ -17,7 +18,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Level;
@@ -59,6 +59,7 @@ public class DataSeeder {
         if (demoDataEnabled) {
             clearAllData();
             int totalTickets = loadDemoTicketsFromFiles();
+            seedDispatcherInboxDemoRequests();
             LOGGER.info("Demo data loaded: " + totalTickets + " tickets from demo-data/*.json files");
         } else if (demoDataEmpty) {
             clearAllData();
@@ -156,6 +157,26 @@ public class DataSeeder {
                 "web", "I get an error when uploading my insurance card: 'Upload failed (E102)'."));
         incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto("u-pascal",
                 "web", "Urgent: I need to cancel today's appointment in 2 hours. I'm sick."));
+    }
+
+    private void seedDispatcherInboxDemoRequests() {
+        IncomingRequestDto r1 = incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto(
+                "u-dsp-1", "web",
+                "I was charged twice for one appointment and the booking still says unpaid."
+        ));
+        incomingRequestService.markAsAiTriageFailed(r1.id());
+
+        IncomingRequestDto r2 = incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto(
+                "u-dsp-2", "web",
+                "I can see an appointment in my account that is not mine. Please investigate."
+        ));
+        incomingRequestService.markAsAiTriageFailed(r2.id());
+
+        IncomingRequestDto r3 = incomingRequestService.createIncomingRequest(new CreateIncomingRequestDto(
+                "u-dsp-3", "web",
+                "Reschedule button is disabled and support chat told me to request manual dispatch."
+        ));
+        incomingRequestService.markAsReturnedFromAi(r3.id());
     }
 
 
