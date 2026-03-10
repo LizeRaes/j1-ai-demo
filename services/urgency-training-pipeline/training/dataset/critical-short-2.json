@@ -169,7 +169,7 @@
     },
     {
         "text": "The booking system currently does not save new appointments.",
-        "urgency": 9.0
+        "urgency": 5.0
     },
     {
         "text": "Multiple attempts to confirm a booking all failed in the same way.",

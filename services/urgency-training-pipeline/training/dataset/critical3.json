@@ -69,7 +69,7 @@
     },
     {
         "text": "This has been going on since this morning. The booking confirmation seems broken.",
-        "urgency": 9.0
+        "urgency": 6.0
     },
     {
         "text": "There's an urgent issue: the payment system is charging cards without creating bookings.",
@@ -77,7 +77,7 @@
     },
     {
         "text": "Multiple family members are having the same issue. The confirm booking button does nothing.",
-        "urgency": 9.0
+        "urgency": 6.5
     },
     {
         "text": "I need to report that i tried to create an appointment five times and none worked.",
@@ -93,7 +93,7 @@
     },
     {
         "text": "I need to book something for tomorrow. booking appointments is currently impossible.",
-        "urgency": 9.0
+        "urgency": 7.0
     },
     {
         "text": "I've been trying to schedule an appointment for the past 30 minutes. The booking confirmation fails every time.",

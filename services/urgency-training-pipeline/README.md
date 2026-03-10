@@ -14,21 +14,22 @@ mvn compile exec:java -Dexec.args="--dataset training/dataset --export training/
 mvn compile exec:java -Dexec.args="--embedding-provider openai --dataset training/dataset"
 ```
 
-Outputs: `training/export/model-scorer.dnet`, `training/export/model-binary.dnet`
+Outputs:
+- Local: `training/export/model-scorer-local.dnet`, `training/export/model-binary-local.dnet`
+- OpenAI: `training/export/model-scorer-openai.dnet`, `training/export/model-binary-openai.dnet`
 
 ## Predict
+
+Default uses local embeddings:
 
 ```bash
 mvn compile exec:java@predict -Dexec.args="Stripe refused my payment 3x"
 ```
 
-With custom model dir: `-Dexec.args="--model-dir training/export Your text here"`
-
-**Note:** `predict` fails on loaded models (DeepNetts NPE: inputTensor null). `predict2` uses setInput+forward+getOutput workaround but hits "Index 384 out of bounds" – both worth reporting to maintainers:
+OpenAI mode (uses OpenAI embeddings):
 
 ```bash
-mvn compile exec:java@predict -Dexec.args="Stripe refused my payment 3x"   # NPE
-mvn compile exec:java@predict2 -Dexec.args="Stripe refused my payment 3x"    # Index OOB
+mvn compile exec:java@predict -Dexec.args="--embedding-provider openai Stripe refused my payment 3x"
 ```
 
 ---

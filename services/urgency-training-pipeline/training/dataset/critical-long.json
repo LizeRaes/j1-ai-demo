@@ -145,7 +145,7 @@
     },
     {
     "text": "The booking confirmation seems broken.",
-    "urgency": 9.0
+    "urgency": 6.0
     },
     {
     "text": "Appointments are disappearing randomly from the list.",
@@ -157,7 +157,7 @@
     },
     {
     "text": "The confirm booking button does nothing.",
-    "urgency": 9.0
+    "urgency": 6.5
     },
     {
     "text": "Payment succeeded but the appointment is not in my account.",

@@ -16,6 +16,18 @@
     "urgency": 10.0
   },
   {
+    "text": "Someone called pretending to be support and I shared my one-time code. Right after that, appointments in my account changed.",
+    "urgency": 10.0
+  },
+  {
+    "text": "I clicked a fake support link and entered my password. I now see unfamiliar activity in my account.",
+    "urgency": 10.0
+  },
+  {
+    "text": "I gave credentials to a person claiming they were from your team, and now I am locked out while my appointments were modified.",
+    "urgency": 10.0
+  },
+  {
     "text": "My account seems locked. I can't access anything.",
     "urgency": 6.0
   },

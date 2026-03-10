@@ -106,16 +106,6 @@
                             <mainClass>com.example.urgency.Predict</mainClass>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>predict2</id>
-                        <phase>none</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>com.example.urgency.Predict2</mainClass>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>

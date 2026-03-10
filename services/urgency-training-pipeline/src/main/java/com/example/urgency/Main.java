@@ -105,7 +105,8 @@ public class Main {
         System.out.println("\nValidating...");
         System.out.println("Validation results (round to 0.5 before binary critical assessment)");
         System.out.println("────────────────────────────────────────");
-        Metrics.evaluateScorer(scorerNet, testCached).printSummary();
+        var scorerResult = Metrics.evaluateScorer(scorerNet, testCached);
+        scorerResult.printSummary();
         var binaryResult = Metrics.evaluateBinary(binaryNet, testCached);
         binaryResult.printSummary();
         System.out.println("────────────────────────────────────────");
@@ -121,12 +122,15 @@ public class Main {
             System.out.printf("    score %.1f %s (actual %.1f) %s%n", score10, critical ? "[CRITICAL]" : "", actual10, c.text());
         }
 
+        scorerResult.printMisclassifications();
         binaryResult.printMisclassifications();
 
         Path basePath = Path.of(exportPath).getParent();
         basePath.toFile().mkdirs();
-        FileIO.writeToFile(scorerNet, basePath.resolve("model-scorer.dnet").toString());
-        FileIO.writeToFile(binaryNet, basePath.resolve("model-binary.dnet").toString());
-        System.out.println("\nModels saved to " + basePath.resolve("model-scorer.dnet") + " and " + basePath.resolve("model-binary.dnet"));
+        String scorerName = "model-scorer-" + provider + ".dnet";
+        String binaryName = "model-binary-" + provider + ".dnet";
+        FileIO.writeToFile(scorerNet, basePath.resolve(scorerName).toString());
+        FileIO.writeToFile(binaryNet, basePath.resolve(binaryName).toString());
+        System.out.println("\nModels saved to " + basePath.resolve(scorerName) + " and " + basePath.resolve(binaryName));
     }
 }

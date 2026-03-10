@@ -45,7 +45,7 @@
   },
   {
     "text": "Something is very wrong with payments right now. I tried paying for an appointment and got an error saying payment failed. I tried again and it succeeded. Now my bank shows TWO charges but the appointment still says unpaid.",
-    "urgency": 9.0
+    "urgency": 5.0
   },
   {
     "text": "Your login system seems buggy. I logged in successfully, went to the appointments page, and then suddenly it redirected me back to the login screen again. Now it just keeps looping like that.",

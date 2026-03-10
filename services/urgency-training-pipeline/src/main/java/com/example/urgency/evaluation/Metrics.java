@@ -31,7 +31,8 @@ public final class Metrics {
             int derivedCriticalActual,
             int derivedCriticalPredicted,
             int derivedCriticalCorrect,
-            int derivedCriticalCorrectApplied
+            int derivedCriticalCorrectApplied,
+            List<Misclassification> falseNegatives
     ) {
         public void printSummary() {
             System.out.println();
@@ -42,6 +43,15 @@ public final class Metrics {
             System.out.printf("       %-20s %.4f  (%d/%d critical detected)%n", "Recall", derivedRecall, derivedCriticalCorrect, derivedCriticalActual);
             System.out.printf("       %-20s %.4f  (%d predicted critical, %d correct)%n", "Precision", derivedPrecision, derivedCriticalPredicted, derivedCriticalCorrect);
             System.out.printf("       %-20s %.4f  (%d/%d had actual ≥%.1f)%n", "Precision-applied", derivedPrecisionApplied, derivedCriticalCorrectApplied, derivedCriticalPredicted, APPLIED_THRESHOLD);
+        }
+
+        public void printMisclassifications() {
+            if (!falseNegatives.isEmpty()) {
+                System.out.println("\n  Scorer: Critical missed (false negatives):");
+                for (Misclassification m : falseNegatives) {
+                    System.out.printf("    pred %.1f actual %.1f | %s%n", m.pred() * 10, m.actual() * 10, m.text());
+                }
+            }
         }
     }
 
@@ -89,6 +99,7 @@ public final class Metrics {
         int criticalPredicted = 0;
         int criticalPredictedCorrect = 0;
         int criticalPredictedCorrectApplied = 0;
+        List<Misclassification> falseNegatives = new ArrayList<>();
 
         for (CachedEmbedding c : cached) {
             float[] predArr = net.predict(c.embedding());
@@ -102,7 +113,11 @@ public final class Metrics {
 
             if (actualCritical) {
                 criticalActual++;
-                if (predCritical) criticalPredictedCorrect++;
+                if (predCritical) {
+                    criticalPredictedCorrect++;
+                } else {
+                    falseNegatives.add(new Misclassification(c.text(), pred, actual));
+                }
             }
             if (predCritical) {
                 criticalPredicted++;
@@ -118,7 +133,8 @@ public final class Metrics {
         double precisionApplied = criticalPredicted > 0 ? (double) criticalPredictedCorrectApplied / criticalPredicted : Double.NaN;
 
         return new ScorerResult(mae, mse, recall, precision, precisionApplied,
-                criticalActual, criticalPredicted, criticalPredictedCorrect, criticalPredictedCorrectApplied);
+                criticalActual, criticalPredicted, criticalPredictedCorrect, criticalPredictedCorrectApplied,
+                falseNegatives);
     }
 
     public static BinaryResult evaluateBinary(FeedForwardNetwork net, List<CachedEmbedding> cached) {
