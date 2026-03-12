@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +38,10 @@ public class DemoDataServiceTest {
         demoDataService.loadDemoData();
 
         verify(vectorService, times(1)).deleteAllTickets();
+        verify(logService).addLog(eq("Starting demo data load..."), eq("demo-data"));
+        verify(logService).addLog(eq("Cleared existing Oracle AI Database data"), eq("demo-data"));
+        verify(logService).addLog(startsWith("Demo data load complete: "), eq("demo-data"));
+        verify(logService, atLeast(3)).addLog(anyString(), anyString());
         verify(logService, times(12)).addLog(anyString(), anyString());
         verify(vectorService, atLeastOnce()).upsertTicket(any(), any(), any(), any());
     }
