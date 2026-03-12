@@ -20,8 +20,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnabledIfSystemProperty(named = "openai.api-key", matches = ".+")
-@EnabledIfSystemProperty(named = "data.sources.sql[0].provider.ucp.url", matches = "jdbc:oracle:thin:.*")
+//@EnabledIfSystemProperty(named = "openai.api-key", matches = ".+")
+//@EnabledIfSystemProperty(named = "data.sources.sql[0].provider.ucp.url", matches = "jdbc:oracle:thin:.*")
 @RoutingTest
 class MainTest  {
     private final Http1Client client;

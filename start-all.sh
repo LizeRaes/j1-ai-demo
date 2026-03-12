@@ -66,8 +66,7 @@ kill_tree() {
 }
 
 stop_containers() {
-  docker compose down --remove-orphans
-  docker compose -f "$ROOT/services/company-rag/docker-compose.yml" down --remove-orphans
+  docker compose down -v --remove-orphans
 }
 
 wait_for_port() {

@@ -35,9 +35,9 @@ public class Main {
 
 	static void routing(HttpRouting.Builder routing) {
 		Config config = Services.get(Config.class);
-		String configuredApiKey = config.get("openai.api-key").asString().orElse("");
+		String configuredApiKey = config.get("langchain4j.providers.openai.api-key").asString().orElse("");
 		String apiKey = resolveOpenAiApiKey(configuredApiKey);
-		String embeddingModelName = config.get("openai.embedding-model").asString().orElse("text-embedding-3-large");
+		String embeddingModelName = config.get("langchain4j.models.ticket-embedding-model.model-name").asString().orElse("text-embedding-3-large");
 
 		EmbeddingModel embeddingModel = OpenAiEmbeddingModel.builder()
 				.apiKey(apiKey)
@@ -46,7 +46,7 @@ public class Main {
 
 		DataSource dataSource = Services.getNamed(DataSource.class, "ora-ucp-ds");
 
-		Config oracleEmbeddingConfig = config.get("langchain4j.oracle.embedding-store");
+		Config oracleEmbeddingConfig = config.get("langchain4j.embedding-stores.oracle.embedding-store");
 		OracleEmbeddingStoreConfig storeConfig = OracleEmbeddingStoreConfig.create(oracleEmbeddingConfig);
 		EmbeddingStore<TextSegment> embeddingStore = storeConfig.configuredBuilder()
 				.dataSource(dataSource)
