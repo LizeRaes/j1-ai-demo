@@ -1,6 +1,6 @@
-# MedicalAppointment - AI-Powered Medical Support System
+# AI-Powered Helpdesk System for MedicalAppointment App
 
-MedicalAppointment is a demonstration platform consisting of multiple microservices that together form an AI-powered medical appointment and helpdesk system. Patients manage appointments and submit support requests through a web app; those requests flow into a centralized helpdesk that uses AI triage, semantic similarity search, and company-policy document retrieval to classify, prioritize, and route tickets.
+MedicalAppointment is a demonstration platform consisting of multiple microservices that together form an AI-powered helpdesk system for a regular medical appointment app. Patients manage appointments and submit support requests through a web app. Those requests flow into a centralized helpdesk that uses AI triage, semantic similarity search, and company-policy document retrieval to classify, prioritize, and route tickets, as well as a coding assistant to automatically fix reported bugs.
 
 ## Architecture Overview
 
@@ -38,7 +38,7 @@ Tickets with urgency score >= 0.8 are considered critical and are escalated to a
 | [company-rag](services/company-rag/)                            | 8084 | Company-document RAG with RBAC-controlled citations (Oracle AI + OpenAI embeddings)   |
 | [coding-assistant](services/coding-assistant/)                  | 8085 | Async bug-fix assistant that prepares PRs and callbacks to helpdesk                   |
 | [urgency](services/urgency)                                     | 8086 | A service that generates urgency score from a domain-trained ML model.                |
-| [urgency-mcp](services/urgency-mcp)                             | 8086 | An alternative MCP service to calculate urgency score from a domain-trained ML model. |
+| [urgency-mcp](services/urgency-mcp)                             | 9090 | An alternative MCP service to calculate urgency score from a domain-trained ML model. |
 | [urgency-training-pipeline](services/urgency-training-pipeline) | -    | The component responsible for training the domain specific ML model.                  |
 
 
@@ -57,6 +57,24 @@ Preferred startup:
 
 ```bash
 ./start-all.sh
+```
+
+By default, UI event/activity log side panels are hidden. To show them and follow ticket paths throughout the services:
+
+```bash
+./start-all.sh -show-event-log
+```
+
+Set one zoom level for all service dashboards from startup:
+
+```bash
+./start-all.sh -ui-zoom=120
+```
+
+Both options can be combined:
+
+```bash
+./start-all.sh -show-event-log -ui-zoom=120
 ```
 
 Run all tests across all services:

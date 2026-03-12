@@ -52,3 +52,5 @@ ui:
   font:
     zoom:
       default: 100
+  show:
+    event-log: false

@@ -33,11 +33,10 @@ export async function renderDispatcherInbox() {
             return;
         }
 
-        // Render requests - invert order: prepend items so newest appear at top
         requests.forEach(request => {
             try {
                 const item = createRequestListItem(request);
-                container.insertBefore(item, container.firstChild);
+                container.appendChild(item);
             } catch (itemError) {
                 console.error('Error creating request item:', itemError, request);
             }

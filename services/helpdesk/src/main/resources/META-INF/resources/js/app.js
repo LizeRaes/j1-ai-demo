@@ -1,9 +1,10 @@
 import {switchTab} from './ui/router.js';
-import {startEventPolling} from './ui/renderLogs.js';
+import {setLogsPanelCollapsed, startEventPolling} from './ui/renderLogs.js';
 import {getActorContext, renderActorContext} from './ui/actorContext.js';
 import {state} from './ui/state.js';
 import {loadTicketDetail} from './ui/renderTicketDetail.js';
 import {renderTickets} from './ui/renderTickets.js';
+import {UI_CONFIG} from './config.js';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -37,8 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error opening ticket from URL:', error);
         });
 
-        // Start event polling
-        startEventPolling();
+        applyDefaultUiConfig()
+            .catch((error) => {
+                console.error('Error loading event log UI config:', error);
+                setLogsPanelCollapsed(true); // default: hidden
+            })
+            .finally(() => {
+                startEventPolling();
+            });
 
         // Refresh selected ticket detail when persona changes so RBAC-driven docs update immediately.
         window.addEventListener('actor-context-changed', handleActorContextChanged);
@@ -47,6 +54,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.innerHTML = '<div style="padding: 2rem; color: red;">Error loading application. Check console for details.</div>';
     }
 });
+
+async function applyDefaultUiConfig() {
+    const response = await fetch('/api/events/config');
+    if (!response.ok) {
+        setLogsPanelCollapsed(true);
+        return;
+    }
+    const config = await response.json();
+    const defaultZoomPercent = Number(config?.defaultZoomPercent ?? 100);
+    if (Number.isFinite(defaultZoomPercent) && defaultZoomPercent > 0) {
+        UI_CONFIG.DEFAULT_ZOOM_LEVEL = defaultZoomPercent;
+        localStorage.setItem('logsZoomLevel', String(defaultZoomPercent));
+        localStorage.setItem('mainZoomLevel', String(defaultZoomPercent));
+    }
+    const showEventLog = config?.showEventLog === true;
+    setLogsPanelCollapsed(!showEventLog);
+}
 
 async function handleActorContextChanged() {
     try {

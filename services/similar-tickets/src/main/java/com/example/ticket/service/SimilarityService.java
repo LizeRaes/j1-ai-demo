@@ -15,8 +15,10 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.toMap;
 
 public class SimilarityService implements HttpService {
+    private static final int MAX_VECTOR_DIMS_IN_UI = 50;
 
     private final int defaultZoom;
+    private final boolean showEventLog;
 
     private final LogService logService;
     private final TicketStore ticketStore;
@@ -24,7 +26,8 @@ public class SimilarityService implements HttpService {
     private final VectorService vectorService;
 
     public SimilarityService(Config config, EmbeddingService embeddingService, VectorService vectorService) {
-       defaultZoom = config.asInt().orElse(100);
+       defaultZoom = config.get("font.zoom.default").asInt().orElse(100);
+       showEventLog = config.get("show.event-log").asBoolean().orElse(false);
        this.logService = new LogService();
        this.ticketStore = new TicketStore();
        this.embeddingService = embeddingService;
@@ -62,7 +65,10 @@ public class SimilarityService implements HttpService {
 
     private void config(ServerRequest serverRequest, ServerResponse serverResponse) {
         serverResponse.header(HeaderNames.CONTENT_TYPE, "application/json")
-                .send(Map.of("defaultZoom", defaultZoom));
+                .send(Map.of(
+                        "defaultZoom", defaultZoom,
+                        "showEventLog", showEventLog
+                ));
     }
 
     private void logs(ServerRequest serverRequest, ServerResponse serverResponse) {
@@ -79,13 +85,14 @@ public class SimilarityService implements HttpService {
         var inMemoryTickets = ticketStore.getAllTickets();
 
         Map<Long, TicketsResponse.TicketInfo> ticketMap = ticketInfos.stream()
+                .map(this::withUiVectorLimit)
                 .collect(toMap(
                         TicketsResponse.TicketInfo::id,
                         Function.identity()
                 ));
 
         inMemoryTickets.stream()
-                .map(im -> new TicketsResponse.TicketInfo(im.ticketId(), im.ticketType(), im.text(), im.vector()))
+                .map(im -> new TicketsResponse.TicketInfo(im.ticketId(), im.ticketType(), im.text(), truncateVector(im.vector())))
                 .forEach(ticket -> ticketMap.put(ticket.id(), ticket));
 
         var tickets = ticketMap.values().stream()
@@ -94,6 +101,24 @@ public class SimilarityService implements HttpService {
 
         serverResponse.header(HeaderNames.CONTENT_TYPE, "application/json").send(new TicketsResponse(tickets));
 
+    }
+
+    private TicketsResponse.TicketInfo withUiVectorLimit(TicketsResponse.TicketInfo ticketInfo) {
+        return new TicketsResponse.TicketInfo(
+                ticketInfo.id(),
+                ticketInfo.type(),
+                ticketInfo.text(),
+                truncateVector(ticketInfo.vector())
+        );
+    }
+
+    private float[] truncateVector(float[] vector) {
+        if (vector == null || vector.length <= MAX_VECTOR_DIMS_IN_UI) {
+            return vector;
+        }
+        float[] truncated = new float[MAX_VECTOR_DIMS_IN_UI];
+        System.arraycopy(vector, 0, truncated, 0, MAX_VECTOR_DIMS_IN_UI);
+        return truncated;
     }
 
     private void delete(ServerRequest serverRequest, ServerResponse serverResponse) {

@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -38,6 +39,12 @@ public class DocumentResource {
 
     @Inject
     LogService logService;
+
+    @ConfigProperty(name = "ui.show-event-log", defaultValue = "false")
+    boolean showEventLog;
+
+    @ConfigProperty(name = "ui.font.zoom.default", defaultValue = "100")
+    int defaultZoom;
 
     @POST
     @Path("/search")
@@ -167,7 +174,10 @@ public class DocumentResource {
     @GET
     @Path("/config")
     public Map<String, Object> getConfig() {
-        return java.util.Map.of("defaultZoom", 100);
+        return java.util.Map.of(
+                "defaultZoom", defaultZoom,
+                "showEventLog", showEventLog
+        );
     }
 
     @GET

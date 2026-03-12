@@ -61,7 +61,7 @@ public class TicketService {
     @ConfigProperty(name = "app.coding-assistant.repo-url")
     Optional<String> codingAssistantRepoUrl;
 
-    @ConfigProperty(name = "app.coding-assistant.confidence-threshold", defaultValue = "0.60")
+    @ConfigProperty(name = "app.coding-assistant.confidence-threshold")
     Double codingAssistantConfidenceThreshold;
 
     @Transactional

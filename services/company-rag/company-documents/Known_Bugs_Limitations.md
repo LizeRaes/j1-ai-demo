@@ -13,6 +13,7 @@ This document lists confirmed defects that are actively tracked or under investi
 | BUG-003 | Payment success page without status update | In fixing | ENG-2403 | ~3 days |
 | BUG-004 | Help request submitted multiple times | Planned | ENG-2381 | Next minor UI update |
 | BUG-005 | Appointment list empty after restart | Known limitation | ENG-2300 | No fix planned |
+| BUG-006 | Repeated payment failures in EMEA | Deploying fix | PAY-2488 | Rolling deployment (24-48h) |
 
 ## Detailed Entries
 
@@ -50,6 +51,14 @@ This document lists confirmed defects that are actively tracked or under investi
 - **Affected Conditions:** App restart or redeploy.
 - **Workaround:** Inform user issue is known; advise rebooking if urgently needed.
 - **Status:** Known limitation
+
+### BUG-006 - Repeated Payment Failures for Some EMEA Customers
+
+- **Symptoms:** Customer retries payment multiple times with different cards and each attempt fails in-app.
+- **Affected Conditions:** Primarily EMEA region during payment gateway failover windows; most visible on booking confirmation payment step.
+- **Likely Cause:** Regional payment gateway routing instability after recent traffic shift.
+- **Workaround:** Ask user to stop repeated retries for 20-30 minutes, then retry once; if urgent, offer manual booking hold and delayed payment capture.
+- **Status:** Fix deploying in waves (tracking `PAY-2488`), full stabilization expected within 24-48 hours.
 
 ## Agent Guidance
 

@@ -52,6 +52,20 @@ export function startEventPolling() {
     pollInterval = setInterval(loadEvents, 1500); // Poll every 1.5 seconds
 }
 
+export function setLogsPanelCollapsed(collapsed) {
+    logsCollapsed = !!collapsed;
+    const toggleBtn = $('#logs-toggle-btn');
+    const logsPane = $('#logs-pane');
+    if (!toggleBtn || !logsPane) return;
+
+    logsPane.classList.toggle('collapsed', logsCollapsed);
+    const arrow = toggleBtn.querySelector('.toggle-arrow');
+    if (arrow) {
+        arrow.textContent = logsCollapsed ? '▶' : '◀';
+    }
+    toggleBtn.title = logsCollapsed ? 'Show Event Log' : 'Hide Event Log';
+}
+
 function setupFilterButtons() {
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -104,16 +118,7 @@ function setupLogsToggle() {
     if (!toggleBtn || !logsPane) return;
 
     toggleBtn.addEventListener('click', () => {
-        logsCollapsed = !logsCollapsed;
-        if (logsCollapsed) {
-            logsPane.classList.add('collapsed');
-            toggleBtn.querySelector('.toggle-arrow').textContent = '▶';
-            toggleBtn.title = 'Show Event Log';
-        } else {
-            logsPane.classList.remove('collapsed');
-            toggleBtn.querySelector('.toggle-arrow').textContent = '◀';
-            toggleBtn.title = 'Hide Event Log';
-        }
+        setLogsPanelCollapsed(!logsCollapsed);
     });
 }
 

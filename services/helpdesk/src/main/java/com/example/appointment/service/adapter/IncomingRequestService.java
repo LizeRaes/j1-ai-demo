@@ -9,6 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +53,8 @@ public class IncomingRequestService {
         allRequests.addAll(failedRequests);
         allRequests.addAll(returnedRequests);
 
+
+        allRequests.sort(Comparator.comparing(IncomingRequest::getId, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
         return allRequests.stream().map(this::toDto).collect(Collectors.toList());
     }
 
