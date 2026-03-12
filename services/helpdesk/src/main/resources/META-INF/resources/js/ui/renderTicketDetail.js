@@ -69,11 +69,10 @@ export function renderTicketDetail(ticket) {
         acceptBtn.addEventListener('click', async () => {
             try {
                 await acceptTicket(ticket.id, state.currentUserId);
-                alert('Ticket accepted!');
                 await renderTickets('inbox');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
-                alert('Error accepting ticket: ' + error.message);
+                console.error('Error accepting ticket:', error);
             }
         });
         actionsDiv.appendChild(acceptBtn);
@@ -96,7 +95,7 @@ export function renderTicketDetail(ticket) {
                     container.innerHTML = '<div class="detail-placeholder"><p>Ticket converted back to request. Select another item to view details.</p></div>';
                 }
             } catch (error) {
-                alert('Error converting ticket: ' + error.message);
+                console.error('Error converting ticket:', error);
             }
         });
         actionsDiv.appendChild(rollbackBtn);
@@ -135,10 +134,9 @@ export function renderTicketDetail(ticket) {
             try {
                 const {updateTicketType} = await import('../api/ticketsApi.js');
                 await updateTicketType(ticket.id, {ticketType: typeSelect.value});
-                alert('Ticket type updated! Team will be updated automatically.');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
-                alert('Error updating ticket type: ' + error.message);
+                console.error('Error updating ticket type:', error);
             }
         });
 
@@ -169,10 +167,9 @@ export function renderTicketDetail(ticket) {
         updateBtn.addEventListener('click', async () => {
             try {
                 await updateTicketStatus(ticket.id, statusSelect.value);
-                alert('Status updated!');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
-                alert('Error updating status: ' + error.message);
+                console.error('Error updating status:', error);
             }
         });
 
@@ -279,7 +276,6 @@ export function renderTicketDetail(ticket) {
                         }
                     } catch (error) {
                         console.error('Error opening document:', error);
-                        alert('Error loading document: ' + error.message);
                     }
                 });
 
@@ -370,7 +366,7 @@ export function renderTicketDetail(ticket) {
     addPrBtn.addEventListener('click', async () => {
         const prUrl = addPrInput.value.trim();
         if (!prUrl) {
-            alert('Please enter a PR URL');
+            console.warn('Cannot add PR: empty URL.');
             return;
         }
         try {
@@ -378,7 +374,7 @@ export function renderTicketDetail(ticket) {
             addPrInput.value = '';
             await loadTicketDetail(ticket.id);
         } catch (error) {
-            alert('Error adding PR: ' + error.message);
+            console.error('Error adding PR:', error);
         }
     });
     addPrForm.appendChild(addPrLabel);
@@ -411,16 +407,15 @@ export function renderTicketDetail(ticket) {
     const addCommentBtn = createElement('button', 'btn btn-primary', 'Add Comment');
     addCommentBtn.addEventListener('click', async () => {
         if (!commentTextarea.value.trim()) {
-            alert('Please enter a comment');
+            console.warn('Cannot add comment: empty body.');
             return;
         }
         try {
             await addComment(ticket.id, state.currentUserId, commentTextarea.value);
             commentTextarea.value = '';
-            alert('Comment added!');
             await loadTicketDetail(ticket.id);
         } catch (error) {
-            alert('Error adding comment: ' + error.message);
+            console.error('Error adding comment:', error);
         }
     });
     commentForm.appendChild(commentTextarea);
@@ -551,10 +546,7 @@ async function showDocument(documentName, documentLink, citations) {
         document.body.appendChild(overlay);
     } catch (error) {
         console.error('Error showing document:', error);
-        // Show error in a visible alert with more details
-        const errorMsg = error.message || 'Unknown error';
-        alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- Documents service/proxy availability');
-        throw error; // Re-throw so caller can handle it
+        throw error;
     }
 }
 
