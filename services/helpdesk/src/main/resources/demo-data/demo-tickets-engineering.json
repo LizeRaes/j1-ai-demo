@@ -18,26 +18,36 @@
   },
   {
     "userId": "u-sophie",
-    "originalRequest": "Cancel button does nothing when I click it. No error, no confirmation.",
+    "originalRequest": "Confirm Appointment button results in an error page. I tried 3 times.",
     "ticketType": "BUG_APP",
     "status": "COMPLETED",
     "source": "AI",
     "assignedTo": "u-eng-app",
-    "urgencyFlag": false,
-    "urgencyScore": 6.1,
-    "comments": [],
+    "urgencyFlag": true,
+    "urgencyScore": 7.1,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Reproduced on appointment confirmation flow. Error page observed after submit."
+      }
+    ],
     "id": 151
   },
   {
     "userId": "u-mark",
-    "originalRequest": "This app is broken. Buttons just don\u2019t work.",
+    "originalRequest": "I get a 404 Page not found error when trying to book an appointment.",
     "ticketType": "BUG_APP",
     "status": "COMPLETED",
     "source": "AI",
     "assignedTo": "u-eng-app",
-    "urgencyFlag": false,
-    "urgencyScore": 3.9,
-    "comments": [],
+    "urgencyFlag": true,
+    "urgencyScore": 7.1,
+    "comments": [
+      {
+        "authorId": "u-eng-app",
+        "body": "Likely same endpoint-routing issue as other Confirm Appointment 404 reports."
+      }
+    ],
     "id": 152
   },
   {

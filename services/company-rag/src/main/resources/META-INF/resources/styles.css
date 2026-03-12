@@ -126,7 +126,7 @@ body {
     color: #e0e0e0;
 }
 
-.left-pane.collapsed + .right-pane {
+.left-pane.collapsed ~ .right-pane {
     width: 100%;
 }
 
@@ -209,7 +209,7 @@ body {
 
 .right-pane {
     width: 66.67%;
-    background-color: #ffffff;
+    background-color: #f5dcec;
     display: flex;
     flex-direction: column;
     overflow: hidden;

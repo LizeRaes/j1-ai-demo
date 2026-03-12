@@ -221,7 +221,7 @@ echo "=== Starting services (deterministic order) ==="
 
 start_service "medicapt-user-facing" "services/medicapt-user-facing" "http://localhost:8083" java -jar target/quarkus-app/quarkus-run.jar
 start_service "helpdesk" "services/helpdesk" "http://localhost:8080" env HELPDESK_UI_SHOW_EVENT_LOG="$SHOW_EVENT_LOG" HELPDESK_UI_DEFAULT_ZOOM_PERCENT="$UI_ZOOM_PERCENT" java -jar $HELPDESK_DEMO_FLAG target/quarkus-app/quarkus-run.jar
-start_service "urgency" "services/urgency" "http://localhost:8086" env URGENCY_EMBEDDING_PROVIDER=openai java -jar target/quarkus-app/quarkus-run.jar
+start_service "urgency" "services/urgency" "http://localhost:8086" env URGENCY_EMBEDDING_PROVIDER=openai java -Durgency.embedding-provider=openai -jar target/quarkus-app/quarkus-run.jar
 # Optional MCP demo variant:
 # start_service "urgency-mcp" "services/urgency-mcp" "http://localhost:9090/urgency" java -jar target/urgency-mcp.jar
 start_service "ai-triage" "services/ai-triage" "http://localhost:8081" env AI_TRIAGE_UI_SHOW_EVENT_LOG="$SHOW_EVENT_LOG" AI_TRIAGE_UI_DEFAULT_ZOOM_PERCENT="$UI_ZOOM_PERCENT" java -jar target/quarkus-app/quarkus-run.jar

@@ -9,6 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,16 @@ public class IncomingRequestService {
         allRequests.addAll(failedRequests);
         allRequests.addAll(returnedRequests);
 
+        Comparator<IncomingRequest> newestFirst = Comparator
+                .comparing((IncomingRequest r) -> {
+                    LocalDateTime updated = r.getUpdatedAt();
+                    return updated != null ? updated : r.getCreatedAt();
+                }, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(IncomingRequest::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(IncomingRequest::getId, Comparator.nullsLast(Comparator.naturalOrder()))
+                .reversed();
+
+        allRequests.sort(newestFirst);
         return allRequests.stream().map(this::toDto).collect(Collectors.toList());
     }
 

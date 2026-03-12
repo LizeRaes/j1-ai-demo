@@ -64,14 +64,19 @@
   },
   {
     "userId": "u-amelia",
-    "originalRequest": "The app showed a payment error, but my bank says I was charged. Please refund.",
+    "originalRequest": "I attempted several payments with multiple cards and every transaction failed.",
     "ticketType": "BILLING_REFUND",
     "status": "COMPLETED",
     "source": "AI",
     "assignedTo": "u-support-billing",
     "urgencyFlag": true,
-    "urgencyScore": 7.8,
-    "comments": [],
+    "urgencyScore": 8.8,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Multiple payment attempts failed across different cards. Checking payment gateway health and regional incident status."
+      }
+    ],
     "id": 134
   },
   {
@@ -134,14 +139,19 @@
   },
   {
     "userId": "u-jake",
-    "originalRequest": "I was charged for an appointment that disappeared after the app refreshed.",
+    "originalRequest": "Payment keeps failing no matter which card I use. Tried four cards and each one was declined by the app.",
     "ticketType": "BILLING_REFUND",
     "status": "COMPLETED",
     "source": "AI",
     "assignedTo": "u-support-billing",
-    "urgencyFlag": false,
-    "urgencyScore": 6.0,
-    "comments": [],
+    "urgencyFlag": true,
+    "urgencyScore": 8.5,
+    "comments": [
+      {
+        "authorId": "u-support-billing",
+        "body": "Pattern matches repeated payment failure incident. Advised user to avoid repeated retries until gateway stabilization."
+      }
+    ],
     "id": 139
   },
   {
