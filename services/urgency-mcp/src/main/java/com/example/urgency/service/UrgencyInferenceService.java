@@ -23,6 +23,10 @@ public class UrgencyInferenceService {
     private volatile FeedForwardNetwork scorerNet;
     private volatile EmbeddingGenerator embeddingGenerator;
 
+    public UrgencyInferenceService() {
+        validateStartupConfiguration();
+    }
+
     public double score(String complaint) {
         if (complaint == null || complaint.isBlank()) {
             throw new IllegalArgumentException("complaint is required");
@@ -36,6 +40,15 @@ public class UrgencyInferenceService {
         float score01 = net.predict(vec)[0];
         double score10 = Math.round(score01 * 20.0) / 2.0;
         return Math.max(0.0, Math.min(10.0, score10));
+    }
+
+    private void validateStartupConfiguration() {
+        String provider = normalizedProvider();
+        resolveScorerModelPath(provider);
+        if ("openai".equals(provider)) {
+            // Triggers key/config validation early for clear startup failure.
+            new OpenAIEmbeddingGenerator();
+        }
     }
 
     private String normalizedProvider() {

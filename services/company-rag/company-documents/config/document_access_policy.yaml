@@ -16,9 +16,7 @@ Approved_Response_Templates.md:
   - billing
   - scheduling
 Known_Bugs_Limitations.md:
-  read:
-  - dispatching
-  - engineering
+  read: []
 MedicalAppointment_Architecture.txt:
   read:
   - engineering

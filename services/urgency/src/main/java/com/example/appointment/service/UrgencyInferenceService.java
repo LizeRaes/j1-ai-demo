@@ -5,9 +5,11 @@ import com.example.appointment.embedding.EmbeddingGenerator;
 import com.example.appointment.embedding.OpenAIEmbeddingGenerator;
 import deepnetts.net.FeedForwardNetwork;
 import deepnetts.util.FileIO;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import io.quarkus.runtime.Startup;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
+@Startup
 public class UrgencyInferenceService {
 
     @ConfigProperty(name = "urgency.model.dir")
@@ -29,6 +32,15 @@ public class UrgencyInferenceService {
 
     private volatile FeedForwardNetwork scorerNet;
     private volatile EmbeddingGenerator embeddingGenerator;
+
+    @PostConstruct
+    void validateStartupConfiguration() {
+        String provider = normalizedProvider();
+        resolveScorerModelPath(provider);
+        if ("openai".equals(provider)) {
+            openAIEmbeddingGenerator.validateConfiguration();
+        }
+    }
 
     public double score(String complaint) {
         if (complaint == null || complaint.isBlank()) {

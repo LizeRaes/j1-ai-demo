@@ -38,7 +38,7 @@ Tickets with urgency score >= 0.8 are considered critical and are escalated to a
 | [company-rag](services/company-rag/)                            | 8084 | Company-document RAG with RBAC-controlled citations (Oracle AI + OpenAI embeddings)   |
 | [coding-assistant](services/coding-assistant/)                  | 8085 | Async bug-fix assistant that prepares PRs and callbacks to helpdesk                   |
 | [urgency](services/urgency)                                     | 8086 | A service that generates urgency score from a domain-trained ML model.                |
-| [urgency-mcp](services/urgency-mcp)                             | 8086 | An alternative MCP service to calculate urgency score from a domain-trained ML model. |
+| [urgency-mcp](services/urgency-mcp)                             | 9090 | An alternative MCP service to calculate urgency score from a domain-trained ML model. |
 | [urgency-training-pipeline](services/urgency-training-pipeline) | -    | The component responsible for training the domain specific ML model.                  |
 
 

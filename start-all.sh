@@ -2,10 +2,6 @@
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-if [ -z "$OPENAI_API_KEY" ]; then
-  echo "WARN: OPENAI_API_KEY is not set; similar-tickets will use services/similar-tickets/config/config-prod.yaml if present"
-fi
-
 SHOW_EVENT_LOG="${SHOW_EVENT_LOG:-false}"
 UI_ZOOM_PERCENT="${UI_ZOOM_PERCENT:-100}"
 for arg in "$@"; do

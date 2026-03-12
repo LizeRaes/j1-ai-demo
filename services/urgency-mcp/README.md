@@ -16,6 +16,20 @@ mvn clean package
 java -jar target/urgency-mcp.jar
 ```
 
+Select provider explicitly when running standalone:
+
+```bash
+# OpenAI mode
+java -Durgency.embedding-provider=openai -jar target/urgency-mcp.jar
+
+# Local mode
+java -Durgency.embedding-provider=local -jar target/urgency-mcp.jar
+```
+
+Startup fail-fast behavior:
+- If `openai` mode is selected but API key/config is missing, startup aborts with a clear error.
+- If the required provider model file (`*-openai.dnet` or `*-local.dnet`) is missing/ambiguous in `urgency.model.dir`, startup aborts with a clear error.
+
 Server listens at `http://localhost:9090/urgency`.
 
 ## Embedding/model compatibility

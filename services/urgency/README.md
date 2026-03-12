@@ -42,6 +42,20 @@ mvn package
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
+Select provider explicitly when running standalone:
+
+```bash
+# OpenAI mode
+java -Durgency.embedding-provider=openai -jar target/quarkus-app/quarkus-run.jar
+
+# Local mode
+java -Durgency.embedding-provider=local -jar target/quarkus-app/quarkus-run.jar
+```
+
+Startup fail-fast behavior:
+- If `openai` mode is selected but API key/config is missing, service startup aborts with a clear error.
+- If the required provider model file (`*-openai.dnet` or `*-local.dnet`) is missing/ambiguous in `urgency.model.dir`, startup aborts with a clear error.
+
 ## Example
 
 ```bash
