@@ -84,16 +84,6 @@
     color: #d4d4d4;
 }
 
-.log-entry.log-entry-coding-highlight {
-    border-left-color: #ff9800;
-    background: rgba(255, 152, 0, 0.08);
-}
-
-.log-entry.log-entry-coding-highlight .log-entry-message {
-    color: #ffb74d;
-    font-weight: 700;
-}
-
 /* List Items */
 .list-item {
     padding: 1rem;
