@@ -6,6 +6,7 @@ import com.example.appointment.domain.model.Comment;
 import com.example.appointment.domain.model.TicketPullRequest;
 import com.example.appointment.dto.*;
 import com.example.appointment.external.CodingAssistantClient;
+import com.example.appointment.external.TriageClient;
 import com.example.appointment.mapper.TicketMapper;
 import com.example.appointment.mapper.TicketTypeTeamMapper;
 import com.example.appointment.service.adapter.CommentService;
@@ -48,6 +49,10 @@ public class TicketService {
     @Inject
     @RestClient
     CodingAssistantClient codingAssistantClient;
+
+    @Inject
+    @RestClient
+    TriageClient triageClient;
 
     @Inject
     IncomingRequestService incomingRequestService;
@@ -102,6 +107,7 @@ public class TicketService {
         TicketDto ticketDto = ticketMapper.toTicketDto(ticket);
 
         incomingRequestService.markAsConvertedToTicket(dto.incomingRequestId());
+        notifyTicketSyncUpsertBestEffort(ticket, "dispatch-submit");
 
         return ticketDto;
     }
@@ -126,6 +132,7 @@ public class TicketService {
                 null
         );
 
+        notifyTicketSyncUpsertBestEffort(ticket, "manual-submit");
         return ticketMapper.toTicketDto(ticket);
     }
 
@@ -153,6 +160,7 @@ public class TicketService {
                 dto.aiPayloadJson()
         );
 
+        notifyTicketSyncUpsertBestEffort(ticket, "ai-submit");
         return ticketMapper.toTicketDto(ticket);
     }
 
@@ -329,6 +337,8 @@ public class TicketService {
                 ticket.getIncomingRequestId(),
                 null
         );
+
+        notifyTicketSyncDeleteBestEffort(ticket.getId(), ticket.getIncomingRequestId(), "rollback-to-dispatch");
 
         return new TicketMapper().toTicketDto(ticket);
     }
@@ -529,6 +539,66 @@ public class TicketService {
         }
     }
 
+    private void notifyTicketSyncUpsertBestEffort(Ticket ticket, String source) {
+        if (ticket == null || ticket.getId() == null || ticket.getTicketType() == null || ticket.getOriginalRequest() == null) {
+            return;
+        }
+        try {
+            triageClient.notifyTicketUpsert(new TicketSyncUpsertDto(
+                    ticket.getId(),
+                    ticket.getTicketType().name(),
+                    ticket.getOriginalRequest()
+            ));
+            eventService.logEvent(
+                    EventType.SYSTEM_STEP,
+                    EventSeverity.INFO,
+                    "ticketing-api",
+                    "Ticket sync upsert notification sent for ticket #" + ticket.getId() + " (" + source + ").",
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
+        } catch (Exception e) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "ticketing-api",
+                    "Ticket sync upsert notification failed for ticket #" + ticket.getId() + " (" + source + "): " + e.getMessage(),
+                    ticket.getId(),
+                    ticket.getIncomingRequestId(),
+                    null
+            );
+        }
+    }
+
+    private void notifyTicketSyncDeleteBestEffort(Long ticketId, Long incomingRequestId, String source) {
+        if (ticketId == null) {
+            return;
+        }
+        try {
+            triageClient.notifyTicketDelete(ticketId);
+            eventService.logEvent(
+                    EventType.SYSTEM_STEP,
+                    EventSeverity.INFO,
+                    "ticketing-api",
+                    "Ticket sync delete notification sent for ticket #" + ticketId + " (" + source + ").",
+                    ticketId,
+                    incomingRequestId,
+                    null
+            );
+        } catch (Exception e) {
+            eventService.logEvent(
+                    EventType.ERROR_OCCURRED,
+                    EventSeverity.WARNING,
+                    "ticketing-api",
+                    "Ticket sync delete notification failed for ticket #" + ticketId + " (" + source + "): " + e.getMessage(),
+                    ticketId,
+                    incomingRequestId,
+                    null
+            );
+        }
+    }
+
     private String filterAiPayloadForCurrentActor(String aiPayloadJson) {
         if (aiPayloadJson == null || aiPayloadJson.isBlank()) {
             return aiPayloadJson;
@@ -631,6 +701,9 @@ public class TicketService {
         if (isBugTicketType(ticket.getTicketType())) {
             triggerCodingAssistantBestEffort(ticket);
         }
+
+        // Only after successful triage result is accepted into helpdesk state.
+        notifyTicketSyncUpsertBestEffort(ticket, "ai-triage-success");
 
     }
 
