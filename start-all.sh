@@ -6,6 +6,35 @@ if [ -z "$OPENAI_API_KEY" ]; then
   echo "WARN: OPENAI_API_KEY is not set; similar-tickets will use services/similar-tickets/config/config-prod.yaml if present"
 fi
 
+SHOW_EVENT_LOG="${SHOW_EVENT_LOG:-false}"
+UI_ZOOM_PERCENT="${UI_ZOOM_PERCENT:-100}"
+for arg in "$@"; do
+  case "$arg" in
+    -show-event-log|--show-event-log)
+      SHOW_EVENT_LOG=true
+      ;;
+    -ui-zoom=*|--ui-zoom=*)
+      UI_ZOOM_PERCENT="${arg#*=}"
+      ;;
+    -h|--help)
+      echo "Usage: ./start-all.sh [-show-event-log] [-ui-zoom=<percent>]"
+      echo "  -show-event-log   Show left-side event/activity log panels in UIs (default: hidden)"
+      echo "  -ui-zoom=<n>      Set default UI zoom percent for all service dashboards (default: 100)"
+      exit 0
+      ;;
+    *)
+      echo "ERROR: Unknown option '$arg'"
+      echo "Usage: ./start-all.sh [-show-event-log] [-ui-zoom=<percent>]"
+      exit 1
+      ;;
+  esac
+done
+
+if ! [[ "$UI_ZOOM_PERCENT" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: -ui-zoom must be a positive integer (got '$UI_ZOOM_PERCENT')"
+  exit 1
+fi
+
 # Demo-data toggles (override via env vars when needed)
 HELPDESK_DEMO_DATA="${HELPDESK_DEMO_DATA:-true}"
 COMPANY_RAG_DEMO_DATA="${COMPANY_RAG_DEMO_DATA:-true}"
@@ -175,6 +204,8 @@ wait_for_http "docling" "http://localhost:5001/openapi.json" 180
 # --- Start application services ---
 echo "=== Building services ==="
 echo "  demo flags: helpdesk=$HELPDESK_DEMO_DATA company-rag=$COMPANY_RAG_DEMO_DATA similar-tickets=$SIMILAR_TICKETS_DEMO_DATA"
+echo "  ui flags: show-event-log=$SHOW_EVENT_LOG"
+echo "  ui zoom: $UI_ZOOM_PERCENT%"
 
 build_service "medicapt-user-facing" "services/medicapt-user-facing"
 build_service "helpdesk" "services/helpdesk"
@@ -189,14 +220,14 @@ build_service "coding-assistant" "services/coding-assistant"
 echo "=== Starting services (deterministic order) ==="
 
 start_service "medicapt-user-facing" "services/medicapt-user-facing" "http://localhost:8083" java -jar target/quarkus-app/quarkus-run.jar
-start_service "helpdesk" "services/helpdesk" "http://localhost:8080" java -jar $HELPDESK_DEMO_FLAG target/quarkus-app/quarkus-run.jar
-start_service "urgency" "services/urgency" "http://localhost:8086" java -jar target/quarkus-app/quarkus-run.jar
+start_service "helpdesk" "services/helpdesk" "http://localhost:8080" env HELPDESK_UI_SHOW_EVENT_LOG="$SHOW_EVENT_LOG" HELPDESK_UI_DEFAULT_ZOOM_PERCENT="$UI_ZOOM_PERCENT" java -jar $HELPDESK_DEMO_FLAG target/quarkus-app/quarkus-run.jar
+start_service "urgency" "services/urgency" "http://localhost:8086" env URGENCY_EMBEDDING_PROVIDER=openai java -jar target/quarkus-app/quarkus-run.jar
 # Optional MCP demo variant:
 # start_service "urgency-mcp" "services/urgency-mcp" "http://localhost:9090/urgency" java -jar target/urgency-mcp.jar
-start_service "ai-triage" "services/ai-triage" "http://localhost:8081" java -jar target/quarkus-app/quarkus-run.jar
-start_service "company-rag" "services/company-rag" "http://localhost:8084" java -jar $COMPANY_RAG_DEMO_FLAG target/quarkus-app/quarkus-run.jar
-start_service "similar-tickets" "services/similar-tickets" "http://localhost:8082" java -Dconfig.profile=prod $SIMILAR_TICKETS_DEMO_FLAG -jar target/similarity.jar
-start_service "coding-assistant" "services/coding-assistant" "http://localhost:8085" java -jar target/quarkus-app/quarkus-run.jar
+start_service "ai-triage" "services/ai-triage" "http://localhost:8081" env AI_TRIAGE_UI_SHOW_EVENT_LOG="$SHOW_EVENT_LOG" AI_TRIAGE_UI_DEFAULT_ZOOM_PERCENT="$UI_ZOOM_PERCENT" java -jar target/quarkus-app/quarkus-run.jar
+start_service "company-rag" "services/company-rag" "http://localhost:8084" env UI_SHOW_EVENT_LOG="$SHOW_EVENT_LOG" UI_FONT_ZOOM_DEFAULT="$UI_ZOOM_PERCENT" java -jar $COMPANY_RAG_DEMO_FLAG target/quarkus-app/quarkus-run.jar
+start_service "similar-tickets" "services/similar-tickets" "http://localhost:8082" java -Dconfig.profile=prod -Dui.show.event-log="$SHOW_EVENT_LOG" -Dui.font.zoom.default="$UI_ZOOM_PERCENT" $SIMILAR_TICKETS_DEMO_FLAG -jar target/similarity.jar
+start_service "coding-assistant" "services/coding-assistant" "http://localhost:8085" env CODING_ASSISTANT_UI_DEFAULT_ZOOM_PERCENT="$UI_ZOOM_PERCENT" java -jar target/quarkus-app/quarkus-run.jar
 
 echo ""
 echo "=== All services starting ==="

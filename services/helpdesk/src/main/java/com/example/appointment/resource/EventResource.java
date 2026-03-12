@@ -12,7 +12,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.Map;
 
 @Path("/api/events")
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,6 +24,12 @@ public class EventResource {
     @ConfigProperty(name = "event.limit.max")
     int maxEventLimit;
 
+    @ConfigProperty(name = "helpdesk.ui.show-event-log", defaultValue = "false")
+    boolean showEventLog;
+
+    @ConfigProperty(name = "helpdesk.ui.default-zoom-percent", defaultValue = "100")
+    int defaultZoomPercent;
+
     @GET
     @Path("/recent")
     public List<EventDto> getRecentEvents(
@@ -31,5 +37,14 @@ public class EventResource {
             @QueryParam("limit") Integer limit) {
         int eventLimit = limit != null ? Math.min(limit, maxEventLimit) : maxEventLimit;
         return eventService.getRecentEvents(dateTime, eventLimit);
+    }
+
+    @GET
+    @Path("/config")
+    public Map<String, Object> getUiConfig() {
+        return Map.of(
+                "showEventLog", showEventLog,
+                "defaultZoomPercent", defaultZoomPercent
+        );
     }
 }

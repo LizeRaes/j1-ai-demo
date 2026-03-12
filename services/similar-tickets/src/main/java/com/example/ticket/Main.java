@@ -56,7 +56,7 @@ public class Main {
 		EmbeddingService embeddingService = new EmbeddingService(embeddingModel);
 		VectorService vectorService = new VectorService(embeddingStore, embeddingModel, dataSource, storeConfig);
 
-		routing.register("/api/similarity", new SimilarityService(config.get("ui.font.zoom.default"), embeddingService, vectorService));
+		routing.register("/api/similarity", new SimilarityService(config.get("ui"), embeddingService, vectorService));
 	}
 
 	private static String resolveOpenAiApiKey(String configuredApiKey) {

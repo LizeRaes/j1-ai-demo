@@ -23,6 +23,9 @@ public class HomeResource {
     @ConfigProperty(name = "ai-triage.ui.polling.interval-ms")
     Integer pollingIntervalMs;
 
+    @ConfigProperty(name = "ai-triage.ui.show-event-log", defaultValue = "false")
+    Boolean showEventLog;
+
     @ConfigProperty(name = "ai-triage.helpdesk.base-url")
     String helpdeskBaseUrl;
 
@@ -33,6 +36,7 @@ public class HomeResource {
                 .data("defaultZoomPercent", defaultZoomPercent)
                 .data("pollingEnabled", pollingEnabled)
                 .data("pollingIntervalMs", pollingIntervalMs)
+                .data("showEventLog", showEventLog)
                 .data("documentsApiBase", "/api/documents")
                 .data("helpdeskAppBase", helpdeskBaseUrl)
                 .render();

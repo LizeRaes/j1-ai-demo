@@ -182,18 +182,23 @@ async function loadDefaultZoom() {
         const response = await fetch(`${API_BASE}/tickets/config`);
         if (response.ok) {
             const config = await response.json();
-            const savedZoom = localStorage.getItem('fontZoom');
-            // Use saved zoom if available, otherwise use default from config
-            const initialZoom = savedZoom ? parseInt(savedZoom) : config.defaultZoom;
-            setZoom(initialZoom);
+            setZoom(Number(config.defaultZoom || 100));
+            applyEventLogVisibility(config.showEventLog === true);
         }
     } catch (error) {
         console.error('Error loading zoom config:', error);
-        // Fallback to saved zoom or default
-        const savedZoom = localStorage.getItem('fontZoom');
-        if (savedZoom) {
-            setZoom(parseInt(savedZoom));
-        }
+        setZoom(100);
+        applyEventLogVisibility(false);
+    }
+}
+
+function applyEventLogVisibility(showEventLog) {
+    if (showEventLog) {
+        return;
+    }
+    const leftPane = document.getElementById('left-pane');
+    if (leftPane && !leftPane.classList.contains('collapsed')) {
+        toggleLeftPane();
     }
 }
 

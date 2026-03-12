@@ -2,29 +2,29 @@ package com.example.appointment.embedding;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
-import dev.langchain4j.model.openai.OpenAiEmbeddingModelName;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.enterprise.inject.Instance;
 
 /**
  * OpenAI embeddings via LangChain4j. Uses OPENAI_API_KEY env var.
  */
+@ApplicationScoped
 public class OpenAIEmbeddingGenerator implements EmbeddingGenerator {
 
-    private final EmbeddingModel model;
+    private final Instance<EmbeddingModel> embeddingModelInstance;
 
-    public OpenAIEmbeddingGenerator() {
-        String apiKey = System.getenv("OPENAI_API_KEY");
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("OPENAI_API_KEY environment variable is required for OpenAI embeddings");
-        }
-        this.model = OpenAiEmbeddingModel.builder()
-                .apiKey(apiKey)
-                .modelName(OpenAiEmbeddingModelName.TEXT_EMBEDDING_3_SMALL)
-                .build();
+    @Inject
+    public OpenAIEmbeddingGenerator(Instance<EmbeddingModel> embeddingModelInstance) {
+        this.embeddingModelInstance = embeddingModelInstance;
     }
 
     @Override
     public float[] embed(String text) {
+        if (embeddingModelInstance.isUnsatisfied()) {
+            throw new IllegalStateException("OpenAI embedding model is not configured. Set OPENAI_API_KEY and LangChain4j OpenAI settings.");
+        }
+        EmbeddingModel model = embeddingModelInstance.get();
         Embedding embedding = model.embed(text).content();
         return embedding.vector();
     }

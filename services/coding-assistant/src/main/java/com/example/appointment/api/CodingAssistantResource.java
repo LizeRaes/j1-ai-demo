@@ -16,6 +16,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.RestStreamElementType;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import java.util.Map;
 
 @Path("/api/coding-assistant")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -27,6 +30,9 @@ public class CodingAssistantResource {
 
     @Inject
     JobLogStream jobLogStream;
+
+    @ConfigProperty(name = "coding-assistant.ui.default-zoom-percent", defaultValue = "100")
+    int defaultZoomPercent;
 
     @POST
     @Path("/jobs")
@@ -46,5 +52,11 @@ public class CodingAssistantResource {
     @RestStreamElementType(MediaType.APPLICATION_JSON)
     public Multi<JobLogService.LogEntry> streamLogs() {
         return jobLogStream.stream();
+    }
+
+    @GET
+    @Path("/config")
+    public Map<String, Object> getUiConfig() {
+        return Map.of("defaultZoomPercent", defaultZoomPercent);
     }
 }

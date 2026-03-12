@@ -10,6 +10,7 @@ import io.quarkiverse.langchain4j.RegisterAiService;
 import java.util.List;
 
 @RegisterAiService
+// @McpToolBox("urgency")
 public interface AiTriageAssistant {
 
     @SystemMessage("""

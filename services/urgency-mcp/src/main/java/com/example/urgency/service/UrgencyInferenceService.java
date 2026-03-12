@@ -1,31 +1,24 @@
-package com.example.appointment.service;
+package com.example.urgency.service;
 
-import com.example.appointment.embedding.DJLEmbeddingGenerator;
-import com.example.appointment.embedding.EmbeddingGenerator;
-import com.example.appointment.embedding.OpenAIEmbeddingGenerator;
+import com.example.urgency.embedding.DJLEmbeddingGenerator;
+import com.example.urgency.embedding.EmbeddingGenerator;
+import com.example.urgency.embedding.OpenAIEmbeddingGenerator;
 import deepnetts.net.FeedForwardNetwork;
 import deepnetts.util.FileIO;
-import jakarta.annotation.PreDestroy;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import io.helidon.config.Config;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApplicationScoped
 public class UrgencyInferenceService {
 
-    @ConfigProperty(name = "urgency.model.dir")
-    String modelDir;
-
-    @ConfigProperty(name = "urgency.embedding-provider", defaultValue = "local")
-    String embeddingProvider;
-
-    @Inject
-    OpenAIEmbeddingGenerator openAIEmbeddingGenerator;
+    private static final String PROVIDER_PROPERTY = "urgency.embedding-provider";
+    private static final String MODEL_DIR_PROPERTY = "urgency.model.dir";
+    private static final String DEFAULT_PROVIDER = "local";
+    private static final String DEFAULT_MODEL_DIR = "model";
+    private static final Config CONFIG = Config.create();
 
     private volatile FeedForwardNetwork scorerNet;
     private volatile EmbeddingGenerator embeddingGenerator;
@@ -34,6 +27,7 @@ public class UrgencyInferenceService {
         if (complaint == null || complaint.isBlank()) {
             throw new IllegalArgumentException("complaint is required");
         }
+
         String provider = normalizedProvider();
         FeedForwardNetwork net = getScorerNet(provider);
         EmbeddingGenerator generator = getEmbeddingGenerator(provider);
@@ -45,7 +39,20 @@ public class UrgencyInferenceService {
     }
 
     private String normalizedProvider() {
-        return "openai".equalsIgnoreCase(embeddingProvider) ? "openai" : "local";
+        String raw = readConfig(PROVIDER_PROPERTY, DEFAULT_PROVIDER);
+        return "openai".equalsIgnoreCase(raw) ? "openai" : "local";
+    }
+
+    private String modelDir() {
+        return readConfig(MODEL_DIR_PROPERTY, DEFAULT_MODEL_DIR);
+    }
+
+    private String readConfig(String key, String defaultValue) {
+        String fromSystemProperty = System.getProperty(key);
+        if (fromSystemProperty != null && !fromSystemProperty.isBlank()) {
+            return fromSystemProperty;
+        }
+        return CONFIG.get(key).asString().orElse(defaultValue);
     }
 
     private FeedForwardNetwork getScorerNet(String provider) {
@@ -74,7 +81,7 @@ public class UrgencyInferenceService {
         synchronized (this) {
             if (embeddingGenerator == null) {
                 embeddingGenerator = "openai".equals(provider)
-                        ? openAIEmbeddingGenerator
+                        ? new OpenAIEmbeddingGenerator()
                         : new DJLEmbeddingGenerator();
             }
             return embeddingGenerator;
@@ -82,7 +89,7 @@ public class UrgencyInferenceService {
     }
 
     private Path resolveScorerModelPath(String provider) {
-        Path dir = Path.of(modelDir).toAbsolutePath().normalize();
+        Path dir = Path.of(modelDir()).toAbsolutePath().normalize();
         String suffix = provider + ".dnet";
 
         List<Path> matches = new ArrayList<>();
@@ -112,16 +119,5 @@ public class UrgencyInferenceService {
         }
 
         return matches.get(0);
-    }
-
-    @PreDestroy
-    void close() {
-        EmbeddingGenerator eg = embeddingGenerator;
-        if (eg instanceof AutoCloseable ac) {
-            try {
-                ac.close();
-            } catch (Exception ignored) {
-            }
-        }
     }
 }

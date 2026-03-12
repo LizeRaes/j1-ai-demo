@@ -10,7 +10,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #f5f5f5;
+    background-color: #e8d9cc;
     height: 100vh;
     overflow: hidden;
     font-size: calc(1rem * var(--font-zoom) / 100);
@@ -25,9 +25,9 @@ body {
     text-align: center;
     font-size: 1rem;
     font-weight: 700;
-    color: #1f2937;
-    background: #eef2f7;
-    border-bottom: 1px solid #d1d5db;
+    color: #3e2515;
+    background: #cfa787;
+    border-bottom: 1px solid #b28663;
 }
 
 .zoom-controls {
@@ -134,15 +134,15 @@ body {
 .expand-button {
     position: fixed;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: calc(2.5rem + 8px);
+    transform: none;
     background-color: #2d2d2d;
     color: #e0e0e0;
     border: none;
     border-right: 2px solid #444;
-    padding: 15px 8px;
+    padding: 6px 8px;
     cursor: pointer;
-    font-size: calc(14px * var(--font-zoom) / 100);
+    font-size: calc(12px * var(--font-zoom) / 100);
     z-index: 1000;
     transition: background-color 0.2s;
     display: none;

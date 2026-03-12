@@ -2,8 +2,12 @@ const logsEl = document.getElementById("logs");
 const statusEl = document.getElementById("status");
 const ASSISTANT_PREVIEW_LIMIT = 80;
 const MAX_LOGS = 500;
+const ZOOM_STEP = 10;
+const MIN_ZOOM = 50;
+const MAX_ZOOM = 200;
 let logsState = [];
 let eventSource = null;
+let currentZoom = 100;
 
 function startSse() {
   if (eventSource) {
@@ -76,6 +80,7 @@ function formatMessage(rawMessage) {
   const isFinalAssistant = rawMessage.includes("Final agent message:");
   const isCallback = rawMessage.startsWith("Callback") || rawMessage.startsWith("Failed to post callback");
   const isJobDone = rawMessage.includes(" is done (");
+  const isIncomingJob = rawMessage.startsWith("Job accepted.");
 
   if (isAssistantLine && !isFinalAssistant) {
     return {
@@ -95,7 +100,7 @@ function formatMessage(rawMessage) {
       message: rawMessage,
     };
   }
-  if (isJobDone) {
+  if (isJobDone || isIncomingJob) {
     return {
       cssClass: "job-done",
       message: rawMessage,
@@ -122,6 +127,42 @@ function escapeHtml(value) {
 }
 
 startSse();
+
+function setZoom(zoom) {
+  currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
+  document.documentElement.style.setProperty("--font-zoom", currentZoom.toString());
+  const zoomLevelEl = document.getElementById("zoom-level");
+  if (zoomLevelEl) {
+    zoomLevelEl.textContent = `${currentZoom}%`;
+  }
+  localStorage.setItem("codingAssistantUiZoom", currentZoom.toString());
+}
+
+function zoomIn() {
+  setZoom(currentZoom + ZOOM_STEP);
+}
+
+function zoomOut() {
+  setZoom(currentZoom - ZOOM_STEP);
+}
+
+async function loadDefaultZoom() {
+  try {
+    const response = await fetch("/api/coding-assistant/config");
+    if (response.ok) {
+      const config = await response.json();
+      setZoom(Number(config.defaultZoomPercent || 100));
+      return;
+    }
+  } catch (error) {
+    // Ignore and use fallback below
+  }
+  setZoom(100);
+}
+
+document.getElementById("zoom-in")?.addEventListener("click", zoomIn);
+document.getElementById("zoom-out")?.addEventListener("click", zoomOut);
+loadDefaultZoom();
 
 window.addEventListener("beforeunload", () => {
   if (eventSource) {

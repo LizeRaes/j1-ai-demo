@@ -17,6 +17,7 @@ import static java.util.stream.Collectors.toMap;
 public class SimilarityService implements HttpService {
 
     private final int defaultZoom;
+    private final boolean showEventLog;
 
     private final LogService logService;
     private final TicketStore ticketStore;
@@ -24,7 +25,8 @@ public class SimilarityService implements HttpService {
     private final VectorService vectorService;
 
     public SimilarityService(Config config, EmbeddingService embeddingService, VectorService vectorService) {
-       defaultZoom = config.asInt().orElse(100);
+       defaultZoom = config.get("font.zoom.default").asInt().orElse(100);
+       showEventLog = config.get("show.event-log").asBoolean().orElse(false);
        this.logService = new LogService();
        this.ticketStore = new TicketStore();
        this.embeddingService = embeddingService;
@@ -62,7 +64,10 @@ public class SimilarityService implements HttpService {
 
     private void config(ServerRequest serverRequest, ServerResponse serverResponse) {
         serverResponse.header(HeaderNames.CONTENT_TYPE, "application/json")
-                .send(Map.of("defaultZoom", defaultZoom));
+                .send(Map.of(
+                        "defaultZoom", defaultZoom,
+                        "showEventLog", showEventLog
+                ));
     }
 
     private void logs(ServerRequest serverRequest, ServerResponse serverResponse) {
