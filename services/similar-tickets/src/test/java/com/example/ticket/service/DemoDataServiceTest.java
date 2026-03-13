@@ -36,7 +36,7 @@ public class DemoDataServiceTest {
         demoDataService.loadDemoData();
 
         verify(vectorService, times(1)).deleteAllTickets();
-        verify(logService, times(7)).addLog(anyString(), anyString());
+        verify(logService, times(12)).addLog(anyString(), anyString());
         verify(vectorService, atLeastOnce()).upsertTicket(any(), any(), any(), any());
     }
 

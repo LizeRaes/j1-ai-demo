@@ -8,32 +8,37 @@ server:
           welcome: "index.html"
 
 langchain4j:
-  oracle:
-    embedding-store:
-      data-source:
-        service-registry.named: "ora-ucp-ds"
-      enabled: true
-      vector-index-create-option: CREATE_IF_NOT_EXISTS
-      ivf-index:
-        - name: TICKET_EMBEDDINGS_IVF
+  providers:
+    open-ai:
+      api-key: "${OPENAI_API_KEY}"
+
+  models:
+    ticket-embedding-model:
+      provider: open-ai
+      model-name: "text-embedding-3-large"
+
+  embedding-stores:
+    oracle:
+      embedding-store:
+        data-source:
+          service-registry.named: "ora-ucp-ds"
+        enabled: true
+        vector-index-create-option: CREATE_IF_NOT_EXISTS
+        ivf-index:
+          - name: TICKET_EMBEDDINGS_IVF
+            create-option: CREATE_IF_NOT_EXISTS
+            neighbor-partitions: 2
+            sample-per-partition: 256
+            min-vectors-per-partition: 64
+            target-accuracy: 90
+            degree-of-parallelism: 2
+        embedding-table:
+          name: TICKET_EMBEDDINGS
+          id-column: ID
+          embedding-column: EMBEDDING
+          text-column: TEXT
+          metadata-column: METADATA
           create-option: CREATE_IF_NOT_EXISTS
-          neighbor-partitions: 2
-          sample-per-partition: 256
-          min-vectors-per-partition: 64
-          target-accuracy: 90
-          degree-of-parallelism: 2
-      embedding-table:
-        name: TICKET_EMBEDDINGS
-        id-column: ID
-        embedding-column: EMBEDDING
-        text-column: TEXT
-        metadata-column: METADATA
-        create-option: CREATE_IF_NOT_EXISTS
-
-
-openai:
-  api-key: ${OPENAI_API_KEY=}
-  embedding-model: "text-embedding-3-large"
 
 data:
   sources:
