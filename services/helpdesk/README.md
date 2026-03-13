@@ -62,6 +62,7 @@ representatives and engineers use this system to:
     - Real-time event stream in side pane
     - Color-coded events by type and severity
     - Click events to navigate to related tickets
+    - Hidden by default in full-stack startup
 
 ## Technology Stack
 
@@ -122,7 +123,7 @@ Configuration in `src/main/resources/application.properties`:
 
 - `app.coding-assistant.enabled=true|false`
 - `app.coding-assistant.repo-url=...` (set this directly in properties to your own repo URL)
-- `app.coding-assistant.confidence-threshold=0.60`
+- `app.coding-assistant.confidence-threshold=0.55`
 - `app.coding-assistant.callback.auth-token=...`
 
 How to disable quickly:

@@ -2,6 +2,7 @@ const API_BASE = '/api/triage/v1';
 const DEFAULT_ZOOM_PERCENT = Number(document.body.dataset.defaultZoomPercent || '100');
 const POLLING_ENABLED = (document.body.dataset.pollingEnabled || 'true') === 'true';
 const POLLING_INTERVAL_MS = Number(document.body.dataset.pollingIntervalMs || '2000');
+const SHOW_EVENT_LOG = (document.body.dataset.showEventLog || 'false') === 'true';
 const DOCUMENT_API_BASE = document.body.dataset.documentsApiBase || '';
 const HELPDESK_APP_BASE = (document.body.dataset.helpdeskAppBase || '').replace(/\/$/, '');
 const ZOOM_STEP = 10;
@@ -13,10 +14,15 @@ let shouldFollowEventLog = true;
 let shouldFollowTicketList = true;
 
 function initializeUi() {
-    const savedZoom = localStorage.getItem('uiZoom');
-    currentZoom = savedZoom ? parseInt(savedZoom, 10) : DEFAULT_ZOOM_PERCENT;
+    currentZoom = DEFAULT_ZOOM_PERCENT;
     applyZoom();
     loadUiData();
+    if (!SHOW_EVENT_LOG) {
+        const panel = document.getElementById('eventsPanel');
+        if (panel && !panel.classList.contains('collapsed')) {
+            toggleEventsPanel();
+        }
+    }
     if (POLLING_ENABLED) {
         setInterval(loadUiData, Math.max(500, POLLING_INTERVAL_MS));
     }
@@ -93,7 +99,7 @@ function getDocumentTypeLabel(v) {
     return i >= 0 && i < n.length - 1 ? n.substring(i + 1).toLowerCase() : 'unknown';
 }
 
-async function openDocument(documentName, documentLinkOrName) {
+async function openDocument(documentName, documentLinkOrName, citation) {
     const normalizedName = extractDocumentName(documentLinkOrName || documentName);
     if (!normalizedName) return;
     if (!isTextPreviewableDocument(normalizedName)) {
@@ -103,17 +109,96 @@ async function openDocument(documentName, documentLinkOrName) {
     const response = await fetch(DOCUMENT_API_BASE + '/content/' + encodeURIComponent(normalizedName));
     if (!response.ok) throw new Error('Could not load ' + normalizedName);
     const payload = await response.json();
-    showDocumentPreviewModal(normalizedName, payload.content || '');
+    showDocumentPreviewModal(normalizedName, payload.content || '', citation || '');
 }
 
-function showDocumentPreviewModal(documentName, content) {
+function isMarkdownControlChar(ch) {
+    return ch === '*' || ch === '_' || ch === '`' || ch === '~' || ch === '#' || ch === '>' ||
+        ch === '[' || ch === ']' || ch === '(' || ch === ')' || ch === '!' || ch === '|';
+}
+
+function buildSearchProjection(text) {
+    const chars = [];
+    const map = [];
+    let previousWasSpace = false;
+    for (let i = 0; i < text.length; i += 1) {
+        const ch = text[i];
+        if (isMarkdownControlChar(ch)) {
+            continue;
+        }
+        if (/\s/.test(ch)) {
+            if (!previousWasSpace) {
+                chars.push(' ');
+                map.push(i);
+                previousWasSpace = true;
+            }
+            continue;
+        }
+        previousWasSpace = false;
+        chars.push(ch.toLowerCase());
+        map.push(i);
+    }
+    return { projected: chars.join(''), map };
+}
+
+function stripBoundaryQuotes(text) {
+    return (text || '').replace(/^[\s"'`“”‘’]+|[\s"'`“”‘’]+$/g, '');
+}
+
+function findCitationRangeInContent(content, citation) {
+    const citationText = stripBoundaryQuotes(citation || '').trim();
+    if (!citationText || citationText.length < 6) {
+        return null;
+    }
+
+    const exactIndex = content.toLowerCase().indexOf(citationText.toLowerCase());
+    if (exactIndex >= 0) {
+        return { start: exactIndex, end: exactIndex + citationText.length };
+    }
+
+    const contentProjection = buildSearchProjection(content);
+    const citationProjection = buildSearchProjection(citationText);
+    if (!citationProjection.projected || citationProjection.projected.length < 6) {
+        return null;
+    }
+
+    const projectedIndex = contentProjection.projected.indexOf(citationProjection.projected);
+    if (projectedIndex < 0) {
+        return null;
+    }
+
+    const mappedStart = contentProjection.map[projectedIndex];
+    const mappedEnd = contentProjection.map[projectedIndex + citationProjection.projected.length - 1];
+    if (!Number.isInteger(mappedStart) || !Number.isInteger(mappedEnd)) {
+        return null;
+    }
+    return { start: mappedStart, end: mappedEnd + 1 };
+}
+
+function buildHighlightedPreviewHtml(content, citation) {
+    const range = findCitationRangeInContent(content, citation);
+    if (!range) {
+        return escapeHtml(content);
+    }
+    const before = escapeHtml(content.slice(0, range.start));
+    const hit = escapeHtml(content.slice(range.start, range.end));
+    const after = escapeHtml(content.slice(range.end));
+    return before + '<mark class="doc-citation-highlight" style="background:#fff59d;color:#111;padding:0 .08rem;border-radius:2px;">' + hit + '</mark>' + after;
+}
+
+function showDocumentPreviewModal(documentName, content, citation) {
     const overlay = document.createElement('div');
     overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.65);z-index:3000;display:flex;align-items:center;justify-content:center;';
     const modal = document.createElement('div');
     modal.style = 'background:#fff;max-width:70%;max-height:80%;overflow:auto;border-radius:8px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,0.25);';
-    modal.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><strong>' + escapeHtml(documentName) + '</strong><button id="doc-preview-close">Close</button></div><pre style="white-space:pre-wrap;word-wrap:break-word;line-height:1.5;">' + escapeHtml(content) + '</pre>';
+    const previewHtml = buildHighlightedPreviewHtml(content, citation);
+    modal.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><strong>' + escapeHtml(documentName) + '</strong><button id="doc-preview-close">Close</button></div><pre style="white-space:pre-wrap;word-wrap:break-word;line-height:1.5;">' + previewHtml + '</pre>';
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    const mark = modal.querySelector('.doc-citation-highlight');
+    if (mark) {
+        mark.scrollIntoView({ block: 'center' });
+    }
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });
@@ -133,7 +218,7 @@ function renderTicket(ticket) {
         const docName = c.documentName || 'Unknown Document';
         const docLink = c.documentLink || docName;
         const actionLabel = isTextPreviewableDocument(docLink) ? 'Preview' : 'Download';
-        return '<div class="policy-citation"><strong>' + escapeHtml(docName) + '</strong> [' + escapeHtml(getDocumentTypeLabel(docLink)) + '] <a href="#" class="doc-action-link" data-doc-name="' + escapeHtml(docName) + '" data-doc-link="' + escapeHtml(docLink) + '">' + actionLabel + '</a><div>' + escapeHtml(c.citation || '') + '</div></div>';
+        return '<div class="policy-citation"><strong>' + escapeHtml(docName) + '</strong> [' + escapeHtml(getDocumentTypeLabel(docLink)) + '] <a href="#" class="doc-action-link" data-doc-name="' + escapeHtml(docName) + '" data-doc-link="' + escapeHtml(docLink) + '" data-citation="' + escapeHtml(c.citation || '') + '">' + actionLabel + '</a><div>' + escapeHtml(c.citation || '') + '</div></div>';
     }).join('');
     const fail = ticket.status === 'FAILED' && ticket.failReason ? '<div class="fail-reason">' + escapeHtml(ticket.failReason) + '</div>' : '';
     const reqId = ticket.incomingRequestId ? ('Request ID: ' + ticket.incomingRequestId + ' • ') : '';
@@ -166,7 +251,11 @@ function wireDocumentActions(root) {
         link.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                await openDocument(e.currentTarget.getAttribute('data-doc-name'), e.currentTarget.getAttribute('data-doc-link'));
+                await openDocument(
+                    e.currentTarget.getAttribute('data-doc-name'),
+                    e.currentTarget.getAttribute('data-doc-link'),
+                    e.currentTarget.getAttribute('data-citation') || ''
+                );
             } catch (error) {
                 console.error('Error opening document:', error);
             }

@@ -321,11 +321,15 @@ public class DocumentService {
 
     private List<Path> scanDocumentsDirectory() throws IOException {
         Path dirPath = getDocumentsDirectoryPath();
+        Path configDirPath = dirPath.resolve("config").normalize();
         if (!Files.exists(dirPath)) {
             return List.of();
         }
         try (Stream<Path> files = Files.walk(dirPath)) {
-            return files.filter(Files::isRegularFile).toList();
+            return files
+                    .filter(Files::isRegularFile)
+                    .filter(path -> !path.normalize().startsWith(configDirPath))
+                    .toList();
         }
     }
 

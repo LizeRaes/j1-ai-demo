@@ -1,14 +1,65 @@
+:root {
+  --font-zoom: 100;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f3f4f6;
+  background: #e6def5;
   color: #111827;
+  font-size: calc(1rem * var(--font-zoom) / 100);
 }
 
 .container {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 64px 20px 20px;
+}
+
+h1 {
+  background: #c8b5ec;
+  color: #2f1d58;
+  border: 1px solid #a88ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.zoom-controls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.zoom-button {
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #111827;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.zoom-button:hover {
+  background: #f3f4f6;
+}
+
+.zoom-level {
+  min-width: 52px;
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
 }
 
 h1 {
@@ -39,6 +90,16 @@ button {
 
 button:hover {
   background: #1d4ed8;
+}
+
+.zoom-controls .zoom-button {
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #111827;
+}
+
+.zoom-controls .zoom-button:hover {
+  background: #f3f4f6;
 }
 
 #status {

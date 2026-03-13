@@ -268,7 +268,7 @@ export function renderTicketDetail(ticket) {
                     e.preventDefault();
                     try {
                         if (isTextPreviewableDocument(citation.documentLink || citation.documentName)) {
-                            await showDocument(citation.documentName, citation.documentLink);
+                            await showDocument(citation.documentName, citation.documentLink, citation.citation || '');
                         } else {
                             downloadDocument(citation.documentName, citation.documentLink);
                         }
@@ -437,8 +437,7 @@ export async function loadTicketDetail(ticketId) {
 /**
  * Show document content in a modal/overlay
  */
-async function showDocument(documentName, documentLink) {
-    // Use documentLink if available (it might have the full path), otherwise use documentName
+async function showDocument(documentName, documentLink, citation) {
     const documentToFetch = documentLink || documentName;
 
     if (!documentToFetch) {
@@ -496,15 +495,29 @@ async function showDocument(documentName, documentLink) {
 
         // Document content
         const contentDiv = createElement('div', 'document-content');
-        contentDiv.style.whiteSpace = 'pre-wrap';
-        contentDiv.style.fontFamily = 'monospace';
         contentDiv.style.fontSize = '0.9rem';
         contentDiv.style.lineHeight = '1.5';
-        contentDiv.textContent = content;
+        contentDiv.style.maxWidth = '100%';
+        contentDiv.style.overflowWrap = 'anywhere';
+
+        const isMarkdown = (documentName || '').toLowerCase().endsWith('.md');
+        if (isMarkdown) {
+            contentDiv.classList.add('markdown-content');
+            contentDiv.innerHTML = renderMarkdownToHtml(content);
+        } else {
+            contentDiv.style.whiteSpace = 'pre-wrap';
+            contentDiv.style.fontFamily = 'monospace';
+            contentDiv.textContent = content;
+        }
 
         modal.appendChild(header);
         modal.appendChild(contentDiv);
         overlay.appendChild(modal);
+
+        const highlighted = highlightCitationInElement(contentDiv, citation || '');
+        if (highlighted) {
+            highlighted.scrollIntoView({block: 'center', behavior: 'smooth'});
+        }
 
         // Close on overlay click
         overlay.addEventListener('click', (e) => {
@@ -540,4 +553,239 @@ function downloadDocument(documentName, documentLink) {
     document.body.appendChild(a);
     a.click();
     a.remove();
+}
+
+function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value || '';
+    return div.innerHTML;
+}
+
+function stripBoundaryQuotes(text) {
+    return (text || '').replace(/^[\s"'`“”‘’]+|[\s"'`“”‘’]+$/g, '');
+}
+
+function isMarkdownControlChar(ch) {
+    return ch === '*' || ch === '_' || ch === '`' || ch === '~' || ch === '#' || ch === '>' ||
+        ch === '[' || ch === ']' || ch === '(' || ch === ')' || ch === '!' || ch === '|';
+}
+
+function buildSearchProjection(text, stripMarkdownChars) {
+    const chars = [];
+    const map = [];
+    let previousWasSpace = false;
+
+    for (let i = 0; i < text.length; i += 1) {
+        const ch = text[i];
+        if (stripMarkdownChars && isMarkdownControlChar(ch)) {
+            continue;
+        }
+        if (/\s/.test(ch)) {
+            if (!previousWasSpace) {
+                chars.push(' ');
+                map.push(i);
+                previousWasSpace = true;
+            }
+            continue;
+        }
+        previousWasSpace = false;
+        chars.push(ch.toLowerCase());
+        map.push(i);
+    }
+    return {projected: chars.join(''), map};
+}
+
+function findCitationRangeInText(text, citation) {
+    const citationText = stripBoundaryQuotes(citation).trim();
+    if (!citationText || citationText.length < 6) {
+        return null;
+    }
+
+    const exactIndex = text.toLowerCase().indexOf(citationText.toLowerCase());
+    if (exactIndex >= 0) {
+        return {start: exactIndex, end: exactIndex + citationText.length};
+    }
+
+    const textProjection = buildSearchProjection(text, false);
+    const citationProjection = buildSearchProjection(citationText, true);
+    if (!citationProjection.projected || citationProjection.projected.length < 6) {
+        return null;
+    }
+
+    const projectedIndex = textProjection.projected.indexOf(citationProjection.projected);
+    if (projectedIndex < 0) {
+        return null;
+    }
+
+    const start = textProjection.map[projectedIndex];
+    const end = textProjection.map[projectedIndex + citationProjection.projected.length - 1];
+    if (!Number.isInteger(start) || !Number.isInteger(end)) {
+        return null;
+    }
+    return {start, end: end + 1};
+}
+
+function highlightCitationInElement(root, citation) {
+    const range = findCitationRangeInText(root.textContent || '', citation || '');
+    if (!range) {
+        return null;
+    }
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const segments = [];
+    let total = 0;
+    while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const length = node.nodeValue.length;
+        if (length > 0) {
+            segments.push({node, start: total, end: total + length});
+            total += length;
+        }
+    }
+
+    for (let i = segments.length - 1; i >= 0; i -= 1) {
+        const segment = segments[i];
+        if (segment.end <= range.start || segment.start >= range.end) {
+            continue;
+        }
+        const localStart = Math.max(0, range.start - segment.start);
+        const localEnd = Math.min(segment.end - segment.start, range.end - segment.start);
+        if (localStart >= localEnd) {
+            continue;
+        }
+
+        let targetNode = segment.node;
+        if (localEnd < targetNode.nodeValue.length) {
+            targetNode.splitText(localEnd);
+        }
+        if (localStart > 0) {
+            targetNode = targetNode.splitText(localStart);
+        }
+
+        const mark = document.createElement('mark');
+        mark.className = 'doc-citation-highlight';
+        targetNode.parentNode.replaceChild(mark, targetNode);
+        mark.appendChild(targetNode);
+    }
+
+    return root.querySelector('.doc-citation-highlight');
+}
+
+function renderMarkdownInline(text) {
+    let html = escapeHtml(text);
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    return html;
+}
+
+function renderMarkdownToHtml(markdown) {
+    const lines = (markdown || '').replace(/\r\n/g, '\n').split('\n');
+    const out = [];
+    let paragraph = [];
+    let inCode = false;
+    let inUl = false;
+    let inOl = false;
+
+    const flushParagraph = () => {
+        if (paragraph.length === 0) return;
+        out.push('<p>' + paragraph.join('<br>') + '</p>');
+        paragraph = [];
+    };
+
+    const closeLists = () => {
+        if (inUl) {
+            out.push('</ul>');
+            inUl = false;
+        }
+        if (inOl) {
+            out.push('</ol>');
+            inOl = false;
+        }
+    };
+
+    for (const line of lines) {
+        if (line.startsWith('```')) {
+            flushParagraph();
+            closeLists();
+            if (!inCode) {
+                out.push('<pre><code>');
+                inCode = true;
+            } else {
+                out.push('</code></pre>');
+                inCode = false;
+            }
+            continue;
+        }
+
+        if (inCode) {
+            out.push(escapeHtml(line));
+            continue;
+        }
+
+        if (line.trim() === '') {
+            flushParagraph();
+            closeLists();
+            continue;
+        }
+
+        const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+        if (heading) {
+            flushParagraph();
+            closeLists();
+            const level = heading[1].length;
+            out.push(`<h${level}>${renderMarkdownInline(heading[2])}</h${level}>`);
+            continue;
+        }
+
+        const unordered = /^\s*[-*]\s+(.+)$/.exec(line);
+        if (unordered) {
+            flushParagraph();
+            if (inOl) {
+                out.push('</ol>');
+                inOl = false;
+            }
+            if (!inUl) {
+                out.push('<ul>');
+                inUl = true;
+            }
+            out.push('<li>' + renderMarkdownInline(unordered[1]) + '</li>');
+            continue;
+        }
+
+        const ordered = /^\s*\d+\.\s+(.+)$/.exec(line);
+        if (ordered) {
+            flushParagraph();
+            if (inUl) {
+                out.push('</ul>');
+                inUl = false;
+            }
+            if (!inOl) {
+                out.push('<ol>');
+                inOl = true;
+            }
+            out.push('<li>' + renderMarkdownInline(ordered[1]) + '</li>');
+            continue;
+        }
+
+        const quote = /^\s*>\s?(.+)$/.exec(line);
+        if (quote) {
+            flushParagraph();
+            closeLists();
+            out.push('<blockquote><p>' + renderMarkdownInline(quote[1]) + '</p></blockquote>');
+            continue;
+        }
+
+        closeLists();
+        paragraph.push(renderMarkdownInline(line));
+    }
+
+    flushParagraph();
+    closeLists();
+    if (inCode) {
+        out.push('</code></pre>');
+    }
+    return out.join('\n');
 }

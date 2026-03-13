@@ -111,6 +111,7 @@ In `src/main/resources/application.properties`:
 - `app.ai-coding-assistant.model=` (optional)
 - `app.callback.auth-token=...`
 - `quarkus.rest-client.helpdesk-callback.url=http://localhost:8080/api/coding-assistant`
+- `coding-assistant.ui.default-zoom-percent=100`
 
 For local demo defaults, keep `app.callback.auth-token` (coding-assistant) equal to
 `app.coding-assistant.callback.auth-token` (helpdesk).
