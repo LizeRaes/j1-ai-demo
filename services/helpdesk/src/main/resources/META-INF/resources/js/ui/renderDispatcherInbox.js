@@ -161,11 +161,10 @@ function showDispatchForm(request) {
 
         try {
             await submitTicket(dispatchData);
-            alert('Ticket created successfully!');
             await renderDispatcherInbox();
             container.innerHTML = '<div class="detail-placeholder"><p>Ticket created. Select another request to dispatch.</p></div>';
         } catch (error) {
-            alert('Error creating ticket: ' + error.message);
+            console.error('Error creating ticket from dispatcher inbox:', error);
         }
     });
 

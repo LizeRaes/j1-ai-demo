@@ -2,8 +2,12 @@ package com.example.appointment.external;
 
 import com.example.appointment.dto.SimilaritySearchRequest;
 import com.example.appointment.dto.SimilaritySearchResponse;
+import com.example.appointment.dto.TicketSyncUpsertRequest;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
@@ -21,6 +25,14 @@ public interface SimilarityClient {
     @Timeout(5000)
     @Fallback(fallbackMethod = "fallbackSearch")
     SimilaritySearchResponse search(SimilaritySearchRequest request);
+
+    @POST
+    @Path("/tickets/upsert")
+    Response upsert(TicketSyncUpsertRequest request);
+
+    @DELETE
+    @Path("/tickets/delete/{ticketId}")
+    Response delete(@PathParam("ticketId") Long ticketId);
 
     default SimilaritySearchResponse fallbackSearch(SimilaritySearchRequest request) {
         return new SimilaritySearchResponse(List.of());

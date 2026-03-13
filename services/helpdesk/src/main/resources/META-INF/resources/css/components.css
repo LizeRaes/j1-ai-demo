@@ -84,16 +84,6 @@
     color: #d4d4d4;
 }
 
-.log-entry.log-entry-coding-highlight {
-    border-left-color: #ff9800;
-    background: rgba(255, 152, 0, 0.08);
-}
-
-.log-entry.log-entry-coding-highlight .log-entry-message {
-    color: #ffb74d;
-    font-weight: 700;
-}
-
 /* List Items */
 .list-item {
     padding: 1rem;
@@ -375,6 +365,26 @@
     line-height: 1.4;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+}
+
+.related-citation-list {
+    margin-top: 0.25rem;
+}
+
+.related-citation-entry {
+    padding: 0.1rem 0;
+}
+
+.related-citation-entry-separated {
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid #d8d8d8;
+}
+
+.related-citation-relevance {
+    margin-top: 0.22rem;
+    color: #8a8a8a;
+    font-size: 0.75rem;
 }
 
 .related-link {

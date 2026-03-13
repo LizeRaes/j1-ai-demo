@@ -388,12 +388,6 @@ function createLogEntry(event) {
 
     const time = createElement('span', 'log-entry-time', formatTime(event.createdAt));
     const message = createElement('span', 'log-entry-message', event.message);
-    const messageText = event.message || '';
-    const isJobDoneSuccess = /^Job \d+ is done \(SUCCESS\)\.$/.test(messageText);
-    const isNewJobIncoming = messageText.startsWith('NEW JOB CAME IN:');
-    if (isJobDoneSuccess || isNewJobIncoming) {
-        entry.classList.add('log-entry-coding-highlight');
-    }
 
     entry.appendChild(time);
     entry.appendChild(message);

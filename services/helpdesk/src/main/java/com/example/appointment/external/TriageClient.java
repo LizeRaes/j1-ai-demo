@@ -1,5 +1,6 @@
 package com.example.appointment.external;
 
+import com.example.appointment.dto.TicketSyncUpsertDto;
 import com.example.appointment.dto.TriageRequestDto;
 import com.example.appointment.dto.TriageResponseDto;
 import jakarta.ws.rs.*;
@@ -30,5 +31,16 @@ public interface TriageClient {
     @Path("/documents/download/{documentName}")
     @Produces(MediaType.WILDCARD)
     Response downloadDocument(@PathParam("documentName") String documentName);
+
+    @POST
+    @Path("/ticket-sync/upsert")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    Map<String, Object> notifyTicketUpsert(TicketSyncUpsertDto request);
+
+    @DELETE
+    @Path("/ticket-sync/delete/{ticketId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Map<String, Object> notifyTicketDelete(@PathParam("ticketId") Long ticketId);
 
 }

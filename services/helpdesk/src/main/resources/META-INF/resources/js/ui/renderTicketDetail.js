@@ -69,11 +69,10 @@ export function renderTicketDetail(ticket) {
         acceptBtn.addEventListener('click', async () => {
             try {
                 await acceptTicket(ticket.id, state.currentUserId);
-                alert('Ticket accepted!');
                 await renderTickets('inbox');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
-                alert('Error accepting ticket: ' + error.message);
+                console.error('Error accepting ticket:', error);
             }
         });
         actionsDiv.appendChild(acceptBtn);
@@ -96,7 +95,7 @@ export function renderTicketDetail(ticket) {
                     container.innerHTML = '<div class="detail-placeholder"><p>Ticket converted back to request. Select another item to view details.</p></div>';
                 }
             } catch (error) {
-                alert('Error converting ticket: ' + error.message);
+                console.error('Error converting ticket:', error);
             }
         });
         actionsDiv.appendChild(rollbackBtn);
@@ -135,10 +134,9 @@ export function renderTicketDetail(ticket) {
             try {
                 const {updateTicketType} = await import('../api/ticketsApi.js');
                 await updateTicketType(ticket.id, {ticketType: typeSelect.value});
-                alert('Ticket type updated! Team will be updated automatically.');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
-                alert('Error updating ticket type: ' + error.message);
+                console.error('Error updating ticket type:', error);
             }
         });
 
@@ -169,10 +167,9 @@ export function renderTicketDetail(ticket) {
         updateBtn.addEventListener('click', async () => {
             try {
                 await updateTicketStatus(ticket.id, statusSelect.value);
-                alert('Status updated!');
                 await loadTicketDetail(ticket.id);
             } catch (error) {
-                alert('Error updating status: ' + error.message);
+                console.error('Error updating status:', error);
             }
         });
 
@@ -242,22 +239,26 @@ export function renderTicketDetail(ticket) {
     const userTeam = actorContext.team ? actorContext.team.toLowerCase() : null;
 
     if (policyCitations.length > 0) {
-        policyCitations.forEach(citation => {
+        const citationGroups = groupCitationsByDocument(policyCitations);
+
+        citationGroups.forEach(group => {
             const relatedItem = createElement('div', 'related-item related-doc-item');
+            const docNameValue = group.documentName || 'Document';
+            const docLinkValue = group.documentLink || group.documentName;
 
             // Check RBAC: only show document link if user's team is in rbacTeams
-            const hasAccess = citation.rbacTeams &&
+            const hasAccess = group.citations.some(citation => citation.rbacTeams &&
                 Array.isArray(citation.rbacTeams) &&
-                (citation.rbacTeams.length === 0 || citation.rbacTeams.some(team => team.toLowerCase() === userTeam));
+                (citation.rbacTeams.length === 0 || citation.rbacTeams.some(team => team.toLowerCase() === userTeam)));
 
             // Debug logging
-            if (citation.documentName) {
-                console.log('Document:', citation.documentName, 'User team:', userTeam, 'RBAC teams:', citation.rbacTeams, 'Has access:', hasAccess);
+            if (docNameValue) {
+                console.log('Document:', docNameValue, 'User team:', userTeam, 'Has access:', hasAccess, 'Citations:', group.citations.length);
             }
 
-            if (hasAccess && citation.documentName) {
+            if (hasAccess && docNameValue) {
                 // User has access - show clickable document link
-                const docLink = createElement('a', 'related-link', citation.documentName || 'Document');
+                const docLink = createElement('a', 'related-link', docNameValue);
                 docLink.href = '#';
                 docLink.style.cursor = 'pointer';
                 docLink.style.textDecoration = 'underline';
@@ -267,22 +268,22 @@ export function renderTicketDetail(ticket) {
                 docLink.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        if (isTextPreviewableDocument(citation.documentLink || citation.documentName)) {
-                            await showDocument(citation.documentName, citation.documentLink, citation.citation || '');
+                        const allCitations = group.citations.map(c => c.citation).filter(Boolean);
+                        if (isTextPreviewableDocument(docLinkValue)) {
+                            await showDocument(docNameValue, docLinkValue, allCitations);
                         } else {
-                            downloadDocument(citation.documentName, citation.documentLink);
+                            downloadDocument(docNameValue, docLinkValue);
                         }
                     } catch (error) {
                         console.error('Error opening document:', error);
-                        alert('Error loading document: ' + error.message);
                     }
                 });
 
                 relatedItem.appendChild(docLink);
-            } else if (citation.documentName) {
+            } else if (docNameValue) {
                 // User doesn't have access - show document name but not as link
                 const docName = createElement('span', 'related-link');
-                docName.textContent = citation.documentName;
+                docName.textContent = docNameValue;
                 docName.style.color = '#999';
                 docName.style.fontStyle = 'italic';
                 if (!hasAccess) {
@@ -291,22 +292,30 @@ export function renderTicketDetail(ticket) {
                 relatedItem.appendChild(docName);
             }
 
-            // Show full citation (wrapped, no truncation)
-            if (citation.citation) {
-                const citationText = createElement('div', 'related-citation');
-                citationText.textContent = citation.citation;
-                relatedItem.appendChild(citationText);
-            }
+            // Show all citations for this document (wrapped, no truncation)
+            const citationList = createElement('div', 'related-citation-list');
+            citationList.style.marginTop = '0.35rem';
+            group.citations.forEach((citation, index) => {
+                if (citation.citation) {
+                    const citationEntry = createElement('div', 'related-citation-entry');
+                    if (index > 0) {
+                        citationEntry.classList.add('related-citation-entry-separated');
+                    }
 
-            // Show relevance score if available
-            if (citation.score !== undefined && citation.score !== null) {
-                const score = createElement('div', 'related-score');
-                score.style.fontSize = '0.75rem';
-                score.style.color = '#999';
-                score.style.marginTop = '0.25rem';
-                score.textContent = `Relevance: ${(citation.score * 100).toFixed(1)}%`;
-                relatedItem.appendChild(score);
-            }
+                    const citationText = createElement('div', 'related-citation');
+                    citationText.textContent = citation.citation;
+                    citationEntry.appendChild(citationText);
+
+                    if (citation.score !== undefined && citation.score !== null) {
+                        const citationScore = createElement('div', 'related-citation-relevance');
+                        citationScore.textContent = `Relevance: ${(citation.score * 100).toFixed(1)}%`;
+                        citationEntry.appendChild(citationScore);
+                    }
+
+                    citationList.appendChild(citationEntry);
+                }
+            });
+            relatedItem.appendChild(citationList);
 
             relatedDocsList.appendChild(relatedItem);
         });
@@ -357,7 +366,7 @@ export function renderTicketDetail(ticket) {
     addPrBtn.addEventListener('click', async () => {
         const prUrl = addPrInput.value.trim();
         if (!prUrl) {
-            alert('Please enter a PR URL');
+            console.warn('Cannot add PR: empty URL.');
             return;
         }
         try {
@@ -365,7 +374,7 @@ export function renderTicketDetail(ticket) {
             addPrInput.value = '';
             await loadTicketDetail(ticket.id);
         } catch (error) {
-            alert('Error adding PR: ' + error.message);
+            console.error('Error adding PR:', error);
         }
     });
     addPrForm.appendChild(addPrLabel);
@@ -398,16 +407,15 @@ export function renderTicketDetail(ticket) {
     const addCommentBtn = createElement('button', 'btn btn-primary', 'Add Comment');
     addCommentBtn.addEventListener('click', async () => {
         if (!commentTextarea.value.trim()) {
-            alert('Please enter a comment');
+            console.warn('Cannot add comment: empty body.');
             return;
         }
         try {
             await addComment(ticket.id, state.currentUserId, commentTextarea.value);
             commentTextarea.value = '';
-            alert('Comment added!');
             await loadTicketDetail(ticket.id);
         } catch (error) {
-            alert('Error adding comment: ' + error.message);
+            console.error('Error adding comment:', error);
         }
     });
     commentForm.appendChild(commentTextarea);
@@ -437,7 +445,7 @@ export async function loadTicketDetail(ticketId) {
 /**
  * Show document content in a modal/overlay
  */
-async function showDocument(documentName, documentLink, citation) {
+async function showDocument(documentName, documentLink, citations) {
     const documentToFetch = documentLink || documentName;
 
     if (!documentToFetch) {
@@ -514,9 +522,9 @@ async function showDocument(documentName, documentLink, citation) {
         modal.appendChild(contentDiv);
         overlay.appendChild(modal);
 
-        const highlighted = highlightCitationInElement(contentDiv, citation || '');
-        if (highlighted) {
-            highlighted.scrollIntoView({block: 'center', behavior: 'smooth'});
+        const highlightedMarks = highlightCitationsInElement(contentDiv, citations || []);
+        if (highlightedMarks.length > 0) {
+            highlightedMarks[0].scrollIntoView({block: 'center', behavior: 'smooth'});
         }
 
         // Close on overlay click
@@ -538,10 +546,7 @@ async function showDocument(documentName, documentLink, citation) {
         document.body.appendChild(overlay);
     } catch (error) {
         console.error('Error showing document:', error);
-        // Show error in a visible alert with more details
-        const errorMsg = error.message || 'Unknown error';
-        alert('Error loading document "' + documentName + '": ' + errorMsg + '\n\nPlease check:\n- Document name: ' + documentName + '\n- Documents service/proxy availability');
-        throw error; // Re-throw so caller can handle it
+        throw error;
     }
 }
 
@@ -565,19 +570,39 @@ function stripBoundaryQuotes(text) {
     return (text || '').replace(/^[\s"'`“”‘’]+|[\s"'`“”‘’]+$/g, '');
 }
 
-function isMarkdownControlChar(ch) {
-    return ch === '*' || ch === '_' || ch === '`' || ch === '~' || ch === '#' || ch === '>' ||
-        ch === '[' || ch === ']' || ch === '(' || ch === ')' || ch === '!' || ch === '|';
+function normalizeCitationForSearch(citation) {
+    return (citation || '')
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map(line => line
+            .replace(/^\s*[-*+]\s+/, '')
+            .replace(/^\s*\d+\.\s+/, '')
+            .trim())
+        .filter(Boolean)
+        .join(' ');
 }
 
-function buildSearchProjection(text, stripMarkdownChars) {
+function isMarkdownControlChar(ch) {
+    return ch === '*' || ch === '_' || ch === '`' || ch === '~' || ch === '#' || ch === '>' ||
+        ch === '[' || ch === ']' || ch === '(' || ch === ')' || ch === '!' || ch === '|' ||
+        ch === '-' || ch === '+';
+}
+
+function isIgnorableSearchChar(ch) {
+    return isMarkdownControlChar(ch) ||
+        ch === '.' || ch === ',' || ch === ':' || ch === ';' || ch === '?' || ch === '"' ||
+        ch === '\'' || ch === '/' || ch === '\\' || ch === '{' || ch === '}' || ch === '=' ||
+        ch === '&';
+}
+
+function buildSearchProjection(text, stripFormattingChars) {
     const chars = [];
     const map = [];
     let previousWasSpace = false;
 
     for (let i = 0; i < text.length; i += 1) {
         const ch = text[i];
-        if (stripMarkdownChars && isMarkdownControlChar(ch)) {
+        if (stripFormattingChars && isIgnorableSearchChar(ch)) {
             continue;
         }
         if (/\s/.test(ch)) {
@@ -596,7 +621,7 @@ function buildSearchProjection(text, stripMarkdownChars) {
 }
 
 function findCitationRangeInText(text, citation) {
-    const citationText = stripBoundaryQuotes(citation).trim();
+    const citationText = stripBoundaryQuotes(normalizeCitationForSearch(citation)).trim();
     if (!citationText || citationText.length < 6) {
         return null;
     }
@@ -606,7 +631,7 @@ function findCitationRangeInText(text, citation) {
         return {start: exactIndex, end: exactIndex + citationText.length};
     }
 
-    const textProjection = buildSearchProjection(text, false);
+    const textProjection = buildSearchProjection(text, true);
     const citationProjection = buildSearchProjection(citationText, true);
     if (!citationProjection.projected || citationProjection.projected.length < 6) {
         return null;
@@ -625,10 +650,43 @@ function findCitationRangeInText(text, citation) {
     return {start, end: end + 1};
 }
 
-function highlightCitationInElement(root, citation) {
-    const range = findCitationRangeInText(root.textContent || '', citation || '');
-    if (!range) {
-        return null;
+function normalizeCitationList(citations) {
+    if (Array.isArray(citations)) {
+        return citations.filter(Boolean);
+    }
+    if (typeof citations === 'string' && citations.trim() !== '') {
+        return [citations];
+    }
+    return [];
+}
+
+function findCitationRangesInText(text, citations) {
+    const ranges = normalizeCitationList(citations)
+        .map(citation => findCitationRangeInText(text, citation))
+        .filter(Boolean)
+        .sort((a, b) => a.start - b.start);
+
+    if (ranges.length === 0) {
+        return [];
+    }
+
+    const merged = [ranges[0]];
+    for (let i = 1; i < ranges.length; i += 1) {
+        const current = ranges[i];
+        const previous = merged[merged.length - 1];
+        if (current.start <= previous.end) {
+            previous.end = Math.max(previous.end, current.end);
+        } else {
+            merged.push(current);
+        }
+    }
+    return merged;
+}
+
+function highlightCitationsInElement(root, citations) {
+    const ranges = findCitationRangesInText(root.textContent || '', citations);
+    if (ranges.length === 0) {
+        return [];
     }
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -643,32 +701,40 @@ function highlightCitationInElement(root, citation) {
         }
     }
 
-    for (let i = segments.length - 1; i >= 0; i -= 1) {
-        const segment = segments[i];
-        if (segment.end <= range.start || segment.start >= range.end) {
-            continue;
-        }
-        const localStart = Math.max(0, range.start - segment.start);
-        const localEnd = Math.min(segment.end - segment.start, range.end - segment.start);
-        if (localStart >= localEnd) {
-            continue;
-        }
+    const createdMarks = [];
+    for (let r = ranges.length - 1; r >= 0; r -= 1) {
+        const range = ranges[r];
+        for (let i = segments.length - 1; i >= 0; i -= 1) {
+            const segment = segments[i];
+            if (segment.end <= range.start || segment.start >= range.end) {
+                continue;
+            }
+            const localStart = Math.max(0, range.start - segment.start);
+            const localEnd = Math.min(segment.end - segment.start, range.end - segment.start);
+            if (localStart >= localEnd) {
+                continue;
+            }
 
-        let targetNode = segment.node;
-        if (localEnd < targetNode.nodeValue.length) {
-            targetNode.splitText(localEnd);
-        }
-        if (localStart > 0) {
-            targetNode = targetNode.splitText(localStart);
-        }
+            let targetNode = segment.node;
+            if (localEnd < targetNode.nodeValue.length) {
+                targetNode.splitText(localEnd);
+            }
+            if (localStart > 0) {
+                targetNode = targetNode.splitText(localStart);
+            }
 
-        const mark = document.createElement('mark');
-        mark.className = 'doc-citation-highlight';
-        targetNode.parentNode.replaceChild(mark, targetNode);
-        mark.appendChild(targetNode);
+            const mark = document.createElement('mark');
+            mark.className = 'doc-citation-highlight';
+            targetNode.parentNode.replaceChild(mark, targetNode);
+            mark.appendChild(targetNode);
+            createdMarks.push(mark);
+        }
     }
 
-    return root.querySelector('.doc-citation-highlight');
+    return createdMarks.sort((a, b) => {
+        const pos = a.compareDocumentPosition(b);
+        return (pos & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
+    });
 }
 
 function renderMarkdownInline(text) {
@@ -788,4 +854,22 @@ function renderMarkdownToHtml(markdown) {
         out.push('</code></pre>');
     }
     return out.join('\n');
+}
+
+function groupCitationsByDocument(policyCitations) {
+    const groups = new Map();
+    (policyCitations || []).forEach(citation => {
+        const documentName = citation.documentName || '';
+        const documentLink = citation.documentLink || documentName;
+        const key = `${documentName}||${documentLink}`;
+        if (!groups.has(key)) {
+            groups.set(key, {
+                documentName,
+                documentLink,
+                citations: []
+            });
+        }
+        groups.get(key).citations.push(citation);
+    });
+    return Array.from(groups.values());
 }

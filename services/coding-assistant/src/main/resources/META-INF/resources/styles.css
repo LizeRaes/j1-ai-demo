@@ -104,7 +104,7 @@ button:hover {
 
 #status {
   color: #374151;
-  font-size: 14px;
+  font-size: 0.875em;
 }
 
 .logs {
@@ -121,7 +121,7 @@ button:hover {
 }
 
 .meta {
-  font-size: 12px;
+  font-size: 0.75em;
   color: #6b7280;
   margin-bottom: 4px;
 }
@@ -129,7 +129,7 @@ button:hover {
 .msg {
   white-space: pre-wrap;
   word-break: break-word;
-  font-size: 14px;
+  font-size: 0.875em;
 }
 
 .program-step {
@@ -142,7 +142,7 @@ button:hover {
 }
 
 .assistant-stream .msg {
-  font-size: 12px;
+  font-size: 0.75em;
   color: #6b7280;
 }
 

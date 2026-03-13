@@ -1,6 +1,8 @@
-import {createTicketFromAi, createTicketManual} from '../api/ticketsApi.js';
+import {createTicketManual} from '../api/ticketsApi.js';
 import {$, clearElement, createElement} from '../util/dom.js';
 import {switchTab} from './router.js';
+import {getActorContext} from './actorContext.js';
+import {state} from './state.js';
 
 export function renderCreateTicket() {
     const listContainer = $('#list-content');
@@ -16,19 +18,18 @@ export function renderCreateTicket() {
 
     const form = createElement('div', 'ticket-detail');
     form.innerHTML = '<h2>Create Ticket</h2>';
+    const actorContext = getActorContext();
+    const defaultActorId = (actorContext?.actorId || '').trim() || state.currentUserId || 'demo-user';
 
     const createForm = createElement('form');
     createForm.innerHTML = `
         <div class="form-group">
             <label class="form-label">Source</label>
-            <select class="form-select" id="create-source" required>
-                <option value="MANUAL">Manual</option>
-                <option value="AI">AI</option>
-            </select>
+            <input type="text" class="form-input" value="Manual" disabled>
         </div>
         <div class="form-group">
             <label class="form-label">User ID</label>
-            <input type="text" class="form-input" id="create-user-id" required>
+            <input type="text" class="form-input" id="create-user-id" value="${defaultActorId}" required>
         </div>
         <div class="form-group">
             <label class="form-label">Original Request</label>
@@ -61,73 +62,43 @@ export function renderCreateTicket() {
             </select>
             <small style="color: #666; display: block; margin-top: 4px;">Team will be assigned automatically based on ticket type</small>
         </div>
-        <div class="form-group" id="ai-fields" style="display: none;">
-            <label class="form-label">AI Confidence (0-1)</label>
-            <input type="number" class="form-input" id="create-ai-confidence" min="0" max="1" step="0.01">
-        </div>
         <div class="form-group">
-            <label class="form-label">
-                <input type="checkbox" id="create-urgency"> Urgent <span style="font-weight: normal; color: #666;">(Urgency Score: 1-10)</span>
-            </label>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Urgency Score (optional, 1-10)</label>
-            <input type="number" class="form-input" id="create-urgency-score" min="1" max="10" step="1">
+            <label class="form-label">Urgency Score (required, 1-10)</label>
+            <input type="number" class="form-input" id="create-urgency-score" min="1" max="10" step="0.1" required>
         </div>
         <div class="ticket-actions">
             <button type="submit" class="btn btn-primary">Create Ticket</button>
         </div>
     `;
 
-    // Show/hide AI fields based on source
-    const sourceSelect = createForm.querySelector('#create-source');
-    const aiFields = createForm.querySelector('#ai-fields');
-    sourceSelect.addEventListener('change', () => {
-        aiFields.style.display = sourceSelect.value === 'AI' ? 'block' : 'none';
-    });
-
     createForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const source = document.getElementById('create-source').value;
+        const userId = document.getElementById('create-user-id').value.trim();
+        const originalRequest = document.getElementById('create-original-request').value.trim();
+        const ticketType = document.getElementById('create-ticket-type').value;
+        const urgencyScoreRaw = document.getElementById('create-urgency-score').value;
+        const urgencyScore = Number.parseFloat(urgencyScoreRaw);
 
-        if (source === 'AI') {
-            const aiData = {
-                userId: document.getElementById('create-user-id').value,
-                originalRequest: document.getElementById('create-original-request').value,
-                ticketType: document.getElementById('create-ticket-type').value,
-                // assignedTeam is derived automatically from ticketType - not sent
-                urgencyFlag: document.getElementById('create-urgency').checked,
-                urgencyScore: document.getElementById('create-urgency-score').value ?
-                    parseFloat(document.getElementById('create-urgency-score').value) : null,
-                aiConfidence: parseFloat(document.getElementById('create-ai-confidence').value) || 0.8,
-            };
+        if (!userId || !originalRequest || !ticketType || Number.isNaN(urgencyScore) || urgencyScore < 1 || urgencyScore > 10) {
+            console.warn('Create ticket form validation failed.');
+            return;
+        }
 
-            try {
-                await createTicketFromAi(aiData);
-                alert('AI ticket created successfully!');
-                switchTab('inbox');
-            } catch (error) {
-                alert('Error creating ticket: ' + error.message);
-            }
-        } else {
-            const manualData = {
-                userId: document.getElementById('create-user-id').value,
-                originalRequest: document.getElementById('create-original-request').value,
-                ticketType: document.getElementById('create-ticket-type').value,
-                // assignedTeam is derived automatically from ticketType - not sent
-                status: 'FROM_DISPATCH',
-                urgencyFlag: document.getElementById('create-urgency').checked,
-                urgencyScore: document.getElementById('create-urgency-score').value ?
-                    parseFloat(document.getElementById('create-urgency-score').value) : null,
-            };
+        const manualData = {
+            userId,
+            originalRequest,
+            ticketType,
+            // assignedTeam is derived automatically from ticketType - not sent
+            status: 'FROM_DISPATCH',
+            urgencyFlag: urgencyScore >= 6,
+            urgencyScore,
+        };
 
-            try {
-                await createTicketManual(manualData);
-                alert('Ticket created successfully!');
-                switchTab('inbox');
-            } catch (error) {
-                alert('Error creating ticket: ' + error.message);
-            }
+        try {
+            await createTicketManual(manualData);
+            switchTab('inbox');
+        } catch (error) {
+            console.error('Error creating manual ticket:', error);
         }
     });
 
