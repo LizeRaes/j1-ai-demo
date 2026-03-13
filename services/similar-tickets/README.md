@@ -64,7 +64,6 @@ The dashboard features:
   - Latest tickets appear first
 
 The dashboard automatically refreshes every second to show the latest data.
-Activity logs pane is hidden by default in full-stack startup and can be shown via `./start-all.sh -show-event-log`.
 
 ## API Endpoints
 

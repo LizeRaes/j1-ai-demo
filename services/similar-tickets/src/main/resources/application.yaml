@@ -18,27 +18,26 @@ langchain4j:
       model-name: "text-embedding-3-large"
 
   embedding-stores:
-    oracle:
-      embedding-store:
-        data-source:
-          service-registry.named: "ora-ucp-ds"
-        enabled: true
-        vector-index-create-option: CREATE_IF_NOT_EXISTS
-        ivf-index:
-          - name: TICKET_EMBEDDINGS_IVF
-            create-option: CREATE_IF_NOT_EXISTS
-            neighbor-partitions: 2
-            sample-per-partition: 256
-            min-vectors-per-partition: 64
-            target-accuracy: 90
-            degree-of-parallelism: 2
-        embedding-table:
-          name: TICKET_EMBEDDINGS
-          id-column: ID
-          embedding-column: EMBEDDING
-          text-column: TEXT
-          metadata-column: METADATA
+    oracle-embedding-store:
+      provider: oracle
+      data-source:
+        service-registry.named: "ora-ucp-ds"
+      vector-index-create-option: CREATE_IF_NOT_EXISTS
+      ivf-index:
+        - name: TICKET_EMBEDDINGS_IVF
           create-option: CREATE_IF_NOT_EXISTS
+          neighbor-partitions: 2
+          sample-per-partition: 256
+          min-vectors-per-partition: 64
+          target-accuracy: 90
+          degree-of-parallelism: 2
+      embedding-table:
+        name: TICKET_EMBEDDINGS
+        id-column: ID
+        embedding-column: EMBEDDING
+        text-column: TEXT
+        metadata-column: METADATA
+        create-option: CREATE_IF_NOT_EXISTS
 
 data:
   sources:
@@ -57,5 +56,3 @@ ui:
   font:
     zoom:
       default: 100
-  show:
-    event-log: false

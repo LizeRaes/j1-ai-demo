@@ -1,13 +1,9 @@
 package com.example.ticket.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
-public record LogsResponse(@JsonProperty("logs") List<LogInfo> logs) {
+public record LogsResponse(List<LogInfo> logs) {
 
-    public record LogInfo(@JsonProperty("message") String message, @JsonProperty("type") String type,
-                          @JsonProperty("timestamp") long timestamp) {
+    public record LogInfo(String message, String type, long timestamp) {
     }
-
 }

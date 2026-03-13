@@ -7,8 +7,10 @@ import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.Filter;
-import io.helidon.integrations.langchain4j.providers.oracle.EmbeddingTableConfig;
-import io.helidon.integrations.langchain4j.providers.oracle.OracleEmbeddingStoreConfig;
+
+import io.helidon.config.Config;
+import io.helidon.webserver.testing.junit5.ServerTest;
+
 import com.example.ticket.dto.TicketsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +25,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@ServerTest
 @ExtendWith(MockitoExtension.class)
-public class VectorServiceTest {
+class VectorServiceTest {
 
     @Mock
     private EmbeddingStore<TextSegment> embeddingStore;
@@ -40,28 +48,16 @@ public class VectorServiceTest {
     @Mock
     private DataSource dataSource;
 
-    @Mock
-    private OracleEmbeddingStoreConfig storeConfig;
-
-    @Mock
-    private EmbeddingTableConfig embeddingTableConfig;
-
     private VectorService vectorService;
 
     @BeforeEach
-    void setup() {
-        when(storeConfig.embeddingTable()).thenReturn(Optional.of(embeddingTableConfig));
-        when(embeddingTableConfig.name()).thenReturn(Optional.of("test_table"));
-        when(embeddingTableConfig.embeddingColumn()).thenReturn(Optional.of("embedding_col"));
-        when(embeddingTableConfig.metadataColumn()).thenReturn(Optional.of("metadata_col"));
-        when(embeddingTableConfig.textColumn()).thenReturn(Optional.of("text_col"));
-
-        vectorService = new VectorService(embeddingStore, embeddingModel, dataSource, storeConfig);
+    void setup(Config config) {
+        vectorService = new VectorService(embeddingStore, embeddingModel, config, dataSource);
     }
-    
+
     @Test
     void testUpsertTicket() {
-        
+
         Long ticketId = 1L;
         String ticketType = "test-type";
         String text = "test-text";
@@ -69,7 +65,6 @@ public class VectorServiceTest {
 
         vectorService.upsertTicket(ticketId, ticketType, text, vector);
 
-        
         verify(embeddingStore, times(1)).removeAll(any(Filter.class));
         verify(embeddingStore, times(1)).add(any(Embedding.class), any(TextSegment.class));
     }
@@ -102,7 +97,7 @@ public class VectorServiceTest {
         when(statement.execute()).thenThrow(new SQLException("Truncate failed"));
 
         vectorService.deleteAllTickets();
-        
+
         verify(statement, times(1)).execute();
         verify(connection, times(2)).prepareStatement(any());
     }
@@ -127,9 +122,9 @@ public class VectorServiceTest {
         double minScore = 0.5;
         Long excludeTicketId = 1L;
 
-        Embedding embedding = new Embedding(new float[]{1.0f, 2.0f});
+        Embedding embedding = new Embedding(new float[] {1.0f, 2.0f});
         when(embeddingModel.embed(queryText)).thenReturn(Response.from(embedding));
-        EmbeddingSearchResult result = mock(EmbeddingSearchResult.class);
+        var result = mock(EmbeddingSearchResult.class);
         when(embeddingStore.search(any())).thenReturn(result);
 
         vectorService.searchSimilar(queryText, maxResults, minScore, excludeTicketId);
@@ -146,9 +141,9 @@ public class VectorServiceTest {
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.prepareStatement(any())).thenReturn(statement);
         when(statement.executeQuery()).thenReturn(resultSet);
-        
+
         vectorService.retrieveAllTickets();
-        
+
         verify(statement, times(1)).executeQuery();
     }
 

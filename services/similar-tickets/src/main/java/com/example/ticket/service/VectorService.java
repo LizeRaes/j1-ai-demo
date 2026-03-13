@@ -8,20 +8,26 @@ import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.Filter;
-import io.helidon.integrations.langchain4j.providers.oracle.EmbeddingTableConfig;
-import io.helidon.integrations.langchain4j.providers.oracle.OracleEmbeddingStoreConfig;
+
+import io.helidon.config.Config;
+import io.helidon.service.registry.Service;
 
 import javax.sql.DataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.example.ticket.dto.TicketsResponse;
 
 import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
+@Service.Singleton
 public class VectorService {
 
     private final EmbeddingStore<TextSegment> embeddingStore;
@@ -32,20 +38,20 @@ public class VectorService {
     private final String metadataColumn;
     private final String textColumn;
 
-    public VectorService(EmbeddingStore<TextSegment> embeddingStore,
-                         EmbeddingModel embeddingModel,
-                         DataSource dataSource,
-                         OracleEmbeddingStoreConfig storeConfig) {
+    @Service.Inject
+    VectorService(@Service.Named("oracle-embedding-store") EmbeddingStore<TextSegment> embeddingStore,
+                  @Service.Named("ticket-embedding-model") EmbeddingModel embeddingModel,
+                  Config config,
+                  DataSource dataSource) {
         this.embeddingStore = Objects.requireNonNull(embeddingStore);
         this.embeddingModel = Objects.requireNonNull(embeddingModel);
         this.dataSource = Objects.requireNonNull(dataSource);
 
-        EmbeddingTableConfig embeddingTableConfig = storeConfig.embeddingTable().get();
-
-        this.tableName = Objects.requireNonNull(embeddingTableConfig.name().get());
-        this.embeddingColumn = embeddingTableConfig.embeddingColumn().orElse("EMBEDDING");
-        this.metadataColumn = embeddingTableConfig.metadataColumn().orElse("METADATA");
-        this.textColumn = embeddingTableConfig.textColumn().orElse("TEXT");
+        var tableConfig = config.get("langchain4j.embedding-stores.oracle-embedding-store.embedding-table");
+        this.tableName = tableConfig.get("name").asString().orElseThrow();
+        this.embeddingColumn = tableConfig.get("embedding-column").asString().orElse("EMBEDDING");
+        this.metadataColumn = tableConfig.get("metadata-column").asString().orElse("METADATA");
+        this.textColumn = tableConfig.get("text-column").asString().orElse("TEXT");
     }
 
     public void upsertTicket(Long ticketId, String ticketType, String text, float[] vector) {
