@@ -74,6 +74,32 @@ async function applyDefaultUiConfig() {
 
 async function handleActorContextChanged() {
     try {
+        const tabToView = {
+            inbox: 'inbox',
+            team: 'team',
+            mine: 'mine',
+        };
+
+        const currentView = tabToView[state.currentTab];
+        if (currentView) {
+            await renderTickets(currentView);
+
+            const selectedTicketId = state.selectedTicketId;
+            if (selectedTicketId) {
+                const stillVisible = document.querySelector(`.list-item[data-ticket-id="${selectedTicketId}"]`);
+                if (stillVisible) {
+                    await loadTicketDetail(selectedTicketId);
+                } else {
+                    state.selectedTicketId = null;
+                    const detailPane = document.getElementById('detail-pane');
+                    if (detailPane) {
+                        detailPane.innerHTML = '<div class="detail-placeholder"><p>Select an item to view details</p></div>';
+                    }
+                }
+            }
+            return;
+        }
+
         const selectedTicketId = state.selectedTicketId;
         if (selectedTicketId) {
             await loadTicketDetail(selectedTicketId);
