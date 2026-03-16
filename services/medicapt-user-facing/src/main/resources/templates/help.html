@@ -32,6 +32,9 @@
         .help-form {
             margin-bottom: 30px;
         }
+        .message-input-wrap {
+            position: relative;
+        }
         label {
             display: block;
             margin-bottom: 8px;
@@ -45,13 +48,41 @@
             border-radius: 6px;
             font-size: 16px;
             font-family: inherit;
+            line-height: 1.5;
             min-height: 150px;
             resize: vertical;
             transition: border-color 0.3s;
+            position: relative;
+            z-index: 2;
+            background: transparent;
         }
         textarea:focus {
             outline: none;
             border-color: #667eea;
+        }
+        .autocomplete-inline {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: auto;
+            width: 100%;
+            height: 100%;
+            padding: 12px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            resize: none;
+            font-size: 16px;
+            font-family: inherit;
+            color: #9ca3af;
+            line-height: 1.5;
+            background: transparent;
+        }
+        .autocomplete-hint {
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 12px;
         }
         button {
             width: 100%;
@@ -113,12 +144,17 @@
         <div class="help-form">
             <form method="POST" action="/help">
                 <label for="message">How can we help?</label>
-                <textarea id="message" name="message" placeholder="Describe your issue or question here..." required></textarea>
+                <div class="message-input-wrap">
+                    <textarea id="autocomplete-inline" class="autocomplete-inline" readonly tabindex="-1" aria-hidden="true"></textarea>
+                    <textarea id="message" name="message" placeholder="Describe your issue or question here..." required></textarea>
+                </div>
+                <div class="autocomplete-hint">Press Enter to send. Use Shift+Enter for a newline.</div>
                 <button type="submit">Send</button>
             </form>
         </div>
         
         <a href="/">Back to Home</a>
     </div>
+    <script src="/js/help-autocomplete.js"></script>
 </body>
 </html>
