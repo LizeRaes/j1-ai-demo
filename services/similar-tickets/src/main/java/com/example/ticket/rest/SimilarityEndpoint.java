@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.toMap;
 @Http.Path("/api/similarity/tickets")
 @Service.Singleton
 @Service.RunLevel(Service.RunLevel.STARTUP)
-class SimilarityEndpoint {
+public class SimilarityEndpoint {
 
     private static final System.Logger log = System.getLogger(LogService.LOGGER_NAME);
 

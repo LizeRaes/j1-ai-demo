@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
 //@EnabledIfSystemProperty(named = "openai.api-key", matches = ".+")
-//@EnabledIfSystemProperty(named = "data.sources.sql[0].provider.ucp.url", matches = "jdbc:oracle:thin:.*")
+@EnabledIfSystemProperty(named = "data.sources.sql[0].provider.ucp.url", matches = "jdbc:oracle:thin:.*")
 @ServerTest
 class MainTest  {
     private final Http1Client client;

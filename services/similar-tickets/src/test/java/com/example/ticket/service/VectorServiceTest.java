@@ -14,6 +14,7 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 import com.example.ticket.dto.TicketsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,6 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@EnabledIfSystemProperty(named = "data.sources.sql[0].provider.ucp.url", matches = "jdbc:oracle:thin:.*")
 @ServerTest
 @ExtendWith(MockitoExtension.class)
 class VectorServiceTest {
