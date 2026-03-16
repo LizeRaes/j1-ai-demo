@@ -20,6 +20,6 @@ public interface UrgencyClient {
 
     @POST
     @Path("/score")
-    @Timeout(value = 3, unit = ChronoUnit.SECONDS)
+    @Timeout(value = 6, unit = ChronoUnit.SECONDS)
     UrgencyScoreResponse score(UrgencyScoreRequest request);
 }
