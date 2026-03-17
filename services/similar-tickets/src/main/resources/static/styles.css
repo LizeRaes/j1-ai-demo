@@ -10,7 +10,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #e8d9cc;
+    background-color: #f5f5f5;
     height: 100vh;
     overflow: hidden;
     font-size: calc(1rem * var(--font-zoom) / 100);
@@ -25,9 +25,9 @@ body {
     text-align: center;
     font-size: 1rem;
     font-weight: 700;
-    color: #3e2515;
-    background: #cfa787;
-    border-bottom: 1px solid #b28663;
+    color: #1f2937;
+    background: #eef2f7;
+    border-bottom: 1px solid #d1d5db;
 }
 
 .zoom-controls {
@@ -86,7 +86,6 @@ body {
 }
 
 .left-pane {
-    flex: 0 0 33.33%;
     width: 33.33%;
     background-color: #2d2d2d;
     color: #e0e0e0;
@@ -98,7 +97,6 @@ body {
 }
 
 .left-pane.collapsed {
-    flex-basis: 0;
     width: 0;
     transform: translateX(-100%);
     overflow: hidden;
@@ -129,23 +127,22 @@ body {
     color: #e0e0e0;
 }
 
-.left-pane.collapsed ~ .right-pane {
-    width: auto;
-    flex: 1;
+.left-pane.collapsed + .right-pane {
+    width: 100%;
 }
 
 .expand-button {
     position: fixed;
     left: 0;
-    top: calc(2.5rem + 8px);
-    transform: none;
+    top: 50%;
+    transform: translateY(-50%);
     background-color: #2d2d2d;
     color: #e0e0e0;
     border: none;
     border-right: 2px solid #444;
-    padding: 6px 8px;
+    padding: 15px 8px;
     cursor: pointer;
-    font-size: calc(12px * var(--font-zoom) / 100);
+    font-size: calc(14px * var(--font-zoom) / 100);
     z-index: 1000;
     transition: background-color 0.2s;
     display: none;
@@ -212,10 +209,8 @@ body {
 }
 
 .right-pane {
-    flex: 1;
-    width: auto;
-    min-width: 0;
-    background-color: #e7d2bf;
+    width: 66.67%;
+    background-color: #ffffff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -224,31 +219,30 @@ body {
 
 .right-pane h2 {
     padding: 20px;
-    background-color: #d4b295;
-    border-bottom: 1px solid #b98e6f;
+    background-color: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
     font-size: calc(18px * var(--font-zoom) / 100);
     font-weight: 600;
-    color: #3e2515;
+    color: #333;
 }
 
 .table-container {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    background-color: #ecdacb;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #f1e1d3;
+    background-color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border-radius: 8px;
     overflow: hidden;
 }
 
 thead {
-    background-color: #ddc0a7;
+    background-color: #f5f5f5;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -283,7 +277,7 @@ td {
     padding: 12px 16px;
     border-bottom: 1px solid #f0f0f0;
     font-size: calc(13px * var(--font-zoom) / 100);
-    color: #4a3222;
+    color: #555;
 }
 
 tbody tr {
@@ -291,7 +285,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-    background-color: #e6cfbb;
+    background-color: #f9f9f9;
 }
 
 tbody tr:last-child td {

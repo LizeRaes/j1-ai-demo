@@ -1,0 +1,8 @@
+langchain4j:
+  embedding-stores:
+    oracle-embedding-store:
+      embedding-table:
+        name: test_table
+        embedding-column: embedding_col
+        text-column: text_col
+        metadata-column: metadata_col

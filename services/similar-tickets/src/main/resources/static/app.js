@@ -2,8 +2,6 @@ const API_BASE = '/api/similarity';
 
 let logs = [];
 let tickets = [];
-let ticketsFetchInFlight = false;
-let logsFetchInFlight = false;
 
 // Format time for display
 function formatTime(date) {
@@ -75,10 +73,6 @@ function escapeHtml(text) {
 
 
 async function fetchTickets() {
-    if (ticketsFetchInFlight) {
-        return;
-    }
-    ticketsFetchInFlight = true;
     try {
         const response = await fetch(`${API_BASE}/tickets/all`);
         if (response.ok) {
@@ -88,17 +82,11 @@ async function fetchTickets() {
         }
     } catch (error) {
         console.error('Error fetching tickets:', error);
-    } finally {
-        ticketsFetchInFlight = false;
     }
 }
 
 
 async function fetchLogs() {
-    if (logsFetchInFlight) {
-        return;
-    }
-    logsFetchInFlight = true;
     try {
         const response = await fetch(`${API_BASE}/tickets/logs`);
         if (response.ok) {
@@ -134,8 +122,6 @@ async function fetchLogs() {
         }
     } catch (error) {
         console.error('Error fetching logs:', error);
-    } finally {
-        logsFetchInFlight = false;
     }
 }
 
@@ -145,7 +131,7 @@ function startPolling() {
     setInterval(() => {
         fetchTickets();
         fetchLogs();
-    }, 2000);
+    }, 1000);
 }
 
 // Toggle left pane
@@ -196,23 +182,18 @@ async function loadDefaultZoom() {
         const response = await fetch(`${API_BASE}/tickets/config`);
         if (response.ok) {
             const config = await response.json();
-            setZoom(Number(config.defaultZoom || 100));
-            applyEventLogVisibility(config.showEventLog === true);
+            const savedZoom = localStorage.getItem('fontZoom');
+            // Use saved zoom if available, otherwise use default from config
+            const initialZoom = savedZoom ? parseInt(savedZoom) : config.defaultZoom;
+            setZoom(initialZoom);
         }
     } catch (error) {
         console.error('Error loading zoom config:', error);
-        setZoom(100);
-        applyEventLogVisibility(false);
-    }
-}
-
-function applyEventLogVisibility(showEventLog) {
-    if (showEventLog) {
-        return;
-    }
-    const leftPane = document.getElementById('left-pane');
-    if (leftPane && !leftPane.classList.contains('collapsed')) {
-        toggleLeftPane();
+        // Fallback to saved zoom or default
+        const savedZoom = localStorage.getItem('fontZoom');
+        if (savedZoom) {
+            setZoom(parseInt(savedZoom));
+        }
     }
 }
 

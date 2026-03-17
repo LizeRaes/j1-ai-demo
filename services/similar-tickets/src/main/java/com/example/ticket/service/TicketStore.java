@@ -4,6 +4,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import io.helidon.service.registry.Service;
+
+@Service.Singleton
 public class TicketStore {
 
 	public record TicketData(Long ticketId, String ticketType, String text, float[] vector, long timestamp) { }

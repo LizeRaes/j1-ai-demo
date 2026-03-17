@@ -1,12 +1,14 @@
 package com.example.ticket.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
-public record TicketsResponse(@JsonProperty("tickets") List<TicketInfo> tickets) {
+import jakarta.json.bind.annotation.JsonbProperty;
 
-    public record TicketInfo(@JsonProperty("ticketId") Long id, @JsonProperty("ticketType") String type,
-                             @JsonProperty("text") String text, @JsonProperty("vector") float[] vector) {
+public record TicketsResponse(List<TicketInfo> tickets) {
+
+    public record TicketInfo(@JsonbProperty("ticketId") Long id,
+                             @JsonbProperty("ticketType") String type,
+                             String text,
+                             float[] vector) {
     }
 }
