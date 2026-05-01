@@ -4,13 +4,10 @@ import com.example.appointment.dto.AiTriageResult;
 import com.example.appointment.dto.TriageRequest;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
-import io.quarkiverse.langchain4j.RegisterAiService;
-// import io.quarkiverse.langchain4j.mcp.runtime.McpToolBox;
+import dev.langchain4j.service.V;
 
 import java.util.List;
 
-@RegisterAiService
-// @McpToolBox("urgency")
 public interface AiTriageAssistant {
 
     @SystemMessage("""
@@ -22,6 +19,6 @@ public interface AiTriageAssistant {
             Allowed ticket types:
             {{allowedTicketTypes}}
             """)
-    AiTriageResult triage(String userMessage,
-                          List<TriageRequest.TicketTypeInfo> allowedTicketTypes);
+    AiTriageResult triage(@V("userMessage") String userMessage,
+                          @V("allowedTicketTypes") List<TriageRequest.TicketTypeInfo> allowedTicketTypes);
 }

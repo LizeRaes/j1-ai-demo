@@ -15,7 +15,7 @@ This RAG system allows you to:
 - Java 25
 - Maven 3.8+
 - Docker (for Oracle 26 AI to run locally)
-- OpenAI API key (for embeddings)
+- OCI API key auth for OCI GenAI embeddings by default; OpenAI-compatible embeddings remain optional
 
 ## Setup
 
@@ -32,8 +32,16 @@ This RAG system allows you to:
    docker-compose up -d docling
    ```
 
-2. **Set your OpenAI API key:**
+2. **Configure the embedding provider.**
+
+   OCI GenAI is the default:
    ```bash
+   export OCI_COMPARTMENT_ID=<your-compartment-ocid>
+   ```
+
+   To use OpenAI-compatible embeddings instead:
+   ```bash
+   export COMPANY_RAG_EMBEDDING_PROVIDER=openai
    export OPENAI_API_KEY=your-api-key-here
    ```
 
@@ -47,7 +55,7 @@ This RAG system allows you to:
    mvn package
    java -Dsync-demo-data=true -jar target/quarkus-app/quarkus-run.jar
    ```
-   This sync flag embeds documents from `company-documents/` on startup. For the bundled demo docs this is typically under $0.01 in embedding API cost.
+   This sync flag embeds documents from `company-documents/` on startup using the configured embedding provider.
    If you do **not** want startup embedding sync:
    - Dev mode: `mvn quarkus:dev`
    - Normal mode: `mvn package && java -jar target/quarkus-app/quarkus-run.jar`
@@ -471,45 +479,47 @@ curl -OJ http://localhost:8084/api/documents/download/Quarterly_Report.pdf
 Edit `src/main/resources/application.properties` to configure:
 - Oracle datasource URL/credentials (default: `jdbc:oracle:thin:@localhost:1522/freepdb1`)
 - Oracle embedding table and metadata column (`oracleai.embedding.*`)
-- OpenAI API key (required for embeddings)
+- Embedding provider under `company-rag.embedding` (`oci` by default, `openai` optional)
 - Default chunking strategy and chunk size
 - Documents storage folder (`demo.dir.location`, default `company-documents`)
 
 ## Technology Stack
 
 - **Quarkus 3.30.8** - Java framework
-- **Quarkus LangChain4J Extension** - Automatic EmbeddingModel configuration via BOM
 - **LangChain4j** - Embedding generation and Oracle embedding store integration (versions managed by BOM)
-- **OpenAI text-embedding-3-large** - Embedding model (3072-dimensional vectors)
+- **OCI GenAI embeddings** - Default embedding provider
 - **Oracle AI 26ai** - Vector database for similarity search
 - **SnakeYAML** - YAML parsing for document access policy
 
 ## Embedding Model
 
-The service uses **OpenAI's text-embedding-3-large** model to generate embeddings:
-- **Dimensions**: 3072
-- **Model**: text-embedding-3-large
-- **Provider**: OpenAI (requires API key)
+The service uses OCI GenAI embeddings by default:
+- **Model**: `cohere.embed-english-v3.0` by default
+- **Provider**: OCI GenAI (`COMPANY_RAG_EMBEDDING_PROVIDER=oci`)
+- **Region**: `us-chicago-1` by default (`OCI_GENAI_REGION` or `OCI_REGION` can override)
 - **Distance Metric**: Cosine similarity (configured via Oracle vector index settings)
 
 ### Configuration
 
-Set the `OPENAI_API_KEY` environment variable or configure it in `application.properties`:
+Set OCI config via environment or `application.properties`:
 ```properties
-quarkus.langchain4j.openai.api-key=${OPENAI_API_KEY:}
+company-rag.embedding.provider=${COMPANY_RAG_EMBEDDING_PROVIDER:oci}
+company-rag.embedding.oci.compartment-id=${OCI_COMPARTMENT_ID:<compartment-ocid>}
+company-rag.embedding.oci.model-id=${OCI_EMBEDDING_MODEL_ID:cohere.embed-english-v3.0}
+company-rag.embedding.oci.region=${OCI_GENAI_REGION:us-chicago-1}
 ```
 
-The embedding model can be changed via:
+OpenAI-compatible embeddings can still be selected via:
 ```properties
-quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-3-large
+company-rag.embedding.provider=openai
+company-rag.embedding.openai.api-key=${OPENAI_API_KEY:}
+company-rag.embedding.openai.model-name=text-embedding-3-large
 ```
-
-**Note:** The Quarkus LangChain4J extension automatically provides the `EmbeddingModel` bean. No manual configuration needed.
 
 ## Architecture Notes
 
-- **Embedding Generation**: Document chunks are embedded using OpenAI's API when documents are loaded or updated
-- **Vector Storage**: 3072-dimensional vectors stored in Oracle AI 26ai with cosine similarity
+- **Embedding Generation**: Document chunks are embedded using the configured provider when documents are loaded or updated
+- **Vector Storage**: Provider vectors are stored in Oracle AI 26ai with cosine similarity
 - **Metadata Storage**: Document name, chunk index, and text are stored in Oracle embedding table metadata for retrieval
 - **Search**: Returns the most similar document chunks based on ticket text queries
 - **RBAC**: Document access is controlled via YAML configuration file

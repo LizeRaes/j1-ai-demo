@@ -8,15 +8,6 @@ server:
           welcome: "index.html"
 
 langchain4j:
-  providers:
-    open-ai:
-      api-key: "${OPENAI_API_KEY}"
-
-  models:
-    ticket-embedding-model:
-      provider: open-ai
-      model-name: "text-embedding-3-large"
-
   embedding-stores:
     oracle-embedding-store:
       provider: oracle
@@ -51,6 +42,21 @@ data:
             connection-factory-class-name: "oracle.jdbc.pool.OracleDataSource"
             properties:
               oracle.jdbc.vectorDefaultGetObjectType: "FLOAT_ARRAY"
+
+similar-tickets:
+  embedding:
+    provider: "${SIMILAR_TICKETS_EMBEDDING_PROVIDER:oci}"
+    openai:
+      api-key: "${OPENAI_API_KEY:}"
+      model-name: "text-embedding-3-large"
+    oci:
+      auth-method: "api_key"
+      config-file: "~/.oci/config"
+      profile: "DEFAULT"
+      compartment-id: "${OCI_COMPARTMENT_ID:}"
+      model-id: "${OCI_EMBEDDING_MODEL_ID:cohere.embed-english-v3.0}"
+      region: "${OCI_GENAI_REGION:us-chicago-1}"
+      serving-type: "ON_DEMAND"
 
 ui:
   font:

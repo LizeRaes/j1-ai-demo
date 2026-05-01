@@ -8,10 +8,16 @@
 
 ## Setup
 
-Configure the OpenAI API key before starting the service:
+OCI GenAI is the default embedding provider. Configure OCI API key auth before starting the service:
 
-- create `config/config-prod.yaml` with `openai.api-key`
-- OR: set `OPENAI_API_KEY` in your environment
+- `~/.oci/config` with a usable `DEFAULT` profile
+- `OCI_COMPARTMENT_ID`
+
+To use OpenAI-compatible embeddings instead:
+
+```bash
+SIMILAR_TICKETS_EMBEDDING_PROVIDER=openai OPENAI_API_KEY=<key> java -jar target/similarity.jar
+```
 
 1. **Start the Oracle AI database:**
    ```bash
@@ -29,7 +35,7 @@ java -DDemoData=true -jar target/similarity.jar
 `-DDemoData=true` wipes existing vectors and loads demo tickets (about 150), then embeds them.
 
 > [!WARNING]
-> If `OPENAI_API_KEY` is set, startup with demo data triggers embedding API calls and incurs a small cost, approx. `$0.0010-$0.0022` with current embedding model.
+> Startup with demo data triggers embedding API calls against the configured provider and may incur a small cost.
 > To start without demo loading/vectorization: `java -jar target/similarity.jar`
 
 The application will run on port **8082**.
@@ -39,10 +45,10 @@ The application will run on port **8082**.
 ### Running Integration Tests
 
 By default, integration tests are disabled unless you supply some system variables.
-If you have an OpenAPI key and an Oracle Database connection, you may run the tests for the application using the following command:
+If you have a model provider configured and an Oracle Database connection, you may run the tests for the application using the following command:
 
 ```bash
-mvn clean -Dopenai.api-key=<key> -D'data.sources.sql[0].provider.ucp.url'=jdbc:oracle:thin:<DB_URL>:<PORT>/<DB_NAME> verify
+mvn clean -D'data.sources.sql[0].provider.ucp.url'=jdbc:oracle:thin:<DB_URL>:<PORT>/<DB_NAME> verify
 ```
 
 ## Web Dashboard
@@ -274,22 +280,22 @@ curl -X POST http://localhost:8082/api/similarity/tickets/delete \
 Edit `src/main/resources/application.yaml` to configure:
 - Oracle datasource URL/credentials (default: `jdbc:oracle:thin:@localhost:1521/freepdb1`)
 - Oracle embedding table/index settings under `langchain4j.oracle.embedding-store`
-- OpenAI API key (required for embeddings)
+- Embedding provider under `similar-tickets.embedding` (`oci` by default, `openai` optional)
 
 ## Technology Stack
 
 - **Helidon 4.3.3** - Java framework
-- **Helidon LangChain4J Extension** - Automatic EmbeddingModel configuration via YAML
+- **Helidon LangChain4J Extension** - Oracle vector store integration
 - **LangChain4j** - Embedding generation and OracleEmbeddingStoreConfig
-- **OpenAI text-embedding-3-large** - Embedding model (3072-dimensional vectors)
+- **OCI GenAI embeddings** - Default embedding provider
 - **Oracle AI 26ai Database** - Vector database for similarity search
 
 ## Embedding Model
 
-The service uses **OpenAI's text-embedding-3-large** model to generate embeddings:
-- **Dimensions**: 3072
-- **Model**: text-embedding-3-large
-- **Provider**: OpenAI (requires API key)
+The service uses OCI GenAI embeddings by default:
+- **Model**: `cohere.embed-english-v3.0` by default
+- **Provider**: OCI GenAI (`SIMILAR_TICKETS_EMBEDDING_PROVIDER=oci`)
+- **Region**: `us-chicago-1` by default (`OCI_GENAI_REGION` or `OCI_REGION` can override)
 - **Distance Metric**: Cosine similarity (configured via Oracle vector store index settings)
 
 The model embeds only the `text` field from ticket requests. No comments or metadata are included in the embeddings.
@@ -297,22 +303,29 @@ The model embeds only the `text` field from ticket requests. No comments or meta
 ### Configuration
 
 ```yaml
-openai:
-  api-key: ${OPENAI_API_KEY=demo}
-  embedding-model: "text-embedding-3-large"
+similar-tickets:
+  embedding:
+    provider: "${SIMILAR_TICKETS_EMBEDDING_PROVIDER:oci}"
+    oci:
+      compartment-id: "${OCI_COMPARTMENT_ID:<compartment-ocid>}"
+      model-id: "${OCI_EMBEDDING_MODEL_ID:cohere.embed-english-v3.0}"
+      region: "${OCI_GENAI_REGION:us-chicago-1}"
 ```
 
-The embedding model can be changed via:
+OpenAI-compatible embeddings can still be selected via:
 ```yaml
-openai:
-  embedding-model: "text-embedding-3-large"
+similar-tickets:
+  embedding:
+    provider: "openai"
+    openai:
+      api-key: "${OPENAI_API_KEY:}"
+      model-name: "text-embedding-3-large"
 ```
 
 ## Architecture Notes
 
-- **API key behavior**: read framework config value first (including optional `config/config-prod.yaml` when profile `prod` is active); if empty or `demo`, fallback to `OPENAI_API_KEY`; if still missing/`demo`, startup fails fast.
-- **Embedding Generation**: Text is embedded on-the-fly using OpenAI's API when upserting or searching
-- **Vector Storage**: 3072-dimensional vectors stored in Oracle AI 26ai with cosine similarity
+- **Embedding Generation**: Text is embedded on-the-fly using the configured provider when upserting or searching
+- **Vector Storage**: Provider vectors are stored in Oracle AI 26ai with cosine similarity
 - **Metadata Storage**: Ticket ID, type, and original text are stored in Oracle embedding table metadata for retrieval
 - **Search**: Returns the most similar tickets across all ticket types, excluding only the specified ticket
 - **Idempotency**: All operations (upsert, delete) are idempotent - safe to retry
@@ -324,10 +337,9 @@ openai:
 - Check Oracle container logs: `docker-compose logs oracle`
 - Verify port 1521 is accessible: `telnet localhost 1521`
 
-**OpenAI API Errors:**
-- Verify `OPENAI_API_KEY` is set correctly
-- Check API key has sufficient credits/quota
-- Ensure network can reach OpenAI API
+**Model Provider Errors:**
+- For OCI, verify `~/.oci/config`, profile, `OCI_COMPARTMENT_ID`, and that the configured region supports the selected embedding model
+- For OpenAI-compatible mode, verify `OPENAI_API_KEY` and network reachability
 
 
 ## Try metrics

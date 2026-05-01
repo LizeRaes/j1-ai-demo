@@ -34,8 +34,8 @@ Tickets with urgency score >= 0.8 are considered critical and are escalated to a
 | [medicapt-user-facing](services/medicapt-user-facing/)          | 8083 | Patient-facing web app for appointments, billing, support requests                    |
 | [helpdesk](services/helpdesk/)                                  | 8080 | System-of-record ticketing, dispatch, RBAC, ticket lifecycle                          |
 | [ai-triage](services/ai-triage/)                                | 8081 | LLM-powered classification, proxy for urgency scoring and enrichment                  |
-| [similar-tickets](services/similar-tickets/)                    | 8082 | Vector-similarity search over historical tickets (Oracle AI + OpenAI embeddings)      |
-| [company-rag](services/company-rag/)                            | 8084 | Company-document RAG with RBAC-controlled citations (Oracle AI + OpenAI embeddings)   |
+| [similar-tickets](services/similar-tickets/)                    | 8082 | Vector-similarity search over historical tickets (Oracle AI + OCI GenAI embeddings)   |
+| [company-rag](services/company-rag/)                            | 8084 | Company-document RAG with RBAC-controlled citations (Oracle AI + OCI GenAI embeddings) |
 | [coding-assistant](services/coding-assistant/)                  | 8085 | Async bug-fix assistant that prepares PRs and callbacks to helpdesk                   |
 | [urgency](services/urgency)                                     | 8086 | A service that generates urgency score from a domain-trained ML model.                |
 | [urgency-mcp](services/urgency-mcp)                             | 9090 | An alternative MCP service to calculate urgency score from a domain-trained ML model. |
@@ -49,9 +49,18 @@ Each service is independently deployable with its own `pom.xml`, `README.md`, an
 
 **Prerequisites:** Java 25+, Maven 3.8+, Docker.
 
-For OpenAI-backed services, configure API key via either:
-- `services/similar-tickets/config/config-prod.yaml` (`openai.api-key`)
-- `OPENAI_API_KEY` environment variable
+OCI GenAI is the default model provider for AI triage, ticket embeddings, and document embeddings. Configure OCI API key auth in `~/.oci/config` and set `OCI_COMPARTMENT_ID`. Ticket and document embeddings default to `OCI_GENAI_REGION=us-chicago-1` because the default `cohere.embed-english-v3.0` embedding model is region-specific.
+
+OpenAI-compatible providers remain available by setting service-specific provider environment variables to `openai` and exporting `OPENAI_API_KEY`.
+
+To run the AI triage and embedding services with OpenAI-compatible providers:
+
+```bash
+export OPENAI_API_KEY=<your-key>
+export AI_TRIAGE_LLM_PROVIDER=openai
+export COMPANY_RAG_EMBEDDING_PROVIDER=openai
+export SIMILAR_TICKETS_EMBEDDING_PROVIDER=openai
+```
 
 Preferred startup:
 
@@ -83,11 +92,10 @@ Run all tests across all services:
 ./run-all-tests.sh
 ```
 
-`run-all-tests.sh` executes `mvn test` per service (unit-test scope). By default this does **not** run paid vectorization/API workflows. In particular, `similar-tickets` integration-style tests that need real OpenAI/Oracle are skipped unless explicit system properties are provided.
+`run-all-tests.sh` executes `mvn test` per service (unit-test scope). By default this does **not** run paid vectorization/API workflows. In particular, `similar-tickets` integration-style tests that need a real model provider and Oracle are skipped unless explicit system properties are provided.
 
 > [!WARNING]
-> If `OPENAI_API_KEY` is set and you run the default `./start-all.sh`, demo loaders for similar-tickets and company-rag will run and trigger embedding/vectorization calls.
-> Roughly, that is about **20k tokens total** on startup or approx. **$0.0026 USD** per startup with current embedding model settings.
+> If you run the default `./start-all.sh`, demo loaders for similar-tickets and company-rag will run and trigger embedding/vectorization calls against the configured provider.
 > If you want to start without demo vectorization costs, run:
 >
 > ```bash
@@ -111,7 +119,7 @@ HELPDESK_DEMO_DATA=false COMPANY_RAG_DEMO_DATA=false SIMILAR_TICKETS_DEMO_DATA=f
 
 Manual startup order for development:
 
-Ensure `OPENAI_API_KEY` is set in your environment variables before starting services that use embeddings/models.
+Ensure OCI API key auth is configured before starting services that use GenAI models. To use OpenAI-compatible providers instead, set the relevant `*_PROVIDER=openai` environment variable and export `OPENAI_API_KEY`.
 
 ```bash
 # 0. Start the auxiliary services
@@ -171,9 +179,9 @@ docs/
 |---------------------------|-----------------------------|------------------------------------|
 | medicapt-user-facing      | Quarkus + Qute              | — / in-memory                      |
 | helpdesk                  | Quarkus + Hibernate/Panache | — / MySQL                          |
-| ai-triage                 | Quarkus + LangChain4j       | GPT-4o-mini / —                    |
-| similar-tickets           | Helidon + LangChain4j       | OpenAI embeddings / Oracle AI 26ai |
-| company-rag               | Quarkus + LangChain4j       | OpenAI embeddings / Oracle AI 26ai |
+| ai-triage                 | Quarkus + LangChain4j       | OCI GenAI by default; OpenAI-compatible optional |
+| similar-tickets           | Helidon + LangChain4j       | OCI GenAI embeddings / Oracle AI 26ai |
+| company-rag               | Quarkus + LangChain4j       | OCI GenAI embeddings / Oracle AI 26ai |
 | coding-assistant          | Quarkus                     | OpenAI Codex / GitHub CLI          |
 | urgency                   | Quarkus                     | -                                  |
 | urgency-mcp               | Helidon                     | -                                  |

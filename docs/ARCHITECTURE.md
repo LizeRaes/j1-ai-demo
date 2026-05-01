@@ -26,9 +26,10 @@ The system demonstrates how user support requests flow from a user-facing app th
 
 ## Quick Start (Demo)
 
-### Required Environment Variables
-All AI-powered services require an OpenAI API key.  
-**Set the `OPENAI_API_KEY` in your environment variables.**
+### Required Environment
+OCI GenAI is the default model provider for AI triage, ticket embeddings, and document embeddings. Configure OCI API key auth in `~/.oci/config` and set `OCI_COMPARTMENT_ID`. Ticket and document embeddings default to `OCI_GENAI_REGION=us-chicago-1` for the default OCI embedding model.
+
+OpenAI-compatible providers remain available by setting the relevant `*_PROVIDER=openai` environment variable and exporting `OPENAI_API_KEY`.
 
 ### Start Order
 

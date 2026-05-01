@@ -4,7 +4,7 @@ A Quarkus application that uses AI to automatically classify and triage customer
 
 ## Features
 
-- **AI-Powered Classification**: Uses OpenAI GPT-4o-mini to classify tickets into predefined categories
+- **AI-Powered Classification**: Uses either OpenAI-compatible chat models or OCI Generative AI to classify tickets into predefined categories
 - **Urgency Scoring**: Calls urgency service (custom ML model trained on domain data) and maps score to urgency 1-10
 - **Confidence Metrics**: Provides AI confidence scores (0-100) for classification decisions
 - **Similar Ticket Discovery**: Integrates with similarity service to find related historical tickets
@@ -15,15 +15,28 @@ A Quarkus application that uses AI to automatically classify and triage customer
 
 - **Java 25**
 - **Maven 3.8+**
-- **OpenAI API Key** (set as `OPENAI_API_KEY` environment variable)
+- One LLM provider configured:
+  - **OpenAI / OpenAI-compatible**: `OPENAI_API_KEY` or an equivalent compatible endpoint
+  - **OCI Generative AI**: OCI API key auth configured in `~/.oci/config` with a usable `DEFAULT` profile and a target compartment OCID
 - **Similarity Tickets Service** (optional, runs on port 8082 by default)
 - **Document Search Service** (optional, runs on port 8084 by default)
 
 ## Setup
 
-1. **Set OpenAI API Key:**
+1. **Choose an LLM provider.**
+
+   OpenAI / OpenAI-compatible:
    ```bash
    export OPENAI_API_KEY=your-api-key-here
+   ```
+
+   OCI Generative AI:
+   ```properties
+   ai-triage.llm.provider=oci
+   ai-triage.llm.oci.auth-method=api_key
+   ai-triage.llm.oci.config-file=~/.oci/config
+   ai-triage.llm.oci.profile=DEFAULT
+   ai-triage.llm.oci.compartment-id=<your-compartment-ocid>
    ```
 
 2. **Build and run:**
@@ -48,8 +61,9 @@ docker model pull ai/llama3.2:1B-Q8_0
 
 **Configure** `application.properties`
 ```properties
-quarkus.langchain4j.openai.base-url=http://localhost:12434/engines/llama.cpp/v1
-quarkus.langchain4j.openai.chat-model.model-name=ai/llama3.2:1B-Q8_0
+ai-triage.llm.provider=openai
+ai-triage.llm.openai.base-url=http://localhost:12434/engines/llama.cpp/v1
+ai-triage.llm.openai.chat-model.model-name=ai/llama3.2:1B-Q8_0
 ```
 
 **Verify**
@@ -63,9 +77,10 @@ curl http://localhost:12434/engines/llama.cpp/v1/chat/completions \
 #### NVIDIA NIM
 
 ```properties
-quarkus.langchain4j.openai.base-url=https://integrate.api.nvidia.com/v1
-quarkus.langchain4j.openai.api-key=${NIM_API_KEY}
-quarkus.langchain4j.openai.chat-model.model-name=meta/llama-3.1-8b-instruct
+ai-triage.llm.provider=openai
+ai-triage.llm.openai.base-url=https://integrate.api.nvidia.com/v1
+ai-triage.llm.openai.api-key=${NIM_API_KEY}
+ai-triage.llm.openai.chat-model.model-name=meta/llama-3.1-8b-instruct
 ```
 
 **Verify**
@@ -74,6 +89,34 @@ curl https://integrate.api.nvidia.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $NIM_API_KEY" \
   -d '{"model":"meta/llama-3.1-8b-instruct","stream":false,"messages":[{"role":"user","content":"Hi"}]}'
+```
+
+### Running with OCI Generative AI
+
+Configure `application.properties`:
+
+```properties
+ai-triage.llm.provider=oci
+ai-triage.llm.oci.auth-method=api_key
+ai-triage.llm.oci.config-file=~/.oci/config
+ai-triage.llm.oci.profile=DEFAULT
+ai-triage.llm.oci.compartment-id=<your-compartment-ocid>
+ai-triage.llm.oci.chat-model.family=generic
+ai-triage.llm.oci.chat-model.model-name=xai.grok-4-fast-reasoning
+ai-triage.llm.oci.chat-model.serving-type=ON_DEMAND
+```
+
+Optional OCI overrides:
+
+```properties
+# Supported values: generic, cohere
+ai-triage.llm.oci.chat-model.family=generic
+
+# Supported values today: api_key
+ai-triage.llm.oci.auth-method=api_key
+
+# Optional if you want to override the region from ~/.oci/config
+ai-triage.llm.oci.region=us-chicago-1
 ```
 
 ## Configuration
@@ -85,10 +128,24 @@ Edit `src/main/resources/application.properties` to configure:
 quarkus.http.port=8081
 
 # AI Triage Model Configuration
-quarkus.langchain4j.openai.api-key=${OPENAI_API_KEY}
-quarkus.langchain4j.openai.chat-model.model-name=gpt-4o-mini
-quarkus.langchain4j.openai.chat-model.temperature=0.2
-quarkus.langchain4j.openai.chat-model.timeout=15s
+ai-triage.llm.provider=${AI_TRIAGE_LLM_PROVIDER:oci}
+
+# OpenAI / OpenAI-compatible
+ai-triage.llm.openai.api-key=${OPENAI_API_KEY:}
+ai-triage.llm.openai.chat-model.model-name=gpt-4o-mini
+ai-triage.llm.openai.chat-model.temperature=0.2
+ai-triage.llm.openai.chat-model.timeout=15s
+
+# OCI Generative AI
+ai-triage.llm.oci.auth-method=api_key
+ai-triage.llm.oci.config-file=${user.home}/.oci/config
+ai-triage.llm.oci.profile=DEFAULT
+ai-triage.llm.oci.compartment-id=${OCI_COMPARTMENT_ID:<compartment-ocid>}
+ai-triage.llm.oci.chat-model.family=generic
+ai-triage.llm.oci.chat-model.model-name=xai.grok-4-fast-reasoning
+ai-triage.llm.oci.chat-model.serving-type=ON_DEMAND
+ai-triage.llm.oci.chat-model.temperature=0.2
+ai-triage.llm.oci.chat-model.max-tokens=512
 
 # Similarity Service Configuration
 quarkus.rest-client.similarity.url=http://localhost:8082
@@ -117,21 +174,7 @@ ai-triage.ui.show-event-log=false
 
 Default mode calls urgency directly over HTTP (`services/urgency`, port `8086`).
 
-To switch to MCP, where the LLM calls urgency when it thinks it's necessary (but is about 3s slower depending on LLM used):
-
-1. In `src/main/resources/application.properties`:
-   - Comment out: `quarkus.rest-client.urgency.url=...`
-   - Uncomment:
-     - `quarkus.langchain4j.mcp.urgency.transport-type=http`
-     - `quarkus.langchain4j.mcp.urgency.url=http://localhost:9090/urgency`
-     - `quarkus.langchain4j.mcp.urgency.tool-execution-timeout=4s`
-2. In `src/main/java/com/example/appointment/service/AiTriageAssistant.java`:
-   - Uncomment `@McpToolBox("urgency")` and its import
-3. In `src/main/java/com/example/appointment/dto/AiTriageResult.java`:
-   - Uncomment `urgencyScore` field
-4. In `pom.xml`:
-   - Uncomment `quarkus-langchain4j-mcp` dependency
-5. Start `services/urgency-mcp` (port `9090`)
+The previous MCP experiment is not wired into the new config-driven provider abstraction. Treat it as inactive until the LLM adapter is reworked to use tool providers instead of the older Quarkus AI service annotations.
 
 ## API Endpoint
 
@@ -304,7 +347,7 @@ curl -X POST http://localhost:8084/api/documents/search \
 ## How It Works
 
 1. **Request Validation**: Validates that message, ticketId, and allowed ticket types are provided
-2. **AI Classification**: Calls OpenAI GPT-4o-mini with system prompt describing MedicalAppointment and classification rules
+2. **AI Classification**: Calls the configured chat provider with a system prompt describing MedicalAppointment and classification rules
 3. **Urgency Scoring**: Calls urgency service using ML model to determine urgency score
 4. **Result Validation**: Ensures AI response matches allowed types and value constraints
 5. **Similarity Search**: Queries similarity service to find related historical tickets (non-blocking), passing the ticketId
@@ -321,7 +364,7 @@ curl -X POST http://localhost:8084/api/documents/search \
 ## Tech Stack
 
 - **Quarkus 3.30.8** - Java framework
-- **LangChain4j 0.35.0** - AI integration library
-- **OpenAI GPT-4o-mini** - LLM for ticket classification
+- **LangChain4j** - AI integration library
+- **OCI GenAI by default; OpenAI-compatible models optional** - LLM for ticket classification
 - **Jackson** - JSON serialization
 - **Java HTTP Client** - Similarity service integration
