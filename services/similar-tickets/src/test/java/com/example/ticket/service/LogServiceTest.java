@@ -2,6 +2,7 @@ package com.example.ticket.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -15,7 +16,7 @@ class LogServiceTest {
     void testPublishAddsLog() {
         LogService logHandler = new LogService();
 
-        LogRecord record = logRecord(Level.INFO, "Test message", "testMethod", 123L);
+        LogRecord record = logRecord("Test message", "testMethod", 123L);
         logHandler.publish(record);
 
         List<LogService.LogEntry> logs = logHandler.getLogs();
@@ -30,8 +31,8 @@ class LogServiceTest {
     void testGetLogs() {
         LogService logHandler = new LogService();
 
-        logHandler.publish(logRecord(Level.INFO, "Test message 1", "testMethod1", 1L));
-        logHandler.publish(logRecord(Level.INFO, "Test message 2", "testMethod2", 2L));
+        logHandler.publish(logRecord("Test message 1", "testMethod1", 1L));
+        logHandler.publish(logRecord("Test message 2", "testMethod2", 2L));
 
         List<LogService.LogEntry> logs = logHandler.getLogs();
         assertEquals(2, logs.size());
@@ -42,7 +43,7 @@ class LogServiceTest {
         LogService logHandler = new LogService();
 
         for (int i = 0; i < 1001; i++) {
-            logHandler.publish(logRecord(Level.INFO, "Test message " + i, "testMethod", i));
+            logHandler.publish(logRecord("Test message " + i, "testMethod", i));
         }
 
         List<LogService.LogEntry> logs = logHandler.getLogs();
@@ -54,8 +55,8 @@ class LogServiceTest {
     void testLogOrder() {
         LogService logHandler = new LogService();
 
-        logHandler.publish(logRecord(Level.INFO, "Test message 1", "testMethod1", 1L));
-        logHandler.publish(logRecord(Level.INFO, "Test message 2", "testMethod2", 2L));
+        logHandler.publish(logRecord("Test message 1", "testMethod1", 1L));
+        logHandler.publish(logRecord("Test message 2", "testMethod2", 2L));
 
         List<LogService.LogEntry> logs = logHandler.getLogs();
         assertTrue(logs.get(0).timestamp() <= logs.get(1).timestamp());
@@ -65,19 +66,19 @@ class LogServiceTest {
     void testGetLogsReturnsCopy() {
         LogService logHandler = new LogService();
 
-        logHandler.publish(logRecord(Level.INFO, "Test message", "testMethod", 1L));
+        logHandler.publish(logRecord("Test message", "testMethod", 1L));
         List<LogService.LogEntry> logs = logHandler.getLogs();
         logs.clear();
 
         assertEquals(1, logHandler.getLogs().size());
     }
 
-    private static LogRecord logRecord(Level level, String message, String methodName, long timestamp) {
-        LogRecord record = new LogRecord(level, message);
+    private static LogRecord logRecord(String message, String methodName, long timestamp) {
+        LogRecord record = new LogRecord(Level.INFO, message);
         record.setLoggerName(LogService.LOGGER_NAME);
         record.setSourceClassName(DemoDataService.class.getName());
         record.setSourceMethodName(methodName);
-        record.setMillis(timestamp);
+        record.setInstant(Instant.ofEpochMilli(timestamp));
         return record;
     }
 }

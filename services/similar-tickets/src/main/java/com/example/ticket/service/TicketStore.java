@@ -1,30 +1,31 @@
 package com.example.ticket.service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.helidon.service.registry.Service;
 
+import com.example.ticket.model.TicketData;
+
 @Service.Singleton
 public class TicketStore {
 
-	public record TicketData(Long ticketId, String ticketType, String text, float[] vector, long timestamp) { }
+    private final Map<Long, TicketData> tickets = new ConcurrentHashMap<>();
 
-	private final Map<Long, TicketData> tickets = new ConcurrentHashMap<>();
+    public void storeTicket(TicketData ticket) {
+        tickets.put(ticket.ticketId(), ticket);
+    }
 
-	public void storeTicket(Long ticketId, String ticketType, String text, float[] vector) {
-		tickets.put(ticketId, new TicketData(ticketId, ticketType, text, vector, System.currentTimeMillis()));
-	}
+    public void removeTicket(Long ticketId) {
+        tickets.remove(ticketId);
+    }
 
-	public void removeTicket(Long ticketId) {
-		tickets.remove(ticketId);
-	}
-
-	public List<TicketData> getAllTickets() {
-		return tickets.values().stream()
-				.sorted((a, b) -> Long.compare(b.timestamp, a.timestamp)) // Latest first
-				.collect(Collectors.toList());
-	}
+    public List<TicketData> getAllTickets() {
+        return tickets.values().stream()
+                .sorted((a, b) -> Long.compare(b.timestamp(), a.timestamp()))
+                .collect(Collectors.toList());
+    }
 
 }

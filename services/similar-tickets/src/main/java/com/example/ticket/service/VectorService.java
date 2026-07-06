@@ -1,5 +1,8 @@
 package com.example.ticket.service;
 
+import com.example.ticket.model.SimilarTicket;
+import com.example.ticket.model.TicketData;
+import com.example.ticket.model.TicketSearchQuery;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -8,12 +11,10 @@ import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.Filter;
-
 import io.helidon.config.Config;
 import io.helidon.service.registry.Service;
 
 import javax.sql.DataSource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,12 +24,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.example.ticket.dto.TicketsResponse;
-
 import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
 @Service.Singleton
 public class VectorService {
+
+    private static final System.Logger log = System.getLogger(LogService.LOGGER_NAME);
+    private static final String EMBEDDING_TABLE_CONFIG_PATH =
+            "langchain4j.embedding-stores.oracle-embedding-store.embedding-table";
+    private static final String RETRIEVE_ALL_QUERY = """
+                SELECT
+                  JSON_VALUE(%s, '$.id' RETURNING NUMBER) AS ticket_id,
+                  JSON_VALUE(%s, '$.type' RETURNING VARCHAR2(200)) AS ticket_type,
+                  %s AS text_col,
+                  %s AS embedding_col
+                FROM %s
+                """;
 
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;
@@ -47,28 +58,32 @@ public class VectorService {
         this.embeddingModel = Objects.requireNonNull(embeddingModel);
         this.dataSource = Objects.requireNonNull(dataSource);
 
-        var tableConfig = config.get("langchain4j.embedding-stores.oracle-embedding-store.embedding-table");
+        var tableConfig = embeddingTableConfig(config);
         this.tableName = tableConfig.get("name").asString().orElseThrow();
         this.embeddingColumn = tableConfig.get("embedding-column").asString().orElse("EMBEDDING");
         this.metadataColumn = tableConfig.get("metadata-column").asString().orElse("METADATA");
         this.textColumn = tableConfig.get("text-column").asString().orElse("TEXT");
     }
 
-    public void upsertTicket(Long ticketId, String ticketType, String text, float[] vector) {
-        deleteTicket(ticketId);
+    private static Config embeddingTableConfig(Config config) {
+        return config.get(EMBEDDING_TABLE_CONFIG_PATH);
+    }
+
+    public void upsertTicket(TicketData ticket) {
+        deleteTicket(ticket.ticketId());
 
         TextSegment segment = TextSegment.from(
-                text,
+                ticket.text(),
                 Metadata.from(
                         Map.of(
-                                "id", ticketId,
-                                "type", ticketType,
-                                "text", text
+                                "id", ticket.ticketId(),
+                                "type", ticket.ticketType(),
+                                "text", ticket.text()
                         )
                 )
         );
 
-        embeddingStore.add(new Embedding(vector), segment);
+        embeddingStore.add(new Embedding(ticket.vector()), segment);
     }
 
     public void deleteTicket(Long ticketId) {
@@ -93,19 +108,16 @@ public class VectorService {
         }
     }
 
-    public List<SearchResult> searchSimilar(String queryText,
-                                            int maxResults,
-                                            double minScore,
-                                            Long excludeTicketId) {
+    public List<SimilarTicket> searchSimilar(TicketSearchQuery query) {
 
-        Embedding queryEmbedding = embeddingModel.embed(queryText).content();
-        Filter filter = metadataKey("id").isNotEqualTo(excludeTicketId);
+        Embedding queryEmbedding = embeddingModel.embed(query.text()).content();
+        Filter filter = metadataKey("id").isNotEqualTo(query.excludeTicketId());
 
         EmbeddingSearchRequest request = EmbeddingSearchRequest.builder()
                 .queryEmbedding(queryEmbedding)
                 .filter(filter)
-                .maxResults(maxResults)
-                .minScore(minScore)
+                .maxResults(query.maxResults())
+                .minScore(query.minScore())
                 .build();
 
         EmbeddingSearchResult<TextSegment> result = embeddingStore.search(request);
@@ -114,27 +126,20 @@ public class VectorService {
                 .map(match -> {
                     Map<String, Object> meta = match.embedded().metadata().toMap();
                     Object idObj = meta.get("id");
-					return switch (idObj) {
-						case Number n -> new SearchResult(n.longValue(), match.score());
-						case String s -> new SearchResult(Long.parseLong(s), match.score());
-						case Object _ -> null;
-					};
+                    return switch (idObj) {
+                        case Number n -> new SimilarTicket(n.longValue(), match.score());
+                        case String s -> new SimilarTicket(Long.parseLong(s), match.score());
+                        case Object _ -> null;
+                    };
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    public List<TicketsResponse.TicketInfo> retrieveAllTickets() {
-        String sql = """
-                SELECT
-                  JSON_VALUE(%s, '$.id' RETURNING NUMBER) AS ticket_id,
-                  JSON_VALUE(%s, '$.type' RETURNING VARCHAR2(200)) AS ticket_type,
-                  %s AS text_col,
-                  %s AS embedding_col
-                FROM %s
-                """.formatted(metadataColumn, metadataColumn, textColumn, embeddingColumn, tableName);
+    public List<TicketData> retrieveAllTickets() {
+        String sql = RETRIEVE_ALL_QUERY.formatted(metadataColumn, metadataColumn, textColumn, embeddingColumn, tableName);
 
-        List<TicketsResponse.TicketInfo> results = new ArrayList<>();
+        List<TicketData> results = new ArrayList<>();
 
         try (Connection c = dataSource.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -145,14 +150,13 @@ public class VectorService {
                 String ticketType = rs.getString("ticket_type");
                 String text = rs.getString("text_col");
                 float[] vector = rs.getObject("embedding_col", float[].class);
-                results.add(new TicketsResponse.TicketInfo(ticketId, ticketType, text != null ? text : "N/A", vector));
+                results.add(new TicketData(ticketId, ticketType, text != null ? text : "N/A", vector, 0L));
             }
         } catch (Exception e) {
-            return List.of();
+            log.log(System.Logger.Level.ERROR, "Failed to retrieve tickets from the database", e);
+            throw new RuntimeException("Failed to retrieve tickets from the database", e);
         }
 
         return results;
     }
-
-    public record SearchResult(Long ticketId, double score) {}
 }

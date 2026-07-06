@@ -1,79 +1,97 @@
 # Ticket Similarity Service
 
+The Ticket Similarity Service stores ticket embeddings in Oracle AI Database and searches for related historical tickets by vector similarity. It also serves a small dashboard at `/` for inspecting recent logs and stored ticket vectors.
+
 ## Prerequisites
 
-- Java 25
+- Java 25+
 - Maven 3.8+
-- Docker (for Oracle 26ai)
+- Docker, for the local Oracle database
+- `OPENAI_API_KEY`, required when generating embeddings
 
 ## Setup
 
-Configure the OpenAI API key before starting the service:
+Start the local Oracle database:
 
-- create `config/config-prod.yaml` with `openai.api-key`
-- OR: set `OPENAI_API_KEY` in your environment
+```bash
+docker-compose up -d
+```
 
-1. **Start the Oracle AI database:**
-   ```bash
-   docker-compose up -d
-   ```
+Build the service:
 
-2. **Build and run the application:**
-
-With JDK25
 ```bash
 mvn clean verify
+```
+
+Run without demo data:
+
+```bash
+java -jar target/similarity.jar
+```
+
+Run with bundled demo data:
+
+```bash
 java -DDemoData=true -jar target/similarity.jar
 ```
 
-`-DDemoData=true` wipes existing vectors and loads demo tickets (about 150), then embeds them.
+`-DDemoData=true` deletes existing vectors from the configured embedding table, loads the configured demo-data directory, and embeds those tickets. The bundled classpath demo data currently contains 90 tickets.
 
 > [!WARNING]
-> If `OPENAI_API_KEY` is set, startup with demo data triggers embedding API calls and incurs a small cost, approx. `$0.0010-$0.0022` with current embedding model.
-> To start without demo loading/vectorization: `java -jar target/similarity.jar`
+> Demo-data loading calls the configured embedding provider. With OpenAI enabled, this consumes API quota.
 
-The application will run on port **8082**.
+The service listens on port `8082` by default.
 
-**Important:** Make sure Oracle AI 26ai is running before starting the application, otherwise you'll get connection errors.
+## Configuration
 
-### Running Integration Tests
+Edit `src/main/resources/application.yaml` or provide equivalent Helidon config.
 
-By default, integration tests are disabled unless you supply some system variables.
-If you have an OpenAPI key and an Oracle Database connection, you may run the tests for the application using the following command:
-
-```bash
-mvn clean -Dopenai.api-key=<key> -D'data.sources.sql[0].provider.ucp.url'=jdbc:oracle:thin:<DB_URL>:<PORT>/<DB_NAME> verify
+```yaml
+similarity:
+  tickets:
+    base-path: "/api/similarity/tickets"
+    search:
+      max-results: 5
+      min-score: 0.0
+    demo-data:
+      directory: "demo-data"
 ```
+
+Important settings:
+
+- `similarity.tickets.base-path`: API base path. Defaults to `/api/similarity/tickets`.
+- `similarity.tickets.search.max-results`: default search result limit when request `maxResults` is omitted.
+- `similarity.tickets.search.min-score`: default search score threshold when request `minScore` is omitted.
+- `similarity.tickets.demo-data.directory`: filesystem or classpath directory containing demo `*.json` files. Defaults to bundled `demo-data` resources.
+- `langchain4j.providers.open-ai.api-key`: defaults to `${OPENAI_API_KEY}`.
+- `langchain4j.models.ticket-embedding-model`: embedding model config. The default model is `text-embedding-3-large`.
+- `langchain4j.embedding-stores.oracle-embedding-store.embedding-table`: Oracle embedding table settings.
+- `data.sources.sql[0].provider.ucp`: Oracle datasource connection settings.
+- `ui.font.zoom.default`: default dashboard zoom returned by `/config`.
 
 ## Web Dashboard
 
-The service includes a web dashboard for monitoring tickets and activity logs.
+Open the dashboard at:
 
-**Access the dashboard at:** http://localhost:8082
+```text
+http://localhost:8082
+```
 
-The dashboard features:
-- **Left pane (1/3 width)**: Real-time activity logs showing:
-  - Ticket upsert operations
-  - Similarity search requests (with similarity scores for each ticket)
-  - Delete operations
-- **Right pane (2/3 width)**: Scrollable table displaying:
-  - Ticket ID
-  - Ticket Type
-  - Original Text (full text with wrapping)
-  - Vector preview (first 10 dimensions)
-  - Latest tickets appear first
+The dashboard shows:
 
-The dashboard automatically refreshes every second to show the latest data.
-Activity logs pane is hidden by default in full-stack startup and can be shown via `./start-all.sh -show-event-log`.
+- Activity logs from `/logs`.
+- Ticket rows from `/all`, including ticket ID, ticket type, text, and a vector preview.
+- Automatic refresh every second.
+- Configurable default zoom from `/config`.
 
 ## API Endpoints
 
-### 1. Upsert Embedding
-**POST** `/api/similarity/tickets/upsert`
+The examples below use the default base path `/api/similarity/tickets`. If `similarity.tickets.base-path` is changed, replace that prefix in the examples.
 
-Creates or updates an embedding for a ticket.
+### Upsert Embedding
 
-**Request:**
+`POST /api/similarity/tickets/upsert`
+
 ```json
 {
   "ticketId": 912,
@@ -82,38 +100,35 @@ Creates or updates an embedding for a ticket.
 }
 ```
 
-**Response:**
+Response:
+
 ```json
 {
   "status": "OK"
 }
 ```
 
-### 2. Delete Embedding
-**POST** `/api/similarity/tickets/delete`
+### Delete Embedding
 
-Deletes an embedding for a ticket (idempotent).
+`DELETE /api/similarity/tickets/delete/{ticketId}`
 
-**Request:**
-```json
-{
-  "ticketId": 912
-}
+```bash
+curl -X DELETE http://localhost:8082/api/similarity/tickets/delete/912 \
+  -H "Accept: application/json"
 ```
 
-**Response:**
+Response:
+
 ```json
 {
   "status": "OK"
 }
 ```
 
-### 3. Similarity Search
-**POST** `/api/similarity/tickets/search`
+### Similarity Search
 
-Searches for the most similar tickets across all ticket types by embedding the query text. The specified ticket is excluded from results.
+`POST /api/similarity/tickets/search`
 
-**Request:**
 ```json
 {
   "text": "reschedule button disabled",
@@ -123,26 +138,28 @@ Searches for the most similar tickets across all ticket types by embedding the q
 }
 ```
 
-**Fields:**
-- `text` (required): Query text to search for similar tickets
-- `ticketId` (required): This ticket will be excluded from results
-- `maxResults` (optional): Maximum number of results (default: 5)
-- `minScore` (optional): Minimum similarity score threshold (default: 0.0)
-- `ticketType` (optional, deprecated): Ignored - search is performed across all ticket types
+Fields:
 
-**Response:**
+- `text` is required.
+- `ticketId` is required and is excluded from results.
+- `maxResults` is optional and defaults to `similarity.tickets.search.max-results`.
+- `minScore` is optional and defaults to `similarity.tickets.search.min-score`.
+- `ticketType` is accepted for compatibility but ignored; search is global across ticket types.
+
+Response:
+
 ```json
 {
   "relatedTicketIds": [150, 183, 167, 171, 180]
 }
 ```
 
-### 4. Get All Tickets (for dashboard)
-**GET** `/api/similarity/tickets/all`
+### Get All Tickets
 
-Retrieves all stored tickets with their embeddings and metadata.
+`GET /api/similarity/tickets/all`
 
-**Response:**
+Returns stored ticket metadata and full embedding vectors.
+
 ```json
 {
   "tickets": [
@@ -150,23 +167,21 @@ Retrieves all stored tickets with their embeddings and metadata.
       "ticketId": 912,
       "ticketType": "BUG_APP",
       "text": "The reschedule button is disabled on my appointment.",
-      "vector": [0.1234, -0.5678, ...]
+      "vector": [0.1234, -0.5678]
     }
   ]
 }
 ```
 
-### 5. Get Activity Logs (for dashboard)
-**GET** `/api/similarity/tickets/logs`
+### Get Activity Logs
 
-Retrieves activity logs for the dashboard.
+`GET /api/similarity/tickets/logs`
 
-**Response:**
 ```json
 {
   "logs": [
     {
-      "message": "Received ticket #912 via upsert endpoint",
+      "message": "[INFO] Received ticket #912 via upsert endpoint",
       "type": "upsert",
       "timestamp": 1706177897000
     }
@@ -174,232 +189,105 @@ Retrieves activity logs for the dashboard.
 }
 ```
 
+### Get UI Config
+
+`GET /api/similarity/tickets/config`
+
+```json
+{
+  "defaultZoom": 100
+}
+```
+
 ## Testing with cURL
 
-Once the service is running on port 8082, you can test it with the following curl commands:
-
-### 1. Upsert a Ticket Embedding
+Upsert a ticket:
 
 ```bash
 curl -X POST http://localhost:8082/api/similarity/tickets/upsert \
   -H "Content-Type: application/json" \
-  -d '{
-    "ticketId": 940,
-    "ticketType": "BUG_APP",
-    "text": "The reschedule button is disabled on my appointment."
-  }'
+  -d '{"ticketId": 940, "ticketType": "BUG_APP", "text": "The reschedule button is disabled on my appointment."}'
 ```
 
-**Expected Response:**
-```json
-{
-  "status": "OK"
-}
-```
-
-### 2. Search for Similar Tickets
+Search for similar tickets:
 
 ```bash
 curl -X POST http://localhost:8082/api/similarity/tickets/search \
   -H "Content-Type: application/json" \
-  -d '{
-    "text": "reschedule button disabled",
-    "ticketId": 917,
-    "maxResults": 5
-  }'
+  -d '{"text": "reschedule button disabled", "ticketId": 917, "maxResults": 5}'
 ```
 
-**Expected Response:**
-```json
-{
-  "relatedTicketIds": [912,940,150,183,167]
-}
-```
-
-### 3. Delete a Ticket Embedding
+Delete a ticket embedding:
 
 ```bash
-curl -X POST http://localhost:8082/api/similarity/tickets/delete \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ticketId": 912
-  }'
+curl -X DELETE http://localhost:8082/api/similarity/tickets/delete/912 \
+  -H "Accept: application/json"
 ```
 
-**Expected Response:**
-```json
-{
-  "status": "OK"
-}
-```
+## Tests
 
-### Complete Test Flow
-
-Here's a complete test sequence:
+Run unit tests:
 
 ```bash
-# 1. Create/update embeddings for multiple tickets
-curl -X POST http://localhost:8082/api/similarity/tickets/upsert \
-  -H "Content-Type: application/json" \
-  -d '{"ticketId": 912, "ticketType": "BUG_APP", "text": "The reschedule button is disabled on my appointment."}'
+mvn test
+```
 
-curl -X POST http://localhost:8082/api/similarity/tickets/upsert \
-  -H "Content-Type: application/json" \
-  -d '{"ticketId": 847, "ticketType": "BUG_APP", "text": "Cannot reschedule appointment, button not working"}'
+Some HTTP/vector integration tests are skipped unless both an OpenAI key and Oracle JDBC URL are configured:
 
-curl -X POST http://localhost:8082/api/similarity/tickets/upsert \
-  -H "Content-Type: application/json" \
-  -d '{"ticketId": 903, "ticketType": "BUG_APP", "text": "Reschedule functionality is broken"}'
-
-# 2. Search for similar tickets (excluding ticket 912 from results)
-curl -X POST http://localhost:8082/api/similarity/tickets/search \
-  -H "Content-Type: application/json" \
-  -d '{"text": "reschedule button disabled", "maxResults": 5, "id": 912}'
-
-# 3. Delete a ticket embedding
-curl -X POST http://localhost:8082/api/similarity/tickets/delete \
-  -H "Content-Type: application/json" \
-  -d '{"ticketId": 912}'
+```bash
+OPENAI_API_KEY=<key> \
+mvn test -D'data.sources.sql[0].provider.ucp.url'=jdbc:oracle:thin:@localhost:1521/freepdb1
 ```
 
 ## Data Persistence
 
-- **Embeddings are stored in the Oracle database** and persist across application restarts
-- **Ticket metadata** (ticketId, ticketType, and original text) is stored in Oracle embedding table metadata
-- The in-memory `TicketStore` is used for fast access but data is always loaded from the database on startup
-- Data is persisted in Docker volumes (see `docker-compose.yml`)
-
-## Configuration
-
-Edit `src/main/resources/application.yaml` to configure:
-- Oracle datasource URL/credentials (default: `jdbc:oracle:thin:@localhost:1521/freepdb1`)
-- Oracle embedding table/index settings under `langchain4j.oracle.embedding-store`
-- OpenAI API key (required for embeddings)
+- Embeddings are stored in Oracle AI Database and persist across service restarts.
+- Ticket metadata (`ticketId`, `ticketType`, and text) is stored in embedding metadata and text columns.
+- `TicketStore` is in-memory and only contains tickets upserted during the current process. The `/all` endpoint also reads persisted tickets from Oracle.
+- Docker volume behavior is controlled by `docker-compose.yml` and the Oracle image.
 
 ## Technology Stack
 
-- **Helidon 4.3.3** - Java framework
-- **Helidon LangChain4J Extension** - Automatic EmbeddingModel configuration via YAML
-- **LangChain4j** - Embedding generation and OracleEmbeddingStoreConfig
-- **OpenAI text-embedding-3-large** - Embedding model (3072-dimensional vectors)
-- **Oracle AI 26ai Database** - Vector database for similarity search
-
-## Embedding Model
-
-The service uses **OpenAI's text-embedding-3-large** model to generate embeddings:
-- **Dimensions**: 3072
-- **Model**: text-embedding-3-large
-- **Provider**: OpenAI (requires API key)
-- **Distance Metric**: Cosine similarity (configured via Oracle vector store index settings)
-
-The model embeds only the `text` field from ticket requests. No comments or metadata are included in the embeddings.
-
-### Configuration
-
-```yaml
-openai:
-  api-key: ${OPENAI_API_KEY=demo}
-  embedding-model: "text-embedding-3-large"
-```
-
-The embedding model can be changed via:
-```yaml
-openai:
-  embedding-model: "text-embedding-3-large"
-```
+- Helidon SE 4.4.0
+- Helidon LangChain4j integration
+- LangChain4j
+- OpenAI `text-embedding-3-large`
+- Oracle AI Database vector storage
 
 ## Architecture Notes
 
-- **API key behavior**: read framework config value first (including optional `config/config-prod.yaml` when profile `prod` is active); if empty or `demo`, fallback to `OPENAI_API_KEY`; if still missing/`demo`, startup fails fast.
-- **Embedding Generation**: Text is embedded on-the-fly using OpenAI's API when upserting or searching
-- **Vector Storage**: 3072-dimensional vectors stored in Oracle AI 26ai with cosine similarity
-- **Metadata Storage**: Ticket ID, type, and original text are stored in Oracle embedding table metadata for retrieval
-- **Search**: Returns the most similar tickets across all ticket types, excluding only the specified ticket
-- **Idempotency**: All operations (upsert, delete) are idempotent - safe to retry
+- Text is embedded on upsert and search.
+- Search returns IDs only, ordered by the vector store result order.
+- Search is global across ticket types and excludes the request `ticketId`.
+- Upsert deletes any previous embedding for the same ticket ID before adding the new embedding.
+- Delete is idempotent.
 
-## Troubleshooting
+## Observability
 
-**Oracle Connection Errors:**
-- Ensure the database is running: `docker-compose ps`
-- Check Oracle container logs: `docker-compose logs oracle`
-- Verify port 1521 is accessible: `telnet localhost 1521`
-
-**OpenAI API Errors:**
-- Verify `OPENAI_API_KEY` is set correctly
-- Check API key has sufficient credits/quota
-- Ensure network can reach OpenAI API
-
-
-## Try metrics
-
-```
-# Prometheus Format
-curl -s -X GET http://localhost:8082/observe/metrics
-# TYPE base:gc_g1_young_generation_count gauge
-. . .
-
-# JSON Format
-curl -H 'Accept: application/json' -X GET http://localhost:8082/observe/metrics
-{"base":...
-. . .
-```
-
-
-## Try health
-
-This example shows the basics of using Helidon SE Health. It uses the
-set of built-in health checks that Helidon provides plus defines a
-custom health check.
-
-Note the port number reported by the application.
-
-Probe the health endpoints:
+Metrics:
 
 ```bash
-curl -X GET http://localhost:8082/observe/health
-curl -X GET http://localhost:8082/observe/health/ready
+curl -s http://localhost:8082/observe/metrics
+curl -H "Accept: application/json" http://localhost:8082/observe/metrics
 ```
 
+Health:
 
-## Building the Docker Image
-
+```bash
+curl http://localhost:8082/observe/health
+curl http://localhost:8082/observe/health/ready
 ```
+
+## Docker Image
+
+Build:
+
+```bash
 docker build -t similar-tickets .
 ```
 
-## Running the Docker Image
+Run:
 
-```
-docker run --rm -p 8080:8080 similar-tickets:latest
-```
-
-Exercise the application as described above.
-
-
-## Run the application in Kubernetes
-
-If you don’t have access to a Kubernetes cluster, you can [install one](https://helidon.io/docs/latest/#/about/kubernetes) on your desktop.
-
-### Verify connectivity to cluster
-
-```
-kubectl cluster-info                        # Verify which cluster
-kubectl get pods                            # Verify connectivity to cluster
-```
-
-### Deploy the application to Kubernetes
-
-```
-kubectl create -f app.yaml                              # Deploy application
-kubectl get pods                                        # Wait for quickstart pod to be RUNNING
-kubectl get service  similar-tickets                     # Get service info
-kubectl port-forward service/similar-tickets 8081:8080   # Forward service port to 8081
-```
-
-You can now exercise the application as you did before but use the port number 8081.
-
-After you’re done, cleanup.
-
-```
-kubectl delete -f app.yaml
+```bash
+docker run --rm -p 8082:8082 -e OPENAI_API_KEY="$OPENAI_API_KEY" similar-tickets:latest
 ```

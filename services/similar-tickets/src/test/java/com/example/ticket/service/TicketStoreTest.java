@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import com.example.ticket.model.TicketData;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TicketStoreTest {
+class TicketStoreTest {
 
     @Test
     void testStoreTicket() {
@@ -16,11 +18,11 @@ public class TicketStoreTest {
         String text = "test-text";
         float[] vector = {1.0f, 2.0f};
 
-        ticketStore.storeTicket(ticketId, ticketType, text, vector);
+        ticketStore.storeTicket(new TicketData(ticketId, ticketType, text, vector, System.currentTimeMillis()));
 
-        List<TicketStore.TicketData> tickets = ticketStore.getAllTickets();
+        List<TicketData> tickets = ticketStore.getAllTickets();
         assertEquals(1, tickets.size());
-        TicketStore.TicketData ticketData = tickets.getFirst();
+        TicketData ticketData = tickets.getFirst();
         assertEquals(ticketId, ticketData.ticketId());
         assertEquals(ticketType, ticketData.ticketType());
         assertEquals(text, ticketData.text());
@@ -36,7 +38,7 @@ public class TicketStoreTest {
         String text = "test-text";
         float[] vector = {1.0f, 2.0f};
 
-        ticketStore.storeTicket(ticketId, ticketType, text, vector);
+        ticketStore.storeTicket(new TicketData(ticketId, ticketType, text, vector, System.currentTimeMillis()));
         assertEquals(1, ticketStore.getAllTickets().size());
 
         ticketStore.removeTicket(ticketId);
@@ -52,15 +54,15 @@ public class TicketStoreTest {
         String text = "test-text";
         float[] vector = {1.0f, 2.0f};
 
-        ticketStore.storeTicket(ticketId1, ticketType, text, vector);
+        ticketStore.storeTicket(new TicketData(ticketId1, ticketType, text, vector, System.currentTimeMillis()));
         try {
             Thread.sleep(10);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        ticketStore.storeTicket(ticketId2, ticketType, text, vector);
+        ticketStore.storeTicket(new TicketData(ticketId2, ticketType, text, vector, System.currentTimeMillis()));
 
-        List<TicketStore.TicketData> tickets = ticketStore.getAllTickets();
+        List<TicketData> tickets = ticketStore.getAllTickets();
         assertEquals(2, tickets.size());
         assertEquals(ticketId2, tickets.get(0).ticketId()); // Latest first
         assertEquals(ticketId1, tickets.get(1).ticketId());
@@ -69,7 +71,7 @@ public class TicketStoreTest {
     @Test
     void testGetAllTicketsEmpty() {
         TicketStore ticketStore = new TicketStore();
-        List<TicketStore.TicketData> tickets = ticketStore.getAllTickets();
+        List<TicketData> tickets = ticketStore.getAllTickets();
         assertTrue(tickets.isEmpty());
     }
 
@@ -90,10 +92,10 @@ public class TicketStoreTest {
         String text = "test-text";
         float[] vector = {1.0f, 2.0f};
 
-        ticketStore.storeTicket(ticketId1, ticketType, text, vector);
-        ticketStore.storeTicket(ticketId2, ticketType, text, vector);
+        ticketStore.storeTicket(new TicketData(ticketId1, ticketType, text, vector, System.currentTimeMillis()));
+        ticketStore.storeTicket(new TicketData(ticketId2, ticketType, text, vector, System.currentTimeMillis()));
 
-        List<TicketStore.TicketData> tickets = ticketStore.getAllTickets();
+        List<TicketData> tickets = ticketStore.getAllTickets();
         assertEquals(2, tickets.size());
     }
 
@@ -105,12 +107,12 @@ public class TicketStoreTest {
         String text = "test-text";
         float[] vector = {1.0f, 2.0f};
 
-        ticketStore.storeTicket(ticketId, ticketType, text, vector);
-        ticketStore.storeTicket(ticketId, ticketType, text, vector);
+        ticketStore.storeTicket(new TicketData(ticketId, ticketType, text, vector, System.currentTimeMillis()));
+        ticketStore.storeTicket(new TicketData(ticketId, ticketType, text, vector, System.currentTimeMillis()));
 
-        List<TicketStore.TicketData> tickets = ticketStore.getAllTickets();
+        List<TicketData> tickets = ticketStore.getAllTickets();
         assertEquals(1, tickets.size());
-        TicketStore.TicketData ticketData = tickets.getFirst();
+        TicketData ticketData = tickets.getFirst();
         assertTrue(ticketData.timestamp() > 0);
     }
 }
