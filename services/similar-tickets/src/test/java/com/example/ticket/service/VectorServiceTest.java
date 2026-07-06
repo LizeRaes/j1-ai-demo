@@ -163,7 +163,7 @@ class VectorServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    @SuppressWarnings("unchecked") // Mockito cannot retain the TextSegment type token for this generic result.
+    @SuppressWarnings("unchecked")
     private static EmbeddingSearchResult<TextSegment> mockSearchResult() {
         return (EmbeddingSearchResult<TextSegment>) mock(EmbeddingSearchResult.class);
     }

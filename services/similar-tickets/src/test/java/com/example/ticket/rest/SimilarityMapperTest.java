@@ -34,9 +34,9 @@ class SimilarityMapperTest {
     @Test
     void rejectsInvalidSearchRequest() {
         assertThrows(BadRequestException.class,
-                () -> SimilarityMapper.toSearchQuery(new SearchRequest("BUG_APP", null, 5, 0.4, 912L), SEARCH_DEFAULTS));
+                     () -> SimilarityMapper.toSearchQuery(new SearchRequest("BUG_APP", null, 5, 0.4, 912L), SEARCH_DEFAULTS));
         assertThrows(BadRequestException.class,
-                () -> SimilarityMapper.toSearchQuery(new SearchRequest("BUG_APP", "text", 0, 0.4, 912L), SEARCH_DEFAULTS));
+                     () -> SimilarityMapper.toSearchQuery(new SearchRequest("BUG_APP", "text", 0, 0.4, 912L), SEARCH_DEFAULTS));
     }
 
     @Test
@@ -56,8 +56,8 @@ class SimilarityMapperTest {
     @Test
     void mapsInternalResultsToSearchResponsePayload() {
         var response = SimilarityMapper.toSearchResponse(List.of(
-                        new SimilarTicket(12L, 0.91),
-                        new SimilarTicket(15L, 0.82)))
+                new SimilarTicket(12L, 0.91),
+                new SimilarTicket(15L, 0.82)))
                 .asSearchResponse();
 
         assertEquals(List.of(12L, 15L), response.relatedTicketIds());
@@ -66,8 +66,8 @@ class SimilarityMapperTest {
     @Test
     void mapsInternalTicketsToSortedResponsePayload() {
         var response = SimilarityMapper.toTicketsResponse(List.of(
-                        new TicketData(1L, "BILLING", "billing text", new float[]{1.0f}, 10L),
-                        new TicketData(3L, "BUG_APP", "bug text", new float[]{3.0f}, 20L)))
+                new TicketData(1L, "BILLING", "billing text", new float[]{1.0f}, 10L),
+                new TicketData(3L, "BUG_APP", "bug text", new float[]{3.0f}, 20L)))
                 .asTicketsResponse();
 
         assertEquals(3L, response.tickets().getFirst().id());

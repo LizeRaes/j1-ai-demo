@@ -36,7 +36,6 @@ class DemoDataServiceTest {
             demoDataService.loadDemoData();
 
             List<LogService.LogEntry> logs = logHandler.getLogs();
-            int expectedLogCount = 3 + (vectorService.upsertCount / 10);
 
             assertEquals(1, vectorService.deleteAllCalls);
             assertEquals(vectorService.upsertCount, embeddingService.embedCount);
@@ -106,7 +105,7 @@ class DemoDataServiceTest {
         private int embedCount;
 
         private RecordingEmbeddingService() {
-            super((EmbeddingModel) null);
+            super(null);
         }
 
         @Override
@@ -148,7 +147,7 @@ class DemoDataServiceTest {
             return (EmbeddingStore<TextSegment>) Proxy.newProxyInstance(
                     DemoDataServiceTest.class.getClassLoader(),
                     new Class<?>[]{EmbeddingStore.class},
-                    (proxy, method, args) -> {
+                    (_, method, _) -> {
                         throw new UnsupportedOperationException(method.getName());
                     });
         }
@@ -157,20 +156,12 @@ class DemoDataServiceTest {
             return (EmbeddingModel) Proxy.newProxyInstance(
                     DemoDataServiceTest.class.getClassLoader(),
                     new Class<?>[]{EmbeddingModel.class},
-                    (proxy, method, args) -> {
-                        if ("embedAll".equals(method.getName())) {
-                            throw new UnsupportedOperationException(method.getName());
-                        }
-                        if ("dimension".equals(method.getName())) {
-                            return 2;
-                        }
-                        if ("modelName".equals(method.getName())) {
-                            return "test-model";
-                        }
-                        if ("embed".equals(method.getName())) {
-                            return null;
-                        }
-                        return proxy;
+                    (proxy, method, _) -> switch (method.getName()) {
+                        case "embedAll" -> throw new UnsupportedOperationException(method.getName());
+                        case "dimension" -> 2;
+                        case "modelName" -> "test-model";
+                        case "embed" -> null;
+                        default -> proxy;
                     });
         }
 
@@ -187,7 +178,7 @@ class DemoDataServiceTest {
             return (DataSource) Proxy.newProxyInstance(
                     DemoDataServiceTest.class.getClassLoader(),
                     new Class<?>[]{DataSource.class},
-                    (proxy, method, args) -> {
+                    (_, method, _) -> {
                         throw new UnsupportedOperationException(method.getName());
                     });
         }
