@@ -11,7 +11,8 @@ import dev.langchain4j.store.embedding.filter.Filter;
 import io.helidon.config.Config;
 import io.helidon.webserver.testing.junit5.ServerTest;
 
-import com.example.ticket.dto.TicketsResponse;
+import com.example.ticket.model.TicketData;
+import com.example.ticket.model.TicketSearchQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -65,7 +66,7 @@ class VectorServiceTest {
         String text = "test-text";
         float[] vector = {1.0f, 2.0f};
 
-        vectorService.upsertTicket(ticketId, ticketType, text, vector);
+        vectorService.upsertTicket(new TicketData(ticketId, ticketType, text, vector, System.currentTimeMillis()));
 
         verify(embeddingStore, times(1)).removeAll(any(Filter.class));
         verify(embeddingStore, times(1)).add(any(Embedding.class), any(TextSegment.class));
@@ -126,10 +127,10 @@ class VectorServiceTest {
 
         Embedding embedding = new Embedding(new float[] {1.0f, 2.0f});
         when(embeddingModel.embed(queryText)).thenReturn(Response.from(embedding));
-        var result = mock(EmbeddingSearchResult.class);
+        EmbeddingSearchResult<TextSegment> result = mockSearchResult();
         when(embeddingStore.search(any())).thenReturn(result);
 
-        vectorService.searchSimilar(queryText, maxResults, minScore, excludeTicketId);
+        vectorService.searchSimilar(new TicketSearchQuery(queryText, maxResults, minScore, excludeTicketId));
 
         verify(embeddingModel, times(1)).embed(queryText);
         verify(embeddingStore, times(1)).search(any());
@@ -157,8 +158,14 @@ class VectorServiceTest {
         when(connection.prepareStatement(any())).thenReturn(statement);
         when(statement.executeQuery()).thenThrow(new SQLException("Query failed"));
 
-        List<TicketsResponse.TicketInfo> result = vectorService.retrieveAllTickets();
+        List<TicketData> result = vectorService.retrieveAllTickets();
 
         assertTrue(result.isEmpty());
     }
+
+    @SuppressWarnings("unchecked")
+    private static EmbeddingSearchResult<TextSegment> mockSearchResult() {
+        return (EmbeddingSearchResult<TextSegment>) mock(EmbeddingSearchResult.class);
+    }
+
 }

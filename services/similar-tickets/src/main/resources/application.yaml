@@ -1,3 +1,12 @@
+similarity:
+  tickets:
+    base-path: "/api/similarity/tickets"
+    search:
+      max-results: 5
+      min-score: 0.0
+    demo-data:
+      directory: "demo-data"
+
 server:
   port: 8082
   features:

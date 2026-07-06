@@ -4,7 +4,7 @@ import java.util.List;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 
-public record TicketsResponse(List<TicketInfo> tickets) {
+public record TicketsResponse(List<TicketInfo> tickets) implements MappedTicketsResponse {
 
     public record TicketInfo(@JsonbProperty("ticketId") Long id,
                              @JsonbProperty("ticketType") String type,

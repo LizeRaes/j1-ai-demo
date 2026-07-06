@@ -125,12 +125,14 @@ async function fetchLogs() {
     }
 }
 
+async function refreshDashboardData() {
+    await Promise.all([fetchTickets(), fetchLogs()]);
+}
+
 function startPolling() {
-    fetchTickets();
-    fetchLogs();
+    void refreshDashboardData();
     setInterval(() => {
-        fetchTickets();
-        fetchLogs();
+        void refreshDashboardData();
     }, 1000);
 }
 
@@ -210,5 +212,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('zoom-in').addEventListener('click', zoomIn);
     document.getElementById('zoom-out').addEventListener('click', zoomOut);
     
-    loadDefaultZoom();
+    void loadDefaultZoom();
 });
