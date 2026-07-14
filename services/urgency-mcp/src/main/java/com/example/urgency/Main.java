@@ -1,6 +1,5 @@
 package com.example.urgency;
 
-import com.example.urgency.service.UrgencyInferenceService;
 import io.helidon.logging.common.LogConfig;
 import io.helidon.service.registry.Service;
 import io.helidon.service.registry.ServiceRegistryManager;
@@ -17,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
         LogConfig.configureRuntime();
-        new UrgencyInferenceService();
+        DeepNettsSerializationFilterConfiguration.configureRuntime();
         ServiceRegistryManager.start(ApplicationBinding.create());
     }
 }
