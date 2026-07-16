@@ -15,14 +15,14 @@ public final class McpToolCatalog {
 
     ObjectNode listResult() {
         ObjectNode result = json.objectNode();
-        result.set("tools", json.objectNode().arrayNode().add(toolDescriptor()));
+        result.set("tools", json.objectNode().arrayNode().add(toolDescriptor(McpTool.GET_URGENCY)));
         return result;
     }
 
-    private ObjectNode toolDescriptor() {
+    private ObjectNode toolDescriptor(McpTool tool) {
         ObjectNode phrase = json.objectNode()
                 .put("type", "string")
-                .put("description", McpTool.GET_URGENCY.phraseDescription());
+                .put("description", tool.phraseDescription());
         ObjectNode properties = json.objectNode().set("phrase", phrase);
         ObjectNode inputSchema = json.objectNode()
                 .put("$schema", "https://json-schema.org/draft/2020-12/schema")
@@ -32,8 +32,8 @@ public final class McpToolCatalog {
         inputSchema.put("additionalProperties", false);
 
         ObjectNode descriptor = json.objectNode()
-                .put("name", McpTool.GET_URGENCY.toolName())
-                .put("description", McpTool.GET_URGENCY.description())
+                .put("name", tool.toolName())
+                .put("description", tool.description())
                 .set("inputSchema", inputSchema);
         descriptor.put("ttlMs", CACHE_TTL_MS);
         descriptor.put("cacheScope", CACHE_SCOPE);

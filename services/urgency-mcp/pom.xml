@@ -19,6 +19,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <exec.mainClass>${mainClass}</exec.mainClass>
         <exec.cleanupDaemonThreads>false</exec.cleanupDaemonThreads>
+        <deepnetts-core.version>1.13.4</deepnetts-core.version>
     </properties>
 
     <dependencies>
@@ -29,6 +30,10 @@
         <dependency>
             <groupId>io.helidon.config</groupId>
             <artifactId>helidon-config-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.http.media</groupId>
+            <artifactId>helidon-http-media-jsonb</artifactId>
         </dependency>
         <dependency>
             <groupId>io.helidon.integrations.langchain4j.providers</groupId>
@@ -42,7 +47,7 @@
         <dependency>
             <groupId>com.deepnetts</groupId>
             <artifactId>deepnetts-core</artifactId>
-            <version>1.13.4</version>
+            <version>${deepnetts-core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -77,12 +82,12 @@
                         <path>
                             <groupId>io.helidon.codegen</groupId>
                             <artifactId>helidon-codegen-apt</artifactId>
-                            <version>4.4.0</version>
+                            <version>${helidon.version}</version>
                         </path>
                         <path>
                             <groupId>io.helidon.service</groupId>
                             <artifactId>helidon-service-codegen</artifactId>
-                            <version>4.4.0</version>
+                            <version>${helidon.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

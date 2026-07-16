@@ -1,4 +1,4 @@
-package com.example.urgency.service.local;
+package com.example.urgency.service;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -6,19 +6,26 @@ import java.util.Objects;
 import com.example.urgency.embedding.LocalEmbeddingGenerator;
 import com.example.urgency.validation.RequiredText;
 
-public record LocalInferenceSettings(String modelName, Path modelLocation,
-                                     String embeddingModelName, Path embeddingModelLocation,
-                                     int embeddingDimensions) {
+record LocalInferenceSettings(ScorerModelSettings scorerSettings,
+                              String embeddingModelName, Path embeddingModelLocation,
+                              int embeddingDimensions) {
 
-    private static final String MODEL_NAME_LABEL = "local scorer model name";
-    private static final String MODEL_LOCATION_LABEL = "local scorer model location";
+    private static final String SCORER_SETTINGS_LABEL = "scorer model settings";
     private static final String EMBEDDING_NAME_LABEL = "local embedding model name";
     private static final String EMBEDDING_LOCATION_LABEL = "local embedding model location";
     private static final String INVALID_DIMENSIONS_MESSAGE = "local embedding dimensions must be positive";
 
-    public LocalInferenceSettings {
-        modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
-        modelLocation = Objects.requireNonNull(modelLocation, MODEL_LOCATION_LABEL).toAbsolutePath().normalize();
+    LocalInferenceSettings(String modelName, Path modelLocation,
+                           String embeddingModelName, Path embeddingModelLocation,
+                           int embeddingDimensions) {
+        this(new ScorerModelSettings(modelName, modelLocation),
+                embeddingModelName,
+                embeddingModelLocation,
+                embeddingDimensions);
+    }
+
+    LocalInferenceSettings {
+        scorerSettings = Objects.requireNonNull(scorerSettings, SCORER_SETTINGS_LABEL);
         embeddingModelName = new RequiredText(EMBEDDING_NAME_LABEL).require(embeddingModelName);
         embeddingModelLocation = Objects.requireNonNull(embeddingModelLocation, EMBEDDING_LOCATION_LABEL)
                 .toAbsolutePath()
@@ -28,8 +35,8 @@ public record LocalInferenceSettings(String modelName, Path modelLocation,
         }
     }
 
-    public Path scorerModelPath() {
-        return modelLocation.resolve(modelName).normalize();
+    Path scorerModelPath() {
+        return scorerSettings.scorerModelPath();
     }
 
     LocalEmbeddingGenerator embeddingGenerator() {

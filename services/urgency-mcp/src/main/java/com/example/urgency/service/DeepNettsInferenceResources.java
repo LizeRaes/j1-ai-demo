@@ -1,25 +1,31 @@
-package com.example.urgency.service.local;
+package com.example.urgency.service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import com.example.urgency.embedding.EmbeddingGenerator;
 import deepnetts.net.FeedForwardNetwork;
 import deepnetts.util.FileIO;
 
-public final class LocalInferenceResources {
+final class DeepNettsInferenceResources {
 
-    private static final String SETTINGS_LABEL = "local inference settings";
+    private static final String SETTINGS_LABEL = "scorer model settings";
+    private static final String EMBEDDING_GENERATOR_SUPPLIER_LABEL = "embedding generator supplier";
     private static final String MISSING_SCORER_MODEL_PREFIX = "Scorer model file does not exist: ";
     private static final String SCORER_LOAD_FAILURE_PREFIX = "Failed to load scorer model from ";
 
-    private final LocalInferenceSettings settings;
+    private final ScorerModelSettings settings;
+    private final Supplier<EmbeddingGenerator> embeddingGeneratorSupplier;
     private volatile FeedForwardNetwork scorerNet;
     private volatile EmbeddingGenerator embeddingGenerator;
 
-    public LocalInferenceResources(LocalInferenceSettings settings) {
+    DeepNettsInferenceResources(ScorerModelSettings settings, Supplier<EmbeddingGenerator> embeddingGeneratorSupplier) {
         this.settings = Objects.requireNonNull(settings, SETTINGS_LABEL);
+        this.embeddingGeneratorSupplier = Objects.requireNonNull(
+                embeddingGeneratorSupplier,
+                EMBEDDING_GENERATOR_SUPPLIER_LABEL);
     }
 
     void validateStartupConfiguration() {
@@ -49,7 +55,7 @@ public final class LocalInferenceResources {
         }
         synchronized (this) {
             if (embeddingGenerator == null) {
-                embeddingGenerator = settings.embeddingGenerator();
+                embeddingGenerator = embeddingGeneratorSupplier.get();
             }
             return embeddingGenerator;
         }

@@ -59,7 +59,7 @@ class McpProtocolHandlerTest {
         ObjectNode response = handler(scorer).handle(
                 McpRequestHeaders.of(McpRequestValidator.PROTOCOL_VERSION, McpMethod.TOOLS_CALL.methodName(),
                         McpTool.GET_URGENCY.toolName()),
-                toolsCallBody());
+                toolsCallBody("patient cannot access medication"));
 
         JsonNode result = response.get("result");
         assertEquals("patient cannot access medication", scorer.complaint);
@@ -72,7 +72,7 @@ class McpProtocolHandlerTest {
     void rejectsMissingToolNameHeader() {
         ObjectNode response = handler(new StubScorer(5.0)).handle(
                 McpRequestHeaders.of(McpRequestValidator.PROTOCOL_VERSION, McpMethod.TOOLS_CALL.methodName(), null),
-                toolsCallBody());
+                toolsCallBody("patient cannot access medication"));
 
         assertError(response, "Missing Mcp-Name header");
     }
@@ -92,8 +92,8 @@ class McpProtocolHandlerTest {
                 .put("method", method.methodName());
     }
 
-    private ObjectNode toolsCallBody() {
-        ObjectNode arguments = json.objectNode().put("phrase", "patient cannot access medication");
+    private ObjectNode toolsCallBody(String phrase) {
+        ObjectNode arguments = json.objectNode().put("phrase", phrase);
         ObjectNode params = json.objectNode()
                 .put("name", McpTool.GET_URGENCY.toolName())
                 .set("arguments", arguments);

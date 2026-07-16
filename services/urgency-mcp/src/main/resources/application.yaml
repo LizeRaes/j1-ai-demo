@@ -6,7 +6,7 @@ urgency:
   providers:
     local:
       model:
-        name: model-scorer-openai.dnet
+        name: model-scorer-local.dnet
         location: ../urgency/model
       embedding:
         name: feature-hash-1536
@@ -14,13 +14,12 @@ urgency:
         dimensions: 1536
     openai:
       model:
-        name: gpt-4.1-mini
-      temperature: 0.0
-      max-completion-tokens: 20
-      prompt: |
-        Score the urgency of a healthcare support ticket complaint on a scale from 0 to 10.
-        0 means no urgency. 10 means immediate safety, care access, security, payment, or on-call escalation risk.
-        Return only one decimal number and no other text.
+        name: model-scorer-openai.dnet
+        location: ../urgency/model
+      embedding:
+        model:
+          name: text-embedding-3-small
+        dimensions: 1536
 
 openai:
   api-key: ""

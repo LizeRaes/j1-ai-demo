@@ -66,6 +66,7 @@ public final class OpenAIEmbeddingGenerator implements EmbeddingGenerator {
     public record Settings(String modelName, Optional<Integer> dimensions, String apiKey) {
         public Settings {
             modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
+            dimensions = Objects.requireNonNull(dimensions, DIMENSIONS_KEY);
             apiKey = new RequiredText(API_KEY_PROPERTY).require(apiKey);
             dimensions.ifPresent(value -> {
                 if (value < 1) {

@@ -3,7 +3,6 @@ package com.example.urgency.service;
 import java.nio.file.Path;
 
 import com.example.urgency.config.RuntimeConfig;
-import com.example.urgency.service.local.LocalInferenceSettings;
 
 sealed interface UrgencyInferenceConfiguration permits LocalUrgencyInferenceConfiguration, OpenAiUrgencyInferenceConfiguration {
 
@@ -14,6 +13,8 @@ sealed interface UrgencyInferenceConfiguration permits LocalUrgencyInferenceConf
     String LOCAL_EMBEDDING_NAME_KEY = "urgency.providers.local.embedding.name";
     String LOCAL_EMBEDDING_LOCATION_KEY = "urgency.providers.local.embedding.location";
     String LOCAL_EMBEDDING_DIMENSIONS_KEY = "urgency.providers.local.embedding.dimensions";
+    String OPENAI_MODEL_NAME_KEY = "urgency.providers.openai.model.name";
+    String OPENAI_MODEL_LOCATION_KEY = "urgency.providers.openai.model.location";
 
     UrgencyProvider provider();
 
@@ -21,7 +22,7 @@ sealed interface UrgencyInferenceConfiguration permits LocalUrgencyInferenceConf
         UrgencyProvider provider = UrgencyProvider.parse(config.requiredText(PROVIDER_KEY, PROVIDER_LABEL));
         return switch (provider) {
             case LOCAL -> new LocalUrgencyInferenceConfiguration(localSettings(config));
-            case OPENAI -> new OpenAiUrgencyInferenceConfiguration();
+            case OPENAI -> new OpenAiUrgencyInferenceConfiguration(openAiScorerSettings(config));
         };
     }
 
@@ -33,6 +34,12 @@ sealed interface UrgencyInferenceConfiguration permits LocalUrgencyInferenceConf
                 Path.of(config.requiredText(LOCAL_EMBEDDING_LOCATION_KEY, LOCAL_EMBEDDING_LOCATION_KEY)),
                 config.integer(LOCAL_EMBEDDING_DIMENSIONS_KEY));
     }
+
+    private static ScorerModelSettings openAiScorerSettings(RuntimeConfig config) {
+        return new ScorerModelSettings(
+                config.requiredText(OPENAI_MODEL_NAME_KEY, OPENAI_MODEL_NAME_KEY),
+                Path.of(config.requiredText(OPENAI_MODEL_LOCATION_KEY, OPENAI_MODEL_LOCATION_KEY)));
+    }
 }
 
 record LocalUrgencyInferenceConfiguration(LocalInferenceSettings settings) implements UrgencyInferenceConfiguration {
@@ -42,7 +49,7 @@ record LocalUrgencyInferenceConfiguration(LocalInferenceSettings settings) imple
     }
 }
 
-record OpenAiUrgencyInferenceConfiguration() implements UrgencyInferenceConfiguration {
+record OpenAiUrgencyInferenceConfiguration(ScorerModelSettings scorerSettings) implements UrgencyInferenceConfiguration {
     @Override
     public UrgencyProvider provider() {
         return UrgencyProvider.OPENAI;

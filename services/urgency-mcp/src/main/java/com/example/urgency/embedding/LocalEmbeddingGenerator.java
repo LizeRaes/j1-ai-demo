@@ -14,17 +14,19 @@ public final class LocalEmbeddingGenerator implements EmbeddingGenerator {
     private static final String TEXT_LABEL = "text";
     private static final String TOKEN_SPLIT_PATTERN = "[^\\p{Alnum}]+";
 
+    private final String modelName;
+    private final Path modelLocation;
     private final int dimensions;
     private final int seed;
 
     public LocalEmbeddingGenerator(String modelName, Path modelLocation, int dimensions) {
-        String model = new RequiredText(MODEL_NAME_LABEL).require(modelName);
-        Path location = Objects.requireNonNull(modelLocation, MODEL_LOCATION_LABEL);
+        this.modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
+        this.modelLocation = Objects.requireNonNull(modelLocation, MODEL_LOCATION_LABEL);
         if (dimensions < 1) {
             throw new IllegalArgumentException(INVALID_DIMENSIONS_MESSAGE);
         }
         this.dimensions = dimensions;
-        this.seed = Objects.hash(model, location.toAbsolutePath().normalize());
+        this.seed = Objects.hash(this.modelName, this.modelLocation.toAbsolutePath().normalize());
     }
 
     @Override

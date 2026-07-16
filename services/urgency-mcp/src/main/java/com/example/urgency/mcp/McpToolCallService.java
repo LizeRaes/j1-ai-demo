@@ -29,7 +29,7 @@ final class McpToolCallService {
         JsonNode arguments = params == null ? null : params.get("arguments");
         String phrase = arguments == null ? null : McpRequestValidator.stringMember(arguments, "phrase");
         if (phrase == null || phrase.isBlank()) {
-            return toolErrorResult();
+            return toolErrorResult("Missing required string argument: phrase");
         }
 
         log.info(REQUEST_LOG_PREFIX + phrase + REQUEST_LOG_SUFFIX);
@@ -47,10 +47,10 @@ final class McpToolCallService {
         return result;
     }
 
-    private ObjectNode toolErrorResult() {
+    private ObjectNode toolErrorResult(String message) {
         ObjectNode content = json.objectNode()
                 .put("type", "text")
-                .put("text", "Missing required string argument: phrase");
+                .put("text", message);
         ObjectNode result = json.objectNode();
         result.set("content", json.objectNode().arrayNode().add(content));
         result.put("isError", true);

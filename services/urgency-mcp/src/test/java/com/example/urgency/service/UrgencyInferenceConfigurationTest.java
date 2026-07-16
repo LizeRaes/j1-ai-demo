@@ -19,7 +19,9 @@ class UrgencyInferenceConfigurationTest {
             "urgency.providers.local.model.location",
             "urgency.providers.local.embedding.name",
             "urgency.providers.local.embedding.location",
-            "urgency.providers.local.embedding.dimensions"
+            "urgency.providers.local.embedding.dimensions",
+            "urgency.providers.openai.model.name",
+            "urgency.providers.openai.model.location"
     );
 
     @AfterEach
@@ -44,12 +46,17 @@ class UrgencyInferenceConfigurationTest {
     }
 
     @Test
-    void openAiConfigurationDoesNotReadLocalSettings() {
+    void readsOpenAiScorerConfiguration() {
         System.setProperty("urgency.provider", "openai");
+        System.setProperty("urgency.providers.openai.model.name", "model-scorer-openai.dnet");
+        System.setProperty("urgency.providers.openai.model.location", "models");
 
         UrgencyInferenceConfiguration configuration = UrgencyInferenceConfiguration.from(new RuntimeConfig(Config.create()));
 
-        assertInstanceOf(OpenAiUrgencyInferenceConfiguration.class, configuration);
-        assertEquals(UrgencyProvider.OPENAI, configuration.provider());
+        OpenAiUrgencyInferenceConfiguration openAi = assertInstanceOf(OpenAiUrgencyInferenceConfiguration.class, configuration);
+        assertEquals(UrgencyProvider.OPENAI, openAi.provider());
+        assertEquals(
+                Path.of("models").toAbsolutePath().normalize().resolve("model-scorer-openai.dnet"),
+                openAi.scorerSettings().scorerModelPath());
     }
 }

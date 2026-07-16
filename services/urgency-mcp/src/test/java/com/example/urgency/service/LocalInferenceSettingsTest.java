@@ -1,4 +1,4 @@
-package com.example.urgency.service.local;
+package com.example.urgency.service;
 
 import java.nio.file.Path;
 

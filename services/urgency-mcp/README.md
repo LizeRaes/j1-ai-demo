@@ -2,10 +2,10 @@
 
 Helidon 4.4.0 HTTP server exposing urgency inference for support ticket text through a stateless MCP-compatible JSON-RPC endpoint. The MCP endpoint is `http://localhost:9090/urgency` and the tool returns a score from `0.0` to `10.0`.
 
-The service supports two urgency scoring providers:
+The service supports two embedding providers that both feed a DeepNetts urgency scorer:
 
-- `local`: DeepNetts scoring with deterministic local feature hashing, with the local model name, location, and embedding dimensions configured in `application.yaml`.
-- `openai`: OpenAI chat model scoring, with the model name configured in `application.yaml` and the API key supplied through config, a system property, or `OPENAI_API_KEY`.
+- `local`: deterministic local feature hashing, with the scorer model name, location, and embedding dimensions configured in `application.yaml`.
+- `openai`: OpenAI embeddings, defaulting to `text-embedding-3-small`, followed by the configured DeepNetts scorer. The API key comes from config, a system property, or `OPENAI_API_KEY`.
 
 ## MCP 2026-07-28 Migration
 
@@ -70,8 +70,8 @@ curl -X POST http://localhost:9090/urgency \
 - `UrgencyInferenceConfiguration` models either local or OpenAI configuration.
 - `LocalInferenceSettings` resolves local scorer and embedding settings.
 - `LocalInferenceResources` validates the local scorer file and lazily loads the DeepNetts scorer and embedding generator.
-- `OpenAiUrgencyScorerProvider` lazily creates the OpenAI scorer.
-- `LocalUrgencyInferenceEngine` and `OpenAiUrgencyInferenceEngine` contain provider-specific scoring behavior.
+- `DeepNettsInferenceResources` validates and lazily loads the configured DeepNetts scorer.
+- `DeepNettsUrgencyInferenceEngine` scores both local and OpenAI embeddings with that scorer.
 
 This keeps config parsing, model path resolution, startup validation, lazy resource creation, and scoring behavior independently testable without exposing private methods from the service.
 
@@ -90,7 +90,7 @@ urgency:
   providers:
     local:
       model:
-        name: model-scorer-openai.dnet
+        name: model-scorer-local.dnet
         location: ../urgency/model
       embedding:
         name: feature-hash-1536
@@ -98,13 +98,12 @@ urgency:
         dimensions: 1536
     openai:
       model:
-        name: gpt-4.1-mini
-      temperature: 0.0
-      max-completion-tokens: 20
-      prompt: |
-        Score the urgency of a healthcare support ticket complaint on a scale from 0 to 10.
-        0 means no urgency. 10 means immediate safety, care access, security, payment, or on-call escalation risk.
-        Return only one decimal number and no other text.
+        name: model-scorer-openai.dnet
+        location: ../urgency/model
+      embedding:
+        model:
+          name: text-embedding-3-small
+        dimensions: 1536
 
 openai:
   api-key: ""
@@ -118,10 +117,10 @@ Important keys:
 - `urgency.providers.local.embedding.name`: local embedding model identifier used as part of the deterministic local embedding seed.
 - `urgency.providers.local.embedding.location`: local embedding model location used as part of the deterministic local embedding seed.
 - `urgency.providers.local.embedding.dimensions`: local embedding vector width; keep it aligned with the selected DeepNetts scorer input size.
-- `urgency.providers.openai.model.name`: OpenAI chat model used to score urgency directly, for example `gpt-4.1-mini`.
-- `urgency.providers.openai.temperature`: OpenAI chat model temperature for deterministic scoring.
-- `urgency.providers.openai.max-completion-tokens`: OpenAI response token cap for the numeric score.
-- `urgency.providers.openai.prompt`: OpenAI scoring instructions prepended before the complaint text.
+- `urgency.providers.openai.model.name`: OpenAI-compatible DeepNetts scorer file name.
+- `urgency.providers.openai.model.location`: directory containing the OpenAI-compatible scorer.
+- `urgency.providers.openai.embedding.model.name`: OpenAI embedding model name, defaulting to `text-embedding-3-small`.
+- `urgency.providers.openai.embedding.dimensions`: optional OpenAI embedding dimensions override; keep it aligned with the selected scorer input size.
 - `openai.api-key`: optional config key. Prefer `OPENAI_API_KEY` for local development.
 
 ## Build
@@ -145,7 +144,9 @@ java -Durgency.provider=local -jar target/urgency-mcp.jar
 java -Durgency.provider=openai -Dopenai.api-key="$OPENAI_API_KEY" -jar target/urgency-mcp.jar
 ```
 
-Startup fails if the selected provider is unknown, the selected scorer file is missing, or OpenAI mode lacks an API key.
+Inference initialization fails if the selected provider is unknown, the selected scorer file is missing, or OpenAI mode lacks an API key. The MCP HTTP server creates inference lazily on the first `tools/call`, so discovery, ping, and tool listing can still work before the scorer is loaded.
+
+The packaged Helidon runtime installs a narrow Java serialization allow-list before startup so DeepNetts can deserialize checked-in `.dnet` scorer files. If you provide your own `jdk.serialFilter` or `helidon.serialFilter.pattern`, include the DeepNetts model classes and a final `!*` reject rule.
 
 ## MCP Conformance
 
