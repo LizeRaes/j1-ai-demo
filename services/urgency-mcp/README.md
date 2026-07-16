@@ -64,7 +64,7 @@ curl -X POST http://localhost:9090/urgency \
 
 ## Inference Architecture
 
-`UrgencyInferenceService` is intentionally thin. It validates the incoming complaint and delegates scoring to a provider-specific inference engine. Provider selection and startup configuration are modeled separately so those paths can be tested directly:
+`UrgencyInferenceService` validates the incoming complaint and delegates scoring to a provider-specific inference engine. Provider selection and startup configuration are modeled separately so those paths can be tested directly:
 
 - `UrgencyProvider` parses `urgency.provider`.
 - `UrgencyInferenceConfiguration` models either local or OpenAI configuration.
@@ -128,7 +128,7 @@ Important keys:
 Use the repository JDK 25+ and Maven.
 
 ```bash
-mvn -q compile
+mvn -q verify
 ```
 
 ## Run
