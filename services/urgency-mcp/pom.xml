@@ -76,6 +76,15 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-preview</argLine>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <annotationProcessorPaths>
@@ -90,12 +99,19 @@
                             <version>${helidon.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                    <enablePreview>true</enablePreview>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>io.helidon.service</groupId>
                 <artifactId>helidon-service-maven-plugin</artifactId>
                 <version>${helidon.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                </configuration>
                 <executions>
                     <execution>
                         <id>create-application</id>

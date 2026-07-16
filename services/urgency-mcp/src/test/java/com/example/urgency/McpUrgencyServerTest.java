@@ -12,9 +12,8 @@ import io.helidon.webserver.WebServer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,33 +24,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class McpUrgencyServerTest {
 
-    private static WebServer server;
-    private static HttpClient client;
-    private static URI endpoint;
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    @BeforeAll
-    static void startServer() {
+    private WebServer server;
+    private HttpClient client;
+    private URI endpoint;
+    private TestScorer scorer;
+
+    @BeforeEach
+    void startServer() {
+        scorer = new TestScorer();
         server = WebServer.builder()
                 .port(0)
                 .featuresDiscoverServices(false)
-                .routing(routing -> new McpUrgencyServer().setup(routing))
+                .routing(routing -> McpUrgencyServer.withScorerSupplier(() -> scorer).setup(routing))
                 .build()
                 .start();
         client = HttpClient.newHttpClient();
         endpoint = URI.create("http://localhost:" + server.port() + McpUrgencyServer.MCP_PATH);
     }
 
-    @AfterAll
-    static void stopServer() {
+    @AfterEach
+    void stopServer() {
         if (server != null) {
             server.stop();
         }
-    }
-
-    @AfterEach
-    void resetScorer() {
-        McpUrgencyServer.clearInferenceForTesting();
     }
 
     @Test
@@ -140,8 +137,7 @@ class McpUrgencyServerTest {
 
     @Test
     void toolsCallReturnsUrgencyScore() throws Exception {
-        StubScorer scorer = new StubScorer(7.5);
-        McpUrgencyServer.replaceInferenceForTesting(scorer);
+        scorer.returnScore(7.5);
 
         McpResponse response = post(McpRequest.forMethod("tools/call")
                 .name("getUrgency")
@@ -157,8 +153,8 @@ class McpUrgencyServerTest {
     }
 
     @Test
-    void requiresReplacementScorer() {
-        assertThrows(NullPointerException.class, () -> McpUrgencyServer.replaceInferenceForTesting(null));
+    void requiresScorerSupplier() {
+        assertThrows(NullPointerException.class, () -> McpUrgencyServer.withScorerSupplier(null));
     }
 
     private static void assertJsonRpcError(McpResponse response, String message) {
@@ -166,7 +162,7 @@ class McpUrgencyServerTest {
         assertEquals(message, response.body().get("error").get("message").asText());
     }
 
-    private static McpResponse post(McpRequest request) throws Exception {
+    private McpResponse post(McpRequest request) throws Exception {
         HttpRequest.Builder builder = HttpRequest.newBuilder(endpoint)
                 .POST(HttpRequest.BodyPublishers.ofString(request.body()))
                 .header("Content-Type", "application/json")
@@ -237,16 +233,19 @@ class McpUrgencyServerTest {
     private record McpResponse(int status, JsonNode body, List<String> sessionHeaders) {
     }
 
-    private static final class StubScorer implements UrgencyScorer {
-        private final double score;
+    private static final class TestScorer implements UrgencyScorer {
+        private Double score;
         private String complaint;
 
-        private StubScorer(double score) {
+        private void returnScore(double score) {
             this.score = score;
         }
 
         @Override
         public double score(String complaint) {
+            if (score == null) {
+                throw new AssertionError("Unexpected scorer call for complaint: " + complaint);
+            }
             this.complaint = complaint;
             return score;
         }

@@ -1,19 +1,9 @@
 package com.example.urgency;
 
-import java.util.Objects;
-import java.util.Optional;
-
-import com.example.urgency.mcp.McpDiscoveryDocument;
-import com.example.urgency.mcp.McpJson;
-import com.example.urgency.mcp.McpProtocolHandler;
-import com.example.urgency.mcp.McpRequestHeaders;
-import com.example.urgency.mcp.McpRequestValidator;
-import com.example.urgency.mcp.McpTool;
-import com.example.urgency.mcp.McpToolCatalog;
+import com.example.urgency.mcp.*;
 import com.example.urgency.service.UrgencyInferenceService;
 import com.example.urgency.service.UrgencyScorer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.helidon.http.HeaderName;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.Status;
@@ -22,6 +12,10 @@ import io.helidon.webserver.http.HttpFeature;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 @Service.Singleton
 final class McpUrgencyServer implements HttpFeature {
@@ -36,39 +30,26 @@ final class McpUrgencyServer implements HttpFeature {
     private static final HeaderName MCP_PROTOCOL_VERSION_HEADER = HeaderNames.create("MCP-Protocol-Version");
     private static final HeaderName MCP_METHOD_HEADER = HeaderNames.create("Mcp-Method");
     private static final HeaderName MCP_NAME_HEADER = HeaderNames.create("Mcp-Name");
-    private static final String REPLACEMENT_LABEL = "replacement";
-
-    private static volatile UrgencyScorer inference;
+    private static final String SCORER_SUPPLIER_LABEL = "urgency scorer supplier";
 
     private final McpJson json = new McpJson();
-    private final McpProtocolHandler handler = new McpProtocolHandler(McpUrgencyServer::inference);
+    private final McpProtocolHandler handler;
 
-    static UrgencyScorer replaceInferenceForTesting(UrgencyScorer replacement) {
-        UrgencyScorer previous = inference;
-        inference = Objects.requireNonNull(replacement, REPLACEMENT_LABEL);
-        return previous;
+    McpUrgencyServer() {
+        this(new LazyUrgencyScorerSupplier());
     }
 
-    static void clearInferenceForTesting() {
-        inference = null;
+    static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
+        return new McpUrgencyServer(scorerSupplier);
+    }
+
+    private McpUrgencyServer(Supplier<UrgencyScorer> scorerSupplier) {
+        handler = new McpProtocolHandler(Objects.requireNonNull(scorerSupplier, SCORER_SUPPLIER_LABEL));
     }
 
     @Override
     public void setup(HttpRouting.Builder routing) {
         routing.post(MCP_PATH, this::handlePost);
-    }
-
-    private static UrgencyScorer inference() {
-        UrgencyScorer cached = inference;
-        if (cached != null) {
-            return cached;
-        }
-        synchronized (McpUrgencyServer.class) {
-            if (inference == null) {
-                inference = new UrgencyInferenceService();
-            }
-            return inference;
-        }
     }
 
     private void handlePost(ServerRequest request, ServerResponse response) {
@@ -88,5 +69,14 @@ final class McpUrgencyServer implements HttpFeature {
 
     private static Optional<String> header(ServerRequest request, HeaderName name) {
         return request.headers().first(name);
+    }
+
+    private static final class LazyUrgencyScorerSupplier implements Supplier<UrgencyScorer> {
+        private final StableValue<UrgencyScorer> inference = StableValue.of();
+
+        @Override
+        public UrgencyScorer get() {
+            return inference.orElseSet(UrgencyInferenceService::new);
+        }
     }
 }
