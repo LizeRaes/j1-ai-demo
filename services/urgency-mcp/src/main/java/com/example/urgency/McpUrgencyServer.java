@@ -1,26 +1,61 @@
 package com.example.urgency;
 
-import com.example.urgency.service.UrgencyInferenceService;
-import java.util.List;
+import java.lang.StableValue;
+import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import io.helidon.extensions.mcp.server.Mcp;
-import io.helidon.extensions.mcp.server.McpToolContent;
-import io.helidon.extensions.mcp.server.McpToolContents;
+import com.example.urgency.service.UrgencyInferenceService;
+import com.example.urgency.service.UrgencyScorer;
 
-@Mcp.Path("/urgency")
-@Mcp.Server("helidon-mcp-urgency")
-class McpUrgencyServer {
+import io.helidon.extensions.mcp.server.Mcp;
+import io.helidon.extensions.mcp.server.McpToolResult;
+
+@Mcp.Path(McpUrgencyServer.MCP_PATH)
+@Mcp.Server(McpUrgencyServer.MCP_SERVER_NAME)
+final class McpUrgencyServer {
+
+    static final String MCP_PATH = "/urgency";
+    static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
+    static final String TOOL_NAME = "getUrgency";
 
     private static final Logger log = Logger.getLogger(McpUrgencyServer.class.getName());
-    private static final UrgencyInferenceService inference = new UrgencyInferenceService();
+    private static final String SCORER_SUPPLIER_LABEL = "urgency scorer supplier";
 
-    @Mcp.Tool("Get urgency score (0–10) for a support ticket complaint")
-    List<McpToolContent> getUrgency(@Mcp.Description("complaint text to score") String phrase) {
-        log.info("MCP server called: getUrgency(phrase=\"" + phrase + "\")");
-        double score = inference.score(phrase);
+    private final Supplier<UrgencyScorer> scorerSupplier;
+
+    McpUrgencyServer() {
+        this(new LazyUrgencyScorerSupplier());
+    }
+
+    static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
+        return new McpUrgencyServer(scorerSupplier);
+    }
+
+    private McpUrgencyServer(Supplier<UrgencyScorer> scorerSupplier) {
+        this.scorerSupplier = Objects.requireNonNull(scorerSupplier, SCORER_SUPPLIER_LABEL);
+    }
+
+    @Mcp.Tool(value = "Get urgency score (0-10) for a support ticket complaint",
+              title = "Get urgency score",
+              readOnlyHint = true,
+              destructiveHint = false,
+              idempotentHint = true,
+              openWorldHint = false)
+    McpToolResult getUrgency(@Mcp.Description("complaint text to score") String phrase) {
+        log.info(() -> "MCP server called: getUrgency(phrase=\"" + phrase + "\")");
+        double score = scorerSupplier.get().score(phrase);
         String result = Double.toString(score);
-        log.info("MCP server returning urgency score: " + result);
-        return List.of(McpToolContents.textContent(result));
+        log.info(() -> "MCP server returning urgency score: " + result);
+        return McpToolResult.create(result);
+    }
+
+    private static final class LazyUrgencyScorerSupplier implements Supplier<UrgencyScorer> {
+        private final StableValue<UrgencyScorer> inference = StableValue.of();
+
+        @Override
+        public UrgencyScorer get() {
+            return inference.orElseSet(UrgencyInferenceService::new);
+        }
     }
 }

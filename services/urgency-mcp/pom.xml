@@ -13,19 +13,32 @@
     <groupId>com.example.appointment</groupId>
     <artifactId>urgency-mcp</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    
+
     <properties>
         <mainClass>com.example.urgency.Main</mainClass>
         <maven.compiler.release>25</maven.compiler.release>
+        <mcp.extension.version>1.1.0</mcp.extension.version>
         <exec.mainClass>${mainClass}</exec.mainClass>
         <exec.cleanupDaemonThreads>false</exec.cleanupDaemonThreads>
+        <deepnetts-core.version>1.13.4</deepnetts-core.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ai.djl</groupId>
+                <artifactId>bom</artifactId>
+                <version>0.36.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
-            <groupId>io.helidon.extensions.mcp</groupId>
-            <artifactId>helidon4-extensions-mcp-server</artifactId>
-            <version>1.0.3</version>
+            <groupId>io.helidon.webserver</groupId>
+            <artifactId>helidon-webserver</artifactId>
         </dependency>
         <dependency>
             <groupId>io.helidon.config</groupId>
@@ -36,8 +49,13 @@
             <artifactId>helidon-http-media-jsonb</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
+            <groupId>io.helidon.extensions.mcp</groupId>
+            <artifactId>helidon4-extensions-mcp-server</artifactId>
+            <version>${mcp.extension.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.integrations.langchain4j.providers</groupId>
+            <artifactId>helidon-integrations-langchain4j-providers-open-ai</artifactId>
         </dependency>
         <dependency>
             <groupId>io.helidon.logging</groupId>
@@ -45,31 +63,34 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>com.deepnetts</groupId>
+            <artifactId>deepnetts-core</artifactId>
+            <version>${deepnetts-core.version}</version>
+        </dependency>
+        <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>api</artifactId>
-            <version>0.36.0</version>
         </dependency>
         <dependency>
             <groupId>ai.djl.pytorch</groupId>
             <artifactId>pytorch-engine</artifactId>
-            <version>0.36.0</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>ai.djl.huggingface</groupId>
             <artifactId>tokenizers</artifactId>
-            <version>0.36.0</version>
         </dependency>
         <dependency>
-            <groupId>com.deepnetts</groupId>
-            <artifactId>deepnetts-core</artifactId>
-            <version>1.13.4</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai</artifactId>
-            <version>1.12.1</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -88,6 +109,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <enablePreview>true</enablePreview>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>io.helidon.codegen</groupId>
@@ -102,15 +124,30 @@
                         <path>
                             <groupId>io.helidon.extensions.mcp</groupId>
                             <artifactId>helidon4-extensions-mcp-codegen</artifactId>
-                            <version>1.0.3</version>
+                            <version>${mcp.extension.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-preview</argLine>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>io.helidon.service</groupId>
                 <artifactId>helidon-service-maven-plugin</artifactId>
                 <version>${helidon.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                </configuration>
                 <executions>
                     <execution>
                         <id>create-application</id>
@@ -122,4 +159,33 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>conformance</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>run-mcp-conformance</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>sh</executable>
+                                    <arguments>
+                                        <argument>scripts/run-mcp-conformance.sh</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
