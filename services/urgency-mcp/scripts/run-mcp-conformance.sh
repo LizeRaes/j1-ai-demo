@@ -46,5 +46,5 @@ if [ "$i" -eq 30 ]; then
 fi
 
 for scenario in $SCENARIOS; do
-  npx --yes @modelcontextprotocol/conformance server --url "$URL" --scenario "$scenario"
+  npx @modelcontextprotocol/conformance server --url "$URL" --scenario "$scenario"
 done
