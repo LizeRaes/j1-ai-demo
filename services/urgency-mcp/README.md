@@ -113,6 +113,18 @@ Inference initialization fails if:
 
 `McpUrgencyServer` initializes the scorer lazily on first tool call. That means the MCP endpoint can come up before the full inference stack is exercised.
 
+
+## Health and Observability
+
+Helidon health and observability support is enabled through `helidon-webserver-observe-health` and `helidon-health-checks`. Operational health is exposed separately from MCP protocol traffic:
+
+```bash
+curl http://localhost:9090/observe/health
+curl http://localhost:9090/observe/health/ready
+```
+
+These endpoints are for service liveness/readiness checks. MCP `ping` remains handled by Helidon's MCP server implementation.
+
 ## MCP Behavior
 
 The current server uses Helidon's annotation-based MCP server support and stays aligned with the earlier MCP protocol line supported by the extension, centered on the `2025-06-18` family.
