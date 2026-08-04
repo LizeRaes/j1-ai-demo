@@ -92,7 +92,8 @@ public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCl
             return model.newPredictor();
         } catch (ModelNotFoundException | MalformedModelException | IOException e) {
             throw new RuntimeException(
-                    "Failed to load local embedding model: " + modelName + " (configured location: " + modelLocation + ")",
+                    "Failed to load local embedding model: " + modelName
+                            + " (configured location: " + modelLocation + ")",
                     e);
         }
     }
