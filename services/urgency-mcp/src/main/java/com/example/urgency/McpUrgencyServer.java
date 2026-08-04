@@ -52,14 +52,13 @@ public final class McpUrgencyServer {
     }
 
     private static final class LazyUrgencyScorerSupplier implements Supplier<UrgencyScorer> {
-        private UrgencyScorer inference;
+        private final StableValue<UrgencyScorer> inference = StableValue.of();
 
         @Override
-        public synchronized UrgencyScorer get() {
-            if (inference == null) {
-                inference = new UrgencyInferenceService();
-            }
-            return inference;
+        public UrgencyScorer get() {
+            return inference.orElseSet(UrgencyInferenceService::new);
         }
     }
 }
+
+

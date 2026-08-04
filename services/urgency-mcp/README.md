@@ -87,7 +87,7 @@ Do not reuse a scorer across incompatible embedding spaces.
 Use Java 25+ and Maven.
 
 ```bash
-mvn clean package
+MAVEN_OPTS=--enable-preview mvn clean package
 ```
 
 Note: this module uses Java preview features. Maven and the JDK used to build and test it must support the configured preview release.
@@ -199,7 +199,7 @@ For the migrated MCP `2026-07-28` stateless adapter, override the protocol versi
 MCP_CONFORMANCE_ENABLED=true \
 MCP_CONFORMANCE_PROTOCOL_VERSION=2026-07-28 \
 MCP_CONFORMANCE_SCENARIOS="server-discover ping tools-list" \
-mvn -Pconformance verify
+MAVEN_OPTS=--enable-preview mvn -Pconformance verify
 ```
 
 In the migrated flow, the readiness probe uses `server/discover` with `MCP-Protocol-Version: 2026-07-28` and `Mcp-Method: server/discover`. The default list intentionally excludes tool-call scenarios because the real urgency tool performs domain scoring and requires a `phrase` argument.
