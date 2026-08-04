@@ -40,7 +40,7 @@ urgency:
         location: ../urgency/model
       embedding:
         name: sentence-transformers/all-MiniLM-L6-v2
-        location: ../urgency/model/local-embeddings
+        location: ../urgency/model
         dimensions: 384
     openai:
       model:
@@ -95,14 +95,14 @@ Note: this module uses Java preview features. Maven and the JDK used to build an
 ## Run
 
 ```bash
-java -jar target/urgency-mcp.jar
+java --enable-preview -jar target/urgency-mcp.jar
 ```
 
 Select a provider explicitly when needed:
 
 ```bash
-java -Durgency.provider=local -jar target/urgency-mcp.jar
-java -Durgency.provider=openai -Dopenai.api-key="$OPENAI_API_KEY" -jar target/urgency-mcp.jar
+java --enable-preview -Durgency.provider=local -jar target/urgency-mcp.jar
+java --enable-preview -Durgency.provider=openai -Dopenai.api-key="$OPENAI_API_KEY" -jar target/urgency-mcp.jar
 ```
 
 Inference initialization fails if:
@@ -112,6 +112,7 @@ Inference initialization fails if:
 - OpenAI mode is selected without an API key.
 
 `McpUrgencyServer` initializes the scorer lazily on first tool call. That means the MCP endpoint can come up before the full inference stack is exercised.
+
 
 ## Health and Observability
 

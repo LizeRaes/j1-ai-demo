@@ -21,6 +21,7 @@ public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCl
     private static final String TEXT_LABEL = "text";
     private static final String DJL_MODEL_URL_PREFIX = "djl://ai.djl.huggingface.pytorch/";
     private static final String PREDICTOR_LABEL = "local embedding predictor";
+    public static final String ENGINE = "PyTorch";
 
     private final String modelName;
     private final Path modelLocation;
@@ -84,7 +85,7 @@ public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCl
             Criteria<String, float[]> criteria = Criteria.builder()
                     .setTypes(String.class, float[].class)
                     .optModelUrls(DJL_MODEL_URL_PREFIX + modelName)
-                    .optEngine("PyTorch")
+                    .optEngine(ENGINE)
                     .optTranslatorFactory(new TextEmbeddingTranslatorFactory())
                     .build();
             model = criteria.loadModel();

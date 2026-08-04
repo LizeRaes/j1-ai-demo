@@ -10,7 +10,7 @@ urgency:
         location: ../urgency/model
       embedding:
         name: sentence-transformers/all-MiniLM-L6-v2
-        location: ../urgency/model/local-embeddings
+        location: ../urgency/model
         dimensions: 384
     openai:
       model:
