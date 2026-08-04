@@ -160,9 +160,9 @@ class UrgencyInferenceServiceTest {
     }
 
     private static void setLocalEmbeddingConfiguration() {
-        System.setProperty("urgency.providers.local.embedding.name", "feature-hash");
+        System.setProperty("urgency.providers.local.embedding.name", "sentence-transformers/all-MiniLM-L6-v2");
         System.setProperty("urgency.providers.local.embedding.location", "embeddings");
-        System.setProperty("urgency.providers.local.embedding.dimensions", "4");
+        System.setProperty("urgency.providers.local.embedding.dimensions", "384");
     }
 
     private static void clearSystemProperties() {

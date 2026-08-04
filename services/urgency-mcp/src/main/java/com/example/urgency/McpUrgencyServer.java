@@ -1,39 +1,25 @@
 package com.example.urgency;
 
-import com.example.urgency.mcp.*;
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.logging.Logger;
+
 import com.example.urgency.service.UrgencyInferenceService;
 import com.example.urgency.service.UrgencyScorer;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.helidon.http.HeaderName;
-import io.helidon.http.HeaderNames;
-import io.helidon.http.Status;
-import io.helidon.service.registry.Service;
-import io.helidon.webserver.http.HttpFeature;
-import io.helidon.webserver.http.HttpRouting;
-import io.helidon.webserver.http.ServerRequest;
-import io.helidon.webserver.http.ServerResponse;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Supplier;
+import io.helidon.extensions.mcp.server.Mcp;
+import io.helidon.extensions.mcp.server.McpToolResult;
 
-@Service.Singleton
-final class McpUrgencyServer implements HttpFeature {
+@Mcp.Path(McpUrgencyServer.MCP_PATH)
+@Mcp.Server(McpUrgencyServer.MCP_SERVER_NAME)
+public final class McpUrgencyServer {
 
     static final String MCP_PATH = "/urgency";
-    static final String MCP_SERVER_NAME = McpDiscoveryDocument.SERVER_NAME;
-    static final String MCP_PROTOCOL_VERSION = McpRequestValidator.PROTOCOL_VERSION;
-    static final String TOOL_NAME = McpTool.GET_URGENCY.toolName();
-    static final long TOOL_CACHE_TTL_MS = McpToolCatalog.CACHE_TTL_MS;
-    static final String TOOL_CACHE_SCOPE = McpToolCatalog.CACHE_SCOPE;
-
-    private static final HeaderName MCP_PROTOCOL_VERSION_HEADER = HeaderNames.create("MCP-Protocol-Version");
-    private static final HeaderName MCP_METHOD_HEADER = HeaderNames.create("Mcp-Method");
-    private static final HeaderName MCP_NAME_HEADER = HeaderNames.create("Mcp-Name");
+    static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
+    private static final Logger log = Logger.getLogger(McpUrgencyServer.class.getName());
     private static final String SCORER_SUPPLIER_LABEL = "urgency scorer supplier";
 
-    private final McpJson json = new McpJson();
-    private final McpProtocolHandler handler;
+    private final Supplier<UrgencyScorer> scorerSupplier;
 
     McpUrgencyServer() {
         this(new LazyUrgencyScorerSupplier());
@@ -44,39 +30,36 @@ final class McpUrgencyServer implements HttpFeature {
     }
 
     private McpUrgencyServer(Supplier<UrgencyScorer> scorerSupplier) {
-        handler = new McpProtocolHandler(Objects.requireNonNull(scorerSupplier, SCORER_SUPPLIER_LABEL));
+        this.scorerSupplier = Objects.requireNonNull(scorerSupplier, SCORER_SUPPLIER_LABEL);
     }
 
-    @Override
-    public void setup(HttpRouting.Builder routing) {
-        routing.post(MCP_PATH, this::handlePost);
+    @Mcp.Tool(value = "Get urgency score (0-10) for a support ticket complaint",
+              title = "Get urgency score",
+              readOnlyHint = true,
+              destructiveHint = false,
+              idempotentHint = true,
+              openWorldHint = false)
+    McpToolResult getUrgency(@Mcp.Description("complaint text to score") String phrase) {
+        log.info(() -> "MCP server called: getUrgency(phrase=\"" + phrase + "\")");
+        double score = score(phrase);
+        String result = Double.toString(score);
+        log.info(() -> "MCP server returning urgency score: " + result);
+        return McpToolResult.create(result);
     }
 
-    private void handlePost(ServerRequest request, ServerResponse response) {
-        ObjectNode body = json.readObject(request.content().inputStream());
-        ObjectNode result = handler.handle(headers(request), body);
-        response.status(Status.OK_200)
-                .header(HeaderNames.CONTENT_TYPE, "application/json")
-                .send(json.write(result));
-    }
-
-    private static McpRequestHeaders headers(ServerRequest request) {
-        return new McpRequestHeaders(
-                header(request, MCP_PROTOCOL_VERSION_HEADER),
-                header(request, MCP_METHOD_HEADER),
-                header(request, MCP_NAME_HEADER));
-    }
-
-    private static Optional<String> header(ServerRequest request, HeaderName name) {
-        return request.headers().first(name);
+    public double score(String phrase) {
+        return scorerSupplier.get().score(phrase);
     }
 
     private static final class LazyUrgencyScorerSupplier implements Supplier<UrgencyScorer> {
-        private final StableValue<UrgencyScorer> inference = StableValue.of();
+        private UrgencyScorer inference;
 
         @Override
-        public UrgencyScorer get() {
-            return inference.orElseSet(UrgencyInferenceService::new);
+        public synchronized UrgencyScorer get() {
+            if (inference == null) {
+                inference = new UrgencyInferenceService();
+            }
+            return inference;
         }
     }
 }

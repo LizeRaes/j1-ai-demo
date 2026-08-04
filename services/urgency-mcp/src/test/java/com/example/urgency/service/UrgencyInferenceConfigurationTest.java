@@ -34,9 +34,9 @@ class UrgencyInferenceConfigurationTest {
         System.setProperty("urgency.provider", "local");
         System.setProperty("urgency.providers.local.model.name", "model.dnet");
         System.setProperty("urgency.providers.local.model.location", "models");
-        System.setProperty("urgency.providers.local.embedding.name", "feature-hash");
+        System.setProperty("urgency.providers.local.embedding.name", "sentence-transformers/all-MiniLM-L6-v2");
         System.setProperty("urgency.providers.local.embedding.location", "embeddings");
-        System.setProperty("urgency.providers.local.embedding.dimensions", "4");
+        System.setProperty("urgency.providers.local.embedding.dimensions", "384");
 
         UrgencyInferenceConfiguration configuration = UrgencyInferenceConfiguration.from(new RuntimeConfig(Config.create()));
 

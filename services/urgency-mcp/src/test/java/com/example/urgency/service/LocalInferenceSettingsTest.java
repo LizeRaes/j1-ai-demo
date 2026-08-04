@@ -15,9 +15,9 @@ class LocalInferenceSettingsTest {
         LocalInferenceSettings settings = new LocalInferenceSettings(
                 "scorer.dnet",
                 modelDirectory,
-                "feature-hash",
+                "sentence-transformers/all-MiniLM-L6-v2",
                 Path.of("embeddings"),
-                4);
+                384);
 
         assertEquals(modelDirectory.toAbsolutePath().normalize().resolve("scorer.dnet"), settings.scorerModelPath());
     }
@@ -26,10 +26,10 @@ class LocalInferenceSettingsTest {
     void validatesRequiredValues() {
         Path path = Path.of("models");
 
-        assertThrows(IllegalArgumentException.class, () -> new LocalInferenceSettings(" ", path, "feature-hash", path, 4));
-        assertThrows(NullPointerException.class, () -> new LocalInferenceSettings("scorer.dnet", null, "feature-hash", path, 4));
-        assertThrows(IllegalArgumentException.class, () -> new LocalInferenceSettings("scorer.dnet", path, " ", path, 4));
-        assertThrows(NullPointerException.class, () -> new LocalInferenceSettings("scorer.dnet", path, "feature-hash", null, 4));
-        assertThrows(IllegalArgumentException.class, () -> new LocalInferenceSettings("scorer.dnet", path, "feature-hash", path, 0));
+        assertThrows(IllegalArgumentException.class, () -> new LocalInferenceSettings(" ", path, "sentence-transformers/all-MiniLM-L6-v2", path, 384));
+        assertThrows(NullPointerException.class, () -> new LocalInferenceSettings("scorer.dnet", null, "sentence-transformers/all-MiniLM-L6-v2", path, 384));
+        assertThrows(IllegalArgumentException.class, () -> new LocalInferenceSettings("scorer.dnet", path, " ", path, 384));
+        assertThrows(NullPointerException.class, () -> new LocalInferenceSettings("scorer.dnet", path, "sentence-transformers/all-MiniLM-L6-v2", null, 384));
+        assertThrows(IllegalArgumentException.class, () -> new LocalInferenceSettings("scorer.dnet", path, "sentence-transformers/all-MiniLM-L6-v2", path, 0));
     }
 }

@@ -6,21 +6,35 @@
     <parent>
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-se</artifactId>
-        <version>4.4.0</version>
+        <version>4.5.0</version>
         <relativePath/>
     </parent>
 
     <groupId>com.example.appointment</groupId>
     <artifactId>urgency-mcp</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    
+    <version>1.0.1-SNAPSHOT</version>
+
     <properties>
         <mainClass>com.example.urgency.Main</mainClass>
         <maven.compiler.release>25</maven.compiler.release>
+        <mcp.extension.version>1.2.0</mcp.extension.version>
         <exec.mainClass>${mainClass}</exec.mainClass>
         <exec.cleanupDaemonThreads>false</exec.cleanupDaemonThreads>
+        <preview.compiler.arg>--enable-preview</preview.compiler.arg>
         <deepnetts-core.version>1.13.4</deepnetts-core.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ai.djl</groupId>
+                <artifactId>bom</artifactId>
+                <version>0.36.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -34,6 +48,19 @@
         <dependency>
             <groupId>io.helidon.http.media</groupId>
             <artifactId>helidon-http-media-jsonb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.webserver.observe</groupId>
+            <artifactId>helidon-webserver-observe-health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.health</groupId>
+            <artifactId>helidon-health-checks</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.extensions.mcp</groupId>
+            <artifactId>helidon4-extensions-mcp-server</artifactId>
+            <version>${mcp.extension.version}</version>
         </dependency>
         <dependency>
             <groupId>io.helidon.integrations.langchain4j.providers</groupId>
@@ -50,6 +77,19 @@
             <version>${deepnetts-core.version}</version>
         </dependency>
         <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-engine</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
@@ -57,6 +97,21 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.webclient</groupId>
+            <artifactId>helidon-webclient</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.webclient</groupId>
+            <artifactId>helidon-webclient-http1</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.webserver.testing.junit5</groupId>
+            <artifactId>helidon-webserver-testing-junit5</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -76,15 +131,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>--enable-preview</argLine>
-                    <forkCount>1</forkCount>
-                    <reuseForks>true</reuseForks>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <annotationProcessorPaths>
@@ -98,8 +144,20 @@
                             <artifactId>helidon-service-codegen</artifactId>
                             <version>${helidon.version}</version>
                         </path>
+                        <path>
+                            <groupId>io.helidon.extensions.mcp</groupId>
+                            <artifactId>helidon4-extensions-mcp-codegen</artifactId>
+                            <version>${mcp.extension.version}</version>
+                        </path>
                     </annotationProcessorPaths>
-                    <enablePreview>true</enablePreview>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-preview</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -108,9 +166,7 @@
                 <version>${helidon.version}</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
-                    <compilerArgs>
-                        <arg>--enable-preview</arg>
-                    </compilerArgs>
+                    <compilerArgs>${preview.compiler.arg}</compilerArgs>
                 </configuration>
                 <executions>
                     <execution>

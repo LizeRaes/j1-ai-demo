@@ -9,9 +9,9 @@ urgency:
         name: model-scorer-local.dnet
         location: ../urgency/model
       embedding:
-        name: feature-hash-1536
+        name: sentence-transformers/all-MiniLM-L6-v2
         location: ../urgency/model/local-embeddings
-        dimensions: 1536
+        dimensions: 384
     openai:
       model:
         name: model-scorer-openai.dnet

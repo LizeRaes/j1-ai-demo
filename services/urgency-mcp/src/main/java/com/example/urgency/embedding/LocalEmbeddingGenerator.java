@@ -1,65 +1,98 @@
 package com.example.urgency.embedding;
 
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Locale;
-
-import com.example.urgency.validation.RequiredText;
 import java.util.Objects;
 
-public final class LocalEmbeddingGenerator implements EmbeddingGenerator {
+import com.example.urgency.validation.RequiredText;
+
+import ai.djl.MalformedModelException;
+import ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory;
+import ai.djl.inference.Predictor;
+import ai.djl.repository.zoo.Criteria;
+import ai.djl.repository.zoo.ModelNotFoundException;
+import ai.djl.repository.zoo.ZooModel;
+
+public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCloseable {
 
     private static final String MODEL_NAME_LABEL = "local embedding model name";
     private static final String MODEL_LOCATION_LABEL = "local embedding model location";
     private static final String INVALID_DIMENSIONS_MESSAGE = "local embedding dimensions must be positive";
     private static final String TEXT_LABEL = "text";
-    private static final String TOKEN_SPLIT_PATTERN = "[^\\p{Alnum}]+";
+    private static final String DJL_MODEL_URL_PREFIX = "djl://ai.djl.huggingface.pytorch/";
+    private static final String PREDICTOR_LABEL = "local embedding predictor";
 
     private final String modelName;
     private final Path modelLocation;
     private final int dimensions;
-    private final int seed;
+
+    private ZooModel<String, float[]> model;
+    private Predictor<String, float[]> predictor;
 
     public LocalEmbeddingGenerator(String modelName, Path modelLocation, int dimensions) {
         this.modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
-        this.modelLocation = Objects.requireNonNull(modelLocation, MODEL_LOCATION_LABEL);
+        this.modelLocation = Objects.requireNonNull(modelLocation, MODEL_LOCATION_LABEL).toAbsolutePath().normalize();
         if (dimensions < 1) {
             throw new IllegalArgumentException(INVALID_DIMENSIONS_MESSAGE);
         }
         this.dimensions = dimensions;
-        this.seed = Objects.hash(this.modelName, this.modelLocation.toAbsolutePath().normalize());
     }
 
     @Override
     public float[] embed(String text) {
-        Objects.requireNonNull(text, TEXT_LABEL);
-        float[] vector = new float[dimensions];
-        String[] tokens = text.toLowerCase(Locale.ROOT).split(TOKEN_SPLIT_PATTERN);
-        for (String token : tokens) {
-            if (!token.isBlank()) {
-                addToken(vector, token);
+        String requiredText = new RequiredText(TEXT_LABEL).require(text);
+        ensureLoaded();
+        try {
+            float[] vector = Objects.requireNonNull(predictor, PREDICTOR_LABEL).predict(requiredText);
+            if (vector.length != dimensions) {
+                throw new IllegalStateException(
+                        "Configured local embedding dimensions " + dimensions
+                                + " do not match model output dimensions " + vector.length
+                                + " for " + modelName);
             }
+            return vector;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Embedding failed for: " + requiredText, e);
         }
-        normalize(vector);
-        return vector;
     }
 
-    private void addToken(float[] vector, String token) {
-        int hash = Objects.hash(seed, token);
-        int index = Math.floorMod(hash, dimensions);
-        vector[index] += (hash & 1) == 0 ? 1.0f : -1.0f;
+    @Override
+    public void close() {
+        if (predictor != null) {
+            predictor.close();
+        }
+        if (model != null) {
+            model.close();
+        }
     }
 
-    private static void normalize(float[] vector) {
-        double magnitude = 0.0;
-        for (float value : vector) {
-            magnitude += value * value;
-        }
-        if (magnitude == 0.0) {
+    private void ensureLoaded() {
+        if (predictor != null) {
             return;
         }
-        float scale = (float) (1.0 / Math.sqrt(magnitude));
-        for (int i = 0; i < vector.length; i++) {
-            vector[i] *= scale;
+        synchronized (this) {
+            if (predictor == null) {
+                predictor = loadPredictor();
+            }
+        }
+    }
+
+    private Predictor<String, float[]> loadPredictor() {
+        try {
+            Criteria<String, float[]> criteria = Criteria.builder()
+                    .setTypes(String.class, float[].class)
+                    .optModelUrls(DJL_MODEL_URL_PREFIX + modelName)
+                    .optEngine("PyTorch")
+                    .optTranslatorFactory(new TextEmbeddingTranslatorFactory())
+                    .build();
+            model = criteria.loadModel();
+            return model.newPredictor();
+        } catch (ModelNotFoundException | MalformedModelException | IOException e) {
+            throw new RuntimeException(
+                    "Failed to load local embedding model: " + modelName + " (configured location: " + modelLocation + ")",
+                    e);
         }
     }
 }
