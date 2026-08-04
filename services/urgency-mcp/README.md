@@ -181,7 +181,7 @@ curl -X POST http://localhost:9090/urgency \
 
 ## MCP Conformance
 
-The conformance script uses the official MCP conformance runner and starts this server in local mode. Its defaults intentionally stay on the legacy Helidon MCP path so the generated annotation server remains covered:
+The conformance script uses the official MCP conformance runner and starts this server in local mode. Its defaults stay on the legacy Helidon MCP path so the generated annotation server remains covered:
 
 - `server-initialize`
 - `ping`

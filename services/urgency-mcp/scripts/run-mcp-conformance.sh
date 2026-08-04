@@ -17,7 +17,7 @@ if [ ! -f "$JAR" ]; then
   exit 1
 fi
 
-"$JAVA_BIN" -Durgency.provider=local -jar "$JAR" > target/urgency-mcp-conformance.log 2>&1 &
+"$JAVA_BIN" --enable-preview -Durgency.provider=local -jar "$JAR" > target/urgency-mcp-conformance.log 2>&1 &
 SERVER_PID=$!
 
 cleanup() {
@@ -68,5 +68,5 @@ if [ "$i" -eq 30 ]; then
 fi
 
 for scenario in $SCENARIOS; do
-  npx --yes @modelcontextprotocol/conformance server --url "$URL" --scenario "$scenario"
+  npx @modelcontextprotocol/conformance server --url "$URL" --scenario "$scenario"
 done
