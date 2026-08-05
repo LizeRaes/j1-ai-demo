@@ -129,7 +129,7 @@ These endpoints are for service liveness/readiness checks. MCP `ping` remains ha
 
 The `/urgency` endpoint supports two protocol paths:
 
-- Requests without `MCP-Protocol-Version: 2026-07-28` continue through Helidon's annotation-based MCP server support for the earlier MCP line centered on `2025-06-18`.
+- Requests without `MCP-Protocol-Version: 2026-07-28` continue through Helidon's annotation-based MCP server support for the earlier MCP specifications.
 - Requests with `MCP-Protocol-Version: 2026-07-28` are handled by a stateless HTTP adapter before the generated Helidon MCP route.
 
 The 2026 adapter does not require `initialize`, does not create or return `Mcp-Session-Id`, and rejects any request that carries a session header. Each request must include:
@@ -154,7 +154,8 @@ The `getUrgency` tool is declared with these behavior hints:
 - `idempotentHint = true`
 - `openWorldHint = false`
 
-MCP Apps, Tasks, Roots, Sampling, Logging, and OAuth/OIDC authorization are not implemented by this optional local urgency-scoring service. OAuth/OIDC hardening should be handled at the gateway or by a later MCP auth integration if this endpoint becomes a protected remote service.
+MCP Apps, Tasks, Roots, Sampling, Logging, and OAuth/OIDC authorization are not implemented by this optional local urgency-scoring service. 
+OAuth/OIDC hardening should be handled at the gateway or by a later MCP auth integration if this endpoint becomes a protected remote service.
 
 Example stateless discovery request:
 
@@ -190,7 +191,7 @@ The conformance script uses the official MCP conformance runner and starts this 
 Run the default 2025-oriented check with:
 
 ```bash
-MCP_CONFORMANCE_ENABLED=true mvn -Pconformance verify
+MAVEN_OPTS=--enable-preview MCP_CONFORMANCE_ENABLED=true mvn -Pconformance verify
 ```
 
 For the migrated MCP `2026-07-28` stateless adapter, override the protocol version and scenario list explicitly:
