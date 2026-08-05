@@ -15,6 +15,7 @@ import io.helidon.http.HeaderNames;
 import io.helidon.http.HttpMediaType;
 import io.helidon.http.Method;
 import io.helidon.http.Status;
+import io.helidon.json.JsonObject;
 import io.helidon.service.registry.Service;
 import io.helidon.webserver.http.FilterChain;
 import io.helidon.webserver.http.HttpFeature;
@@ -28,11 +29,6 @@ import io.helidon.webserver.http.RoutingResponse;
 @Service.Singleton
 final class McpRequestLoggingFeature implements HttpFeature {
 
-    private static final GenericType<Map<String, Object>> REQUEST_BODY_TYPE = GenericType.<Map<String, Object>>builder()
-            .baseType(Map.class)
-            .addGenericParameter(String.class)
-            .addGenericParameter(Object.class)
-            .build();
     private static final HttpMediaType MEDIA_TYPE = HttpMediaType.create("application/json");
     private static final String URGENCY_PATH = McpUrgencyServer.MCP_PATH;
     private static final String URGENCY_PATH_SEGMENT = "urgency";
@@ -73,7 +69,7 @@ final class McpRequestLoggingFeature implements HttpFeature {
             return;
         }
         try {
-            Map<String, Object> body = req.content().as(REQUEST_BODY_TYPE);
+            JsonObject body = req.content().as(JsonObject.class);
             McpProtocolRequest request = new McpProtocolRequest(headers(req), body);
             send(res, statelessHandler.handle(request));
         } catch (RuntimeException e) {
@@ -82,25 +78,32 @@ final class McpRequestLoggingFeature implements HttpFeature {
     }
 
     private static McpProtocolResponse methodNotAllowed() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("jsonrpc", "2.0");
-        body.put("id", null);
-        body.put("error", Map.of("code", -32600, "message", "MCP 2026-07-28 requests must use POST"));
+        JsonObject body = JsonObject.builder()
+                .set("jsonrpc", "2.0")
+                .setNull("id")
+                .set("error", error -> error
+                        .set("code", -32600)
+                        .set("message", "MCP 2026-07-28 requests must use POST"))
+                .build();
         return new McpProtocolResponse(Status.METHOD_NOT_ALLOWED_405, body);
     }
 
     private static boolean isStatelessMcpRequest(RoutingRequest req) {
         String path = req.prologue().uriPath().path();
-        return URGENCY_PATH.equals(path) && req.headers().value(PROTOCOL_VERSION_HEADER).isPresent();
+        return URGENCY_PATH.equals(path)
+                && req.headers().value(PROTOCOL_VERSION_HEADER)
+                .filter(StatelessMcpProtocolHandler.PROTOCOL_VERSION::equals)
+                .isPresent();
     }
 
     private static Map<String, String> headers(RoutingRequest req) {
         return req.headers()
-                .toMap()
-                .entrySet()
                 .stream()
-                .filter(entry -> !entry.getValue().isEmpty())
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, entry -> entry.getValue().getFirst()));
+                .filter(header -> header.valueCount() > 0)
+                .collect(Collectors.toUnmodifiableMap(
+                        header -> header.headerName().defaultCase(),
+                        header -> header.allValues().getFirst(),
+                        (first, _) -> first));
     }
 
     private static void send(RoutingResponse response, McpProtocolResponse protocolResponse) {

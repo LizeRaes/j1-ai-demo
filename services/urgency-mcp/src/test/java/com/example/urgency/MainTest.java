@@ -1,13 +1,12 @@
 package com.example.urgency;
 
 import java.util.List;
-import java.util.Map;
 
-import io.helidon.common.GenericType;
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.http.HeaderNames;
 import io.helidon.http.HeaderValues;
 import io.helidon.http.Status;
+import io.helidon.json.JsonObject;
 import io.helidon.webclient.http1.Http1Client;
 import io.helidon.webclient.http1.Http1ClientResponse;
 import io.helidon.webserver.testing.junit5.ServerTest;
@@ -20,11 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ServerTest
 class MainTest {
 
-    private static final GenericType<Map<String, Object>> RESPONSE_BODY_TYPE = GenericType.<Map<String, Object>>builder()
-            .baseType(Map.class)
-            .addGenericParameter(String.class)
-            .addGenericParameter(Object.class)
-            .build();
     private static final String INITIALIZE_REQUEST = """
             {"jsonrpc":"2.0","id":1,"method":"initialize",
              "params":{"protocolVersion":"2025-06-18","capabilities":{},
@@ -57,10 +51,14 @@ class MainTest {
                 "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"server/discover\"}")) {
             assertEquals(Status.OK_200, response.status());
             assertFalse(response.headers().contains(HeaderNames.create("Mcp-Session-Id")));
-            Map<String, Object> result = result(response.entity().as(RESPONSE_BODY_TYPE));
-            assertEquals(List.of("2026-07-28"), result.get("protocolVersions"));
-            assertNumberEquals(300_000, result.get("ttlMs"));
-            assertEquals("public", result.get("cacheScope"));
+            JsonObject result = result(response.entity().as(JsonObject.class));
+            assertEquals("complete", result.stringValue("resultType", ""));
+            assertEquals("2026-07-28", result.arrayValue("supportedVersions").orElseThrow()
+                    .get(0).orElseThrow().asString().value());
+            assertEquals("2026-07-28", result.arrayValue("protocolVersions").orElseThrow()
+                    .get(0).orElseThrow().asString().value());
+            assertEquals(300_000, result.intValue("ttlMs", 0));
+            assertEquals("public", result.stringValue("cacheScope", ""));
         }
     }
 
@@ -69,15 +67,15 @@ class MainTest {
         try (Http1ClientResponse response = statelessPost("tools/list", null,
                 "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}")) {
             assertEquals(Status.OK_200, response.status());
-            Map<String, Object> result = result(response.entity().as(RESPONSE_BODY_TYPE));
-            assertNumberEquals(300_000, result.get("ttlMs"));
-            assertEquals("public", result.get("cacheScope"));
-            assertEquals("getUrgency", firstTool(result).get("name"));
+            JsonObject result = result(response.entity().as(JsonObject.class));
+            assertEquals(300_000, result.intValue("ttlMs", 0));
+            assertEquals("public", result.stringValue("cacheScope", ""));
+            assertEquals("getUrgency", firstTool(result).stringValue("name", ""));
         }
     }
 
     @Test
-    void statelessRejectsLegacySessionHeader() {
+    void statelessRequestWithLegacySessionHeaderIsRejected() {
         try (Http1ClientResponse response = client.post("/urgency")
                 .contentType(MediaTypes.APPLICATION_JSON)
                 .header(HeaderValues.create("MCP-Protocol-Version", "2026-07-28"))
@@ -85,8 +83,9 @@ class MainTest {
                 .header(HeaderValues.create("Mcp-Session-Id", "legacy-session"))
                 .submit("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}")) {
             assertEquals(Status.BAD_REQUEST_400, response.status());
-            Map<String, Object> error = objectMap(response.entity().as(RESPONSE_BODY_TYPE).get("error"));
-            assertNumberEquals(-32600, error.get("code"));
+            assertFalse(response.headers().contains(HeaderNames.create("Mcp-Session-Id")));
+            assertEquals(-32600, response.entity().as(JsonObject.class)
+                    .objectValue("error").orElseThrow().intValue("code", 0));
         }
     }
 
@@ -117,22 +116,11 @@ class MainTest {
         }
     }
 
-    private static void assertNumberEquals(int expected, Object actual) {
-        assertEquals(expected, ((Number) actual).intValue());
+    private static JsonObject result(JsonObject body) {
+        return body.objectValue("result").orElseThrow();
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> result(Map<String, Object> body) {
-        return (Map<String, Object>) body.get("result");
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> firstTool(Map<String, Object> result) {
-        return ((List<Map<String, Object>>) result.get("tools")).getFirst();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> objectMap(Object value) {
-        return (Map<String, Object>) value;
+    private static JsonObject firstTool(JsonObject result) {
+        return result.arrayValue("tools").orElseThrow().get(0).orElseThrow().asObject();
     }
 }

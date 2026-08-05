@@ -36,7 +36,7 @@ sealed interface UrgencyInferenceConfiguration permits LocalUrgencyInferenceConf
     }
 
     private static ScorerModelSettings openAiScorerSettings(RuntimeConfig config) {
-        return new ScorerModelSettings(
+        return ScorerModelSettings.of(
                 config.requiredText(OPENAI_MODEL_NAME_KEY, OPENAI_MODEL_NAME_KEY),
                 Path.of(config.requiredText(OPENAI_MODEL_LOCATION_KEY, OPENAI_MODEL_LOCATION_KEY)));
     }

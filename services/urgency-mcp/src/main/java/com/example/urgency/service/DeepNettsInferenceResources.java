@@ -1,13 +1,13 @@
 package com.example.urgency.service;
 
+import com.example.urgency.embedding.EmbeddingGenerator;
+import deepnetts.net.FeedForwardNetwork;
+import deepnetts.util.FileIO;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Supplier;
-
-import com.example.urgency.embedding.EmbeddingGenerator;
-import deepnetts.net.FeedForwardNetwork;
-import deepnetts.util.FileIO;
 
 final class DeepNettsInferenceResources {
 
@@ -63,7 +63,7 @@ final class DeepNettsInferenceResources {
 
     private static FeedForwardNetwork loadScorerNet(Path modelPath) {
         try {
-            return (FeedForwardNetwork) FileIO.createFromFile(modelPath.toString(), FeedForwardNetwork.class);
+            return FileIO.createFromFile(modelPath.toString(), FeedForwardNetwork.class);
         } catch (Exception e) {
             throw new RuntimeException(SCORER_LOAD_FAILURE_PREFIX + modelPath, e);
         }

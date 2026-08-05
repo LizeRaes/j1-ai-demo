@@ -1,15 +1,24 @@
 package com.example.urgency.mcp;
 
+import io.helidon.json.JsonObject;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public record McpProtocolRequest(Map<String, String> headers, Map<String, Object> body) {
+public final class McpProtocolRequest {
 
-    public McpProtocolRequest {
-        headers = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNull(headers, "headers")));
-        body = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNull(body, "body")));
+    private final Map<String, String> headers;
+    private final JsonObject body;
+
+    public McpProtocolRequest(Map<String, String> headers, JsonObject body) {
+        this.headers = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNull(headers, "headers")));
+        this.body = Objects.requireNonNull(body, "body");
+    }
+
+    public JsonObject body() {
+        return body;
     }
 
     String header(String name) {

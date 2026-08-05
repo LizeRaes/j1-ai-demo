@@ -15,7 +15,7 @@ import io.helidon.extensions.mcp.server.McpToolResult;
 public final class McpUrgencyServer {
 
     static final String MCP_PATH = "/urgency";
-    static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
+    public static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
     private static final Logger log = Logger.getLogger(McpUrgencyServer.class.getName());
     private static final String SCORER_SUPPLIER_LABEL = "urgency scorer supplier";
 
@@ -25,7 +25,7 @@ public final class McpUrgencyServer {
         this(new LazyUrgencyScorerSupplier());
     }
 
-    static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
+    public static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
         return new McpUrgencyServer(scorerSupplier);
     }
 

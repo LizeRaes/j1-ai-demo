@@ -1,14 +1,14 @@
 package com.example.urgency.embedding;
 
-import java.util.Objects;
-import java.util.Optional;
-
 import com.example.urgency.config.RuntimeConfig;
 import com.example.urgency.validation.RequiredText;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import io.helidon.config.Config;
+
+import java.util.Objects;
+import java.util.Optional;
 
 public final class OpenAIEmbeddingGenerator implements EmbeddingGenerator {
 
@@ -63,16 +63,32 @@ public final class OpenAIEmbeddingGenerator implements EmbeddingGenerator {
         return builder.build();
     }
 
-    public record Settings(String modelName, Optional<Integer> dimensions, String apiKey) {
-        public Settings {
-            modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
-            dimensions = Objects.requireNonNull(dimensions, DIMENSIONS_KEY);
-            apiKey = new RequiredText(API_KEY_PROPERTY).require(apiKey);
-            dimensions.ifPresent(value -> {
+    public static final class Settings {
+        private final String modelName;
+        private final Optional<Integer> dimensions;
+        private final String apiKey;
+
+        public Settings(String modelName, Optional<Integer> dimensions, String apiKey) {
+            this.modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
+            this.dimensions = Objects.requireNonNull(dimensions, DIMENSIONS_KEY);
+            this.apiKey = new RequiredText(API_KEY_PROPERTY).require(apiKey);
+            this.dimensions.ifPresent(value -> {
                 if (value < 1) {
                     throw new IllegalArgumentException(DIMENSIONS_KEY + POSITIVE_SUFFIX);
                 }
             });
+        }
+
+        public String modelName() {
+            return modelName;
+        }
+
+        public Optional<Integer> dimensions() {
+            return dimensions;
+        }
+
+        public String apiKey() {
+            return apiKey;
         }
 
         static Settings fromConfig(Config config) {

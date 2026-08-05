@@ -21,6 +21,9 @@
         <exec.mainClass>${mainClass}</exec.mainClass>
         <exec.cleanupDaemonThreads>false</exec.cleanupDaemonThreads>
         <preview.compiler.arg>--enable-preview</preview.compiler.arg>
+        <helidon.deprecate.compiler.arg>-Ahelidon.api.deprecated=ignore</helidon.deprecate.compiler.arg>
+        <helidon.preview.compiler.arg>-Ahelidon.api.preview=ignore</helidon.preview.compiler.arg>
+        <helidon.incubating.compiler.arg>-Ahelidon.api.incubating=ignore</helidon.incubating.compiler.arg>
         <deepnetts-core.version>1.13.4</deepnetts-core.version>
     </properties>
 
@@ -135,13 +138,8 @@
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>io.helidon.codegen</groupId>
-                            <artifactId>helidon-codegen-apt</artifactId>
-                            <version>${helidon.version}</version>
-                        </path>
-                        <path>
-                            <groupId>io.helidon.service</groupId>
-                            <artifactId>helidon-service-codegen</artifactId>
+                            <groupId>io.helidon.bundles</groupId>
+                            <artifactId>helidon-bundles-apt</artifactId>
                             <version>${helidon.version}</version>
                         </path>
                         <path>
@@ -150,7 +148,20 @@
                             <version>${mcp.extension.version}</version>
                         </path>
                     </annotationProcessorPaths>
-                    <compilerArgs>--enable-preview</compilerArgs>
+                    <compilerArgs>
+                        <compilerArg>
+                            ${helidon.deprecate.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.incubating.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.preview.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${preview.compiler.arg}
+                        </compilerArg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -166,7 +177,20 @@
                 <version>${helidon.version}</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
-                    <compilerArgs>${preview.compiler.arg}</compilerArgs>
+                    <compilerArgs>
+                        <compilerArg>
+                            ${helidon.deprecate.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.incubating.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.preview.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${preview.compiler.arg}
+                        </compilerArg>
+                    </compilerArgs>
                 </configuration>
                 <executions>
                     <execution>
