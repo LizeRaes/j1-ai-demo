@@ -182,28 +182,41 @@ curl -X POST http://localhost:9090/urgency \
 
 ## MCP Conformance
 
-The conformance script uses the official MCP conformance runner and starts this server in local mode. Its defaults stay on the legacy Helidon MCP path so the generated annotation server remains covered:
+The conformance script starts this server in local mode. By default it targets the stateless MCP `2026-07-28` adapter, but the published `@modelcontextprotocol/conformance` runner may not yet include draft-only scenarios such as `server-discover`.
+To avoid unknown-scenario failures, the script separates local draft checks from official runner scenarios.
 
-- `server-initialize`
-- `ping`
-- `tools-list`
-
-Run the default 2025-oriented check with:
+Run the default stateless draft check with:
 
 ```bash
-MAVEN_OPTS=--enable-preview MCP_CONFORMANCE_ENABLED=true mvn -Pconformance verify
+MCP_CONFORMANCE_ENABLED=true MAVEN_OPTS=--enable-preview mvn -Pconformance verify
 ```
 
-For the migrated MCP `2026-07-28` stateless adapter, override the protocol version and scenario list explicitly:
+The default `2026-07-28` run performs local checks for:
+
+- `server-discover`
+- `tools-list`
+- `reject-session-header`
+
+These defaults are controlled with:
+
+```text
+MCP_CONFORMANCE_PROTOCOL_VERSION=2026-07-28
+MCP_DRAFT_CHECKS="server-discover tools-list reject-session-header"
+MCP_CONFORMANCE_SCENARIOS="ping tools-list"
+```
+
+If a newer published conformance runner adds draft scenarios, pass those scenario names through `MCP_CONFORMANCE_SCENARIOS` explicitly.
+
+To run the Helidon annotation-server path with scenarios available in the published runner, override the protocol version and scenarios explicitly:
 
 ```bash
 MCP_CONFORMANCE_ENABLED=true \
-MCP_CONFORMANCE_PROTOCOL_VERSION=2026-07-28 \
-MCP_CONFORMANCE_SCENARIOS="server-discover ping tools-list" \
+MCP_CONFORMANCE_PROTOCOL_VERSION=2025-06-18 \
+MCP_CONFORMANCE_SCENARIOS="server-initialize ping tools-list" \
 MAVEN_OPTS=--enable-preview mvn -Pconformance verify
 ```
 
-In the migrated flow, the readiness probe uses `server/discover` with `MCP-Protocol-Version: 2026-07-28` and `Mcp-Method: server/discover`. The default list intentionally excludes tool-call scenarios because the real urgency tool performs domain scoring and requires a `phrase` argument.
+In the stateless flow, the readiness probe uses `server/discover` with `MCP-Protocol-Version: 2026-07-28` and `Mcp-Method: server/discover`. In the older compatibility flow, readiness uses `initialize`.
 
 ## ai-triage Configuration
 

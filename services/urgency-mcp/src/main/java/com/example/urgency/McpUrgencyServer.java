@@ -12,6 +12,7 @@ import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Path(McpUrgencyServer.MCP_PATH)
 @Mcp.Server(McpUrgencyServer.MCP_SERVER_NAME)
+@Mcp.Stateless
 public final class McpUrgencyServer {
 
     static final String MCP_PATH = "/urgency";

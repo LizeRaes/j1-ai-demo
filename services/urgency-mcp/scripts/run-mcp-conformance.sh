@@ -7,10 +7,16 @@ if [ "${MCP_CONFORMANCE_ENABLED:-}" != "true" ]; then
 fi
 
 URL="${MCP_CONFORMANCE_URL:-http://localhost:9090/urgency}"
-SCENARIOS="${MCP_CONFORMANCE_SCENARIOS:-server-initialize ping tools-list}"
 JAVA_BIN="${JAVA_BIN:-java}"
 JAR="${MCP_SERVER_JAR:-target/urgency-mcp.jar}"
-PROTOCOL_VERSION="${MCP_CONFORMANCE_PROTOCOL_VERSION:-2025-06-18}"
+PROTOCOL_VERSION="${MCP_CONFORMANCE_PROTOCOL_VERSION:-2026-07-28}"
+DRAFT_CHECKS="${MCP_DRAFT_CHECKS:-server-discover tools-list reject-session-header}"
+
+if [ "$PROTOCOL_VERSION" = "2026-07-28" ]; then
+  OFFICIAL_SCENARIOS="${MCP_CONFORMANCE_SCENARIOS:- ping tools-list}"
+else
+  OFFICIAL_SCENARIOS="${MCP_CONFORMANCE_SCENARIOS:-server-initialize ping tools-list}"
+fi
 
 if [ ! -f "$JAR" ]; then
   echo "MCP server jar not found: $JAR" >&2
@@ -44,6 +50,60 @@ stateless_readiness() {
       >/dev/null 2>&1
 }
 
+
+stateless_request() {
+  method="$1"
+  name="${2:-}"
+  body="$3"
+  if [ -n "$name" ]; then
+    curl -fsS -X POST "$URL" \
+        -H 'Content-Type: application/json' \
+        -H 'Accept: application/json' \
+        -H "MCP-Protocol-Version: $PROTOCOL_VERSION" \
+        -H "Mcp-Method: $method" \
+        -H "Mcp-Name: $name" \
+        -d "$body" \
+        >/dev/null
+  else
+    curl -fsS -X POST "$URL" \
+        -H 'Content-Type: application/json' \
+        -H 'Accept: application/json' \
+        -H "MCP-Protocol-Version: $PROTOCOL_VERSION" \
+        -H "Mcp-Method: $method" \
+        -d "$body" \
+        >/dev/null
+  fi
+}
+
+stateless_rejects_session_header() {
+  status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$URL" \
+      -H 'Content-Type: application/json' \
+      -H 'Accept: application/json' \
+      -H "MCP-Protocol-Version: $PROTOCOL_VERSION" \
+      -H 'Mcp-Method: ping' \
+      -H 'Mcp-Session-Id: legacy-session' \
+      -d '{"jsonrpc":"2.0","id":1,"method":"ping"}')
+  test "$status" = "400"
+}
+
+run_draft_check() {
+  case "$1" in
+    server-discover)
+      stateless_request server/discover "" '{"jsonrpc":"2.0","id":1,"method":"server/discover"}'
+      ;;
+    tools-list)
+      stateless_request tools/list "" '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+      ;;
+    reject-session-header)
+      stateless_rejects_session_header
+      ;;
+    *)
+      echo "Unknown draft check '$1'" >&2
+      exit 1
+      ;;
+  esac
+}
+
 ready() {
   if [ "$PROTOCOL_VERSION" = "2026-07-28" ]; then
     stateless_readiness
@@ -67,6 +127,17 @@ if [ "$i" -eq 30 ]; then
   exit 1
 fi
 
-for scenario in $SCENARIOS; do
-  npx @modelcontextprotocol/conformance server --url "$URL" --scenario "$scenario"
+if [ "$PROTOCOL_VERSION" = "2026-07-28" ]; then
+  for check in $DRAFT_CHECKS; do
+    echo "Running MCP draft check: $check"
+    run_draft_check "$check"
+  done
+  if [ -z "$OFFICIAL_SCENARIOS" ]; then
+    echo "Skipping official MCP conformance scenarios for draft protocol $PROTOCOL_VERSION."
+    echo "Set MCP_CONFORMANCE_SCENARIOS to run scenarios available in the published runner."
+  fi
+fi
+
+for scenario in $OFFICIAL_SCENARIOS; do
+  npx --yes @modelcontextprotocol/conformance server --url "$URL" --scenario "$scenario"
 done
