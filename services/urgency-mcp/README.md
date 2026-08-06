@@ -87,7 +87,7 @@ Do not reuse a scorer across incompatible embedding spaces.
 Use Java 25+ and Maven.
 
 ```bash
-MAVEN_OPTS=--enable-preview mvn clean package
+mvn clean package
 ```
 
 Note: this module uses Java preview features. Maven and the JDK used to build and test it must support the configured preview release.
@@ -188,7 +188,7 @@ To avoid unknown-scenario failures, the script separates local draft checks from
 Run the default stateless draft check with:
 
 ```bash
-MCP_CONFORMANCE_ENABLED=true MAVEN_OPTS=--enable-preview mvn -Pconformance verify
+MCP_CONFORMANCE_ENABLED=true mvn -Pconformance verify
 ```
 
 The default `2026-07-28` run performs local checks for:
@@ -213,7 +213,7 @@ To run the Helidon annotation-server path with scenarios available in the publis
 MCP_CONFORMANCE_ENABLED=true \
 MCP_CONFORMANCE_PROTOCOL_VERSION=2025-06-18 \
 MCP_CONFORMANCE_SCENARIOS="server-initialize ping tools-list" \
-MAVEN_OPTS=--enable-preview mvn -Pconformance verify
+mvn -Pconformance verify
 ```
 
 In the stateless flow, the readiness probe uses `server/discover` with `MCP-Protocol-Version: 2026-07-28` and `Mcp-Method: server/discover`. In the older compatibility flow, readiness uses `initialize`.
