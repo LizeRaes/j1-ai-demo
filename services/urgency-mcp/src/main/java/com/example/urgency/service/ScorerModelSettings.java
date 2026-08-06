@@ -10,9 +10,10 @@ record ScorerModelSettings(String modelName, Path modelLocation) {
     private static final String MODEL_NAME_LABEL = "scorer model name";
     private static final String MODEL_LOCATION_LABEL = "scorer model location";
 
-    ScorerModelSettings {
+    public static ScorerModelSettings of(String modelName, Path modelLocation) {
         modelName = new RequiredText(MODEL_NAME_LABEL).require(modelName);
         modelLocation = Objects.requireNonNull(modelLocation, MODEL_LOCATION_LABEL).toAbsolutePath().normalize();
+        return new ScorerModelSettings(modelName, modelLocation);
     }
 
     Path scorerModelPath() {

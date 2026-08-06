@@ -123,11 +123,29 @@ curl http://localhost:9090/observe/health
 curl http://localhost:9090/observe/health/ready
 ```
 
-These endpoints are for service liveness/readiness checks. MCP `ping` remains handled by Helidon's MCP server implementation.
+These endpoints are for service liveness/readiness checks. MCP `ping` remains handled as protocol traffic on `/urgency`.
 
 ## MCP Behavior
 
-The current server uses Helidon's annotation-based MCP server support and stays aligned with the earlier MCP protocol line supported by the extension, centered on the `2025-06-18` family.
+The `/urgency` endpoint supports two protocol paths:
+
+- Requests without `MCP-Protocol-Version: 2026-07-28` continue through Helidon's annotation-based MCP server support for the earlier MCP specifications.
+- Requests with `MCP-Protocol-Version: 2026-07-28` are handled by a stateless HTTP adapter before the generated Helidon MCP route.
+
+The 2026 adapter does not require `initialize`, does not create or return `Mcp-Session-Id`, and rejects any request that carries a session header. Each request must include:
+
+- `MCP-Protocol-Version: 2026-07-28`
+- `Mcp-Method: <json-rpc-method>`
+- `Mcp-Name: getUrgency` for `tools/call`
+
+The adapter supports `server/discover`, `ping`, `tools/list`, and `tools/call`. It rejects requests where `Mcp-Method` disagrees with the JSON-RPC body method, or where `Mcp-Name` disagrees with `params.name` for `tools/call`.
+
+`tools/list` advertises the single `getUrgency` tool with JSON Schema 2020-12 input schema requiring `phrase`, plus cache metadata:
+
+- `ttlMs: 300000`
+- `cacheScope: "public"`
+
+`tools/call` returns both text content and numeric `structuredContent` so older text-oriented clients and typed 2026 clients can consume the urgency score.
 
 The `getUrgency` tool is declared with these behavior hints:
 
@@ -136,29 +154,69 @@ The `getUrgency` tool is declared with these behavior hints:
 - `idempotentHint = true`
 - `openWorldHint = false`
 
-In practice, that tells MCP clients that the tool reads input, does not mutate state, is safe to retry, and operates within a narrow application concern.
+MCP Apps, Tasks, Roots, Sampling, Logging, and OAuth/OIDC authorization are not implemented by this optional local urgency-scoring service. 
+OAuth/OIDC hardening should be handled at the gateway or by a later MCP auth integration if this endpoint becomes a protected remote service.
+
+Example stateless discovery request:
+
+```bash
+curl -X POST http://localhost:9090/urgency \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'MCP-Protocol-Version: 2026-07-28' \
+  -H 'Mcp-Method: server/discover' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"server/discover"}'
+```
+
+Example stateless tool call:
+
+```bash
+curl -X POST http://localhost:9090/urgency \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'MCP-Protocol-Version: 2026-07-28' \
+  -H 'Mcp-Method: tools/call' \
+  -H 'Mcp-Name: getUrgency' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getUrgency","arguments":{"phrase":"patient cannot access insulin refill"}}}'
+```
 
 ## MCP Conformance
 
-The conformance script uses the official MCP conformance runner and starts this server in local mode. By default it runs focused server scenarios against the real `/urgency` endpoint on the older MCP line:
+The conformance script starts this server in local mode. By default it targets the stateless MCP `2026-07-28` adapter, but the published `@modelcontextprotocol/conformance` runner may not yet include draft-only scenarios such as `server-discover`.
+To avoid unknown-scenario failures, the script separates local draft checks from official runner scenarios.
 
-- `server-initialize`
-- `ping`
-- `tools-list`
-
-Run it with:
+Run the default stateless draft check with:
 
 ```bash
 MCP_CONFORMANCE_ENABLED=true mvn -Pconformance verify
 ```
 
-Override the default scenarios when needed:
+The default `2026-07-28` run performs local checks for:
 
-```bash
-MCP_CONFORMANCE_ENABLED=true MCP_CONFORMANCE_SCENARIOS="server-initialize ping tools-list" mvn -Pconformance verify
+- `server-discover`
+- `tools-list`
+- `reject-session-header`
+
+These defaults are controlled with:
+
+```text
+MCP_CONFORMANCE_PROTOCOL_VERSION=2026-07-28
+MCP_DRAFT_CHECKS="server-discover tools-list reject-session-header"
+MCP_CONFORMANCE_SCENARIOS="ping tools-list"
 ```
 
-The default list intentionally excludes tool-call scenarios because the real urgency tool performs domain scoring and requires a `phrase` argument.
+If a newer published conformance runner adds draft scenarios, pass those scenario names through `MCP_CONFORMANCE_SCENARIOS` explicitly.
+
+To run the Helidon annotation-server path with scenarios available in the published runner, override the protocol version and scenarios explicitly:
+
+```bash
+MCP_CONFORMANCE_ENABLED=true \
+MCP_CONFORMANCE_PROTOCOL_VERSION=2025-06-18 \
+MCP_CONFORMANCE_SCENARIOS="server-initialize ping tools-list" \
+mvn -Pconformance verify
+```
+
+In the stateless flow, the readiness probe uses `server/discover` with `MCP-Protocol-Version: 2026-07-28` and `Mcp-Method: server/discover`. In the older compatibility flow, readiness uses `initialize`.
 
 ## ai-triage Configuration
 

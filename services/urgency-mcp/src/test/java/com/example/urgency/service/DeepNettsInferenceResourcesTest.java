@@ -53,7 +53,7 @@ class DeepNettsInferenceResourcesTest {
     }
 
     private ScorerModelSettings settings(String modelName) {
-        return new ScorerModelSettings(modelName, temporaryDirectory);
+        return ScorerModelSettings.of(modelName, temporaryDirectory);
     }
 
     private static final class StubEmbeddingGenerator implements EmbeddingGenerator {

@@ -6,20 +6,24 @@
     <parent>
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-se</artifactId>
-        <version>4.4.0</version>
+        <version>4.5.0</version>
         <relativePath/>
     </parent>
 
     <groupId>com.example.appointment</groupId>
     <artifactId>urgency-mcp</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <properties>
         <mainClass>com.example.urgency.Main</mainClass>
         <maven.compiler.release>25</maven.compiler.release>
-        <mcp.extension.version>1.1.0</mcp.extension.version>
+        <mcp.extension.version>1.2.0</mcp.extension.version>
         <exec.mainClass>${mainClass}</exec.mainClass>
         <exec.cleanupDaemonThreads>false</exec.cleanupDaemonThreads>
+        <preview.compiler.arg>--enable-preview</preview.compiler.arg>
+        <helidon.deprecate.compiler.arg>-Ahelidon.api.deprecated=ignore</helidon.deprecate.compiler.arg>
+        <helidon.preview.compiler.arg>-Ahelidon.api.preview=ignore</helidon.preview.compiler.arg>
+        <helidon.incubating.compiler.arg>-Ahelidon.api.incubating=ignore</helidon.incubating.compiler.arg>
         <deepnetts-core.version>1.13.4</deepnetts-core.version>
     </properties>
 
@@ -134,13 +138,8 @@
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>io.helidon.codegen</groupId>
-                            <artifactId>helidon-codegen-apt</artifactId>
-                            <version>${helidon.version}</version>
-                        </path>
-                        <path>
-                            <groupId>io.helidon.service</groupId>
-                            <artifactId>helidon-service-codegen</artifactId>
+                            <groupId>io.helidon.bundles</groupId>
+                            <artifactId>helidon-bundles-apt</artifactId>
                             <version>${helidon.version}</version>
                         </path>
                         <path>
@@ -149,9 +148,20 @@
                             <version>${mcp.extension.version}</version>
                         </path>
                     </annotationProcessorPaths>
-                    <source>25</source>
-                    <target>25</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
+                    <compilerArgs>
+                        <compilerArg>
+                            ${helidon.deprecate.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.incubating.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.preview.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${preview.compiler.arg}
+                        </compilerArg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -159,8 +169,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>--enable-preview</argLine>
-                    <forkCount>1</forkCount>
-                    <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
             <plugin>
@@ -170,7 +178,18 @@
                 <configuration>
                     <release>${maven.compiler.release}</release>
                     <compilerArgs>
-                        <arg>--enable-preview</arg>
+                        <compilerArg>
+                            ${helidon.deprecate.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.incubating.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${helidon.preview.compiler.arg}
+                        </compilerArg>
+                        <compilerArg>
+                            ${preview.compiler.arg}
+                        </compilerArg>
                     </compilerArgs>
                 </configuration>
                 <executions>

@@ -1,17 +1,16 @@
 package com.example.urgency.embedding;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Objects;
-
-import com.example.urgency.validation.RequiredText;
-
 import ai.djl.MalformedModelException;
 import ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory;
 import ai.djl.inference.Predictor;
 import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
+import com.example.urgency.validation.RequiredText;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Objects;
 
 public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCloseable {
 
@@ -21,7 +20,6 @@ public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCl
     private static final String TEXT_LABEL = "text";
     private static final String DJL_MODEL_URL_PREFIX = "djl://ai.djl.huggingface.pytorch/";
     private static final String PREDICTOR_LABEL = "local embedding predictor";
-    public static final String ENGINE = "PyTorch";
 
     private final String modelName;
     private final Path modelLocation;
@@ -85,15 +83,14 @@ public final class LocalEmbeddingGenerator implements EmbeddingGenerator, AutoCl
             Criteria<String, float[]> criteria = Criteria.builder()
                     .setTypes(String.class, float[].class)
                     .optModelUrls(DJL_MODEL_URL_PREFIX + modelName)
-                    .optEngine(ENGINE)
+                    .optEngine("PyTorch")
                     .optTranslatorFactory(new TextEmbeddingTranslatorFactory())
                     .build();
             model = criteria.loadModel();
             return model.newPredictor();
         } catch (ModelNotFoundException | MalformedModelException | IOException e) {
             throw new RuntimeException(
-                    "Failed to load local embedding model: " + modelName
-                            + " (configured location: " + modelLocation + ")",
+                    "Failed to load local embedding model: " + modelName + " (configured location: " + modelLocation + ")",
                     e);
         }
     }

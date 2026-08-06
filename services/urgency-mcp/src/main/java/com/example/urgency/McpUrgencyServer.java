@@ -1,6 +1,5 @@
 package com.example.urgency;
 
-import java.lang.StableValue;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -13,12 +12,11 @@ import io.helidon.extensions.mcp.server.McpToolResult;
 
 @Mcp.Path(McpUrgencyServer.MCP_PATH)
 @Mcp.Server(McpUrgencyServer.MCP_SERVER_NAME)
-final class McpUrgencyServer {
+@Mcp.Stateless
+public final class McpUrgencyServer {
 
     static final String MCP_PATH = "/urgency";
-    static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
-    static final String TOOL_NAME = "getUrgency";
-
+    public static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
     private static final Logger log = Logger.getLogger(McpUrgencyServer.class.getName());
     private static final String SCORER_SUPPLIER_LABEL = "urgency scorer supplier";
 
@@ -28,7 +26,7 @@ final class McpUrgencyServer {
         this(new LazyUrgencyScorerSupplier());
     }
 
-    static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
+    public static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
         return new McpUrgencyServer(scorerSupplier);
     }
 
@@ -44,10 +42,14 @@ final class McpUrgencyServer {
               openWorldHint = false)
     McpToolResult getUrgency(@Mcp.Description("complaint text to score") String phrase) {
         log.info(() -> "MCP server called: getUrgency(phrase=\"" + phrase + "\")");
-        double score = scorerSupplier.get().score(phrase);
+        double score = score(phrase);
         String result = Double.toString(score);
         log.info(() -> "MCP server returning urgency score: " + result);
         return McpToolResult.create(result);
+    }
+
+    public double score(String phrase) {
+        return scorerSupplier.get().score(phrase);
     }
 
     private static final class LazyUrgencyScorerSupplier implements Supplier<UrgencyScorer> {
@@ -59,3 +61,5 @@ final class McpUrgencyServer {
         }
     }
 }
+
+

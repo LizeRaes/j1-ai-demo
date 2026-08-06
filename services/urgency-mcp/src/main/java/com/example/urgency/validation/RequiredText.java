@@ -2,13 +2,15 @@ package com.example.urgency.validation;
 
 import java.util.Objects;
 
-public record RequiredText(String label) {
+public final class RequiredText {
 
     private static final String LABEL_LABEL = "label";
     private static final String REQUIRED_SUFFIX = " is required";
 
-    public RequiredText {
-        Objects.requireNonNull(label, LABEL_LABEL);
+    private final String label;
+
+    public RequiredText(String label) {
+        this.label = Objects.requireNonNull(label, LABEL_LABEL);
     }
 
     public String require(String value) {
