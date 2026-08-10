@@ -5,7 +5,9 @@ import java.util.Objects;
 import com.example.urgency.config.RuntimeConfig;
 import com.example.urgency.validation.RequiredText;
 import io.helidon.config.Config;
+import io.helidon.service.registry.Service;
 
+@Service.Singleton
 public class UrgencyInferenceService implements UrgencyScorer {
 
     private static final String COMPLAINT_LABEL = "complaint";
@@ -15,6 +17,7 @@ public class UrgencyInferenceService implements UrgencyScorer {
 
     private final UrgencyInferenceEngine engine;
 
+    @Service.Inject
     public UrgencyInferenceService() {
         this(defaultEngine());
     }

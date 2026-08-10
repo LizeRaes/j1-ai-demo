@@ -49,10 +49,6 @@
             <artifactId>helidon-config-yaml</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.helidon.http.media</groupId>
-            <artifactId>helidon-http-media-jsonb</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.helidon.webserver.observe</groupId>
             <artifactId>helidon-webserver-observe-health</artifactId>
         </dependency>
@@ -66,8 +62,8 @@
             <version>${mcp.extension.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.helidon.integrations.langchain4j.providers</groupId>
-            <artifactId>helidon-integrations-langchain4j-providers-open-ai</artifactId>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
         </dependency>
         <dependency>
             <groupId>io.helidon.logging</groupId>
@@ -100,11 +96,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.helidon.webclient</groupId>
-            <artifactId>helidon-webclient</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

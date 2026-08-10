@@ -46,7 +46,7 @@ class McpUrgencyServerTest {
             complaint.set(value);
             return 7.5;
         };
-        McpUrgencyServer server = McpUrgencyServer.withScorerSupplier(() -> scorer);
+        McpUrgencyServer server = new McpUrgencyServer(() -> scorer);
 
         McpToolResult result = server.getUrgency("patient cannot access billing portal");
 
@@ -58,6 +58,6 @@ class McpUrgencyServerTest {
 
     @Test
     void requiresScorerSupplier() {
-        assertThrows(NullPointerException.class, () -> McpUrgencyServer.withScorerSupplier(null));
+        assertThrows(NullPointerException.class, () -> new McpUrgencyServer(null));
     }
 }

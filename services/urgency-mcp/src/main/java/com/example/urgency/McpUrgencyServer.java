@@ -4,11 +4,11 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import com.example.urgency.service.UrgencyInferenceService;
 import com.example.urgency.service.UrgencyScorer;
 
 import io.helidon.extensions.mcp.server.Mcp;
 import io.helidon.extensions.mcp.server.McpToolResult;
+import io.helidon.service.registry.Service;
 
 @Mcp.Path(McpUrgencyServer.MCP_PATH)
 @Mcp.Server(McpUrgencyServer.MCP_SERVER_NAME)
@@ -18,20 +18,12 @@ public final class McpUrgencyServer {
     static final String MCP_PATH = "/urgency";
     public static final String MCP_SERVER_NAME = "helidon-mcp-urgency";
     private static final Logger log = Logger.getLogger(McpUrgencyServer.class.getName());
-    private static final String SCORER_SUPPLIER_LABEL = "urgency scorer supplier";
 
     private final Supplier<UrgencyScorer> scorerSupplier;
 
-    McpUrgencyServer() {
-        this(new LazyUrgencyScorerSupplier());
-    }
-
-    public static McpUrgencyServer withScorerSupplier(Supplier<UrgencyScorer> scorerSupplier) {
-        return new McpUrgencyServer(scorerSupplier);
-    }
-
-    private McpUrgencyServer(Supplier<UrgencyScorer> scorerSupplier) {
-        this.scorerSupplier = Objects.requireNonNull(scorerSupplier, SCORER_SUPPLIER_LABEL);
+    @Service.Inject
+    public McpUrgencyServer(Supplier<UrgencyScorer> scorerSupplier) {
+        this.scorerSupplier = Objects.requireNonNull(scorerSupplier, "urgency scorer supplier must not be null");
     }
 
     @Mcp.Tool(value = "Get urgency score (0-10) for a support ticket complaint",
@@ -51,15 +43,4 @@ public final class McpUrgencyServer {
     public double score(String phrase) {
         return scorerSupplier.get().score(phrase);
     }
-
-    private static final class LazyUrgencyScorerSupplier implements Supplier<UrgencyScorer> {
-        private final StableValue<UrgencyScorer> inference = StableValue.of();
-
-        @Override
-        public UrgencyScorer get() {
-            return inference.orElseSet(UrgencyInferenceService::new);
-        }
-    }
 }
-
-

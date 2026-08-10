@@ -1,5 +1,6 @@
 package com.example.urgency.mcp;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.example.urgency.McpUrgencyServer;
@@ -14,9 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StatelessMcpProtocolHandlerTest {
 
+    private static final StatelessMcpProtocolHandler HANDLER =
+            new StatelessMcpProtocolHandler(new McpUrgencyServer(() -> _ -> 8.25));
+
     @Test
     void discoversServerCapabilitiesWithCacheHints() {
-        McpProtocolResponse response = handler().handle(request("server/discover"));
+        McpProtocolResponse response = HANDLER.handle(request("server/discover"));
 
         assertEquals(Status.OK_200, response.status());
         JsonObject result = result(response);
@@ -33,7 +37,7 @@ class StatelessMcpProtocolHandlerTest {
 
     @Test
     void listsGetUrgencyToolWithJsonSchema202012() {
-        McpProtocolResponse response = handler().handle(request("tools/list"));
+        McpProtocolResponse response = HANDLER.handle(request("tools/list"));
 
         JsonObject result = result(response);
         assertEquals(300_000, result.intValue("ttlMs", 0));
@@ -62,7 +66,7 @@ class StatelessMcpProtocolHandlerTest {
                                         .set("phrase", "patient cannot access insulin refill")))
                         .build());
 
-        McpProtocolResponse response = handler().handle(request);
+        McpProtocolResponse response = HANDLER.handle(request);
 
         assertEquals(Status.OK_200, response.status());
         JsonObject result = result(response);
@@ -74,7 +78,7 @@ class StatelessMcpProtocolHandlerTest {
 
     @Test
     void rejectsSessionHeaderRemovedByStatelessProtocol() {
-        McpProtocolResponse response = handler().handle(request(Map.of(
+        McpProtocolResponse response = HANDLER.handle(request(Map.of(
                         "MCP-Protocol-Version", "2026-07-28",
                         "Mcp-Method", "ping",
                         "Mcp-Session-Id", "legacy-session"),
@@ -89,7 +93,7 @@ class StatelessMcpProtocolHandlerTest {
 
     @Test
     void rejectsMismatchedMethodHeader() {
-        McpProtocolResponse response = handler().handle(request(Map.of("Mcp-Method", "tools/list"),
+        McpProtocolResponse response = HANDLER.handle(request(Map.of("Mcp-Method", "tools/list"),
                 JsonObject.builder()
                         .set("jsonrpc", "2.0")
                         .set("id", 1)
@@ -101,7 +105,7 @@ class StatelessMcpProtocolHandlerTest {
 
     @Test
     void rejectsMissingToolNameHeader() {
-        McpProtocolResponse response = handler().handle(request("tools/call"));
+        McpProtocolResponse response = HANDLER.handle(request("tools/call"));
 
         assertError(response, -32602);
     }
@@ -119,13 +123,9 @@ class StatelessMcpProtocolHandlerTest {
                                 .set("arguments", arguments -> arguments.set("phrase", " ")))
                         .build());
 
-        McpProtocolResponse response = handler().handle(request);
+        McpProtocolResponse response = HANDLER.handle(request);
 
         assertError(response, -32602);
-    }
-
-    private static StatelessMcpProtocolHandler handler() {
-        return new StatelessMcpProtocolHandler(McpUrgencyServer.withScorerSupplier(() -> phrase -> 8.25));
     }
 
     private static McpProtocolRequest request(String method) {
@@ -137,7 +137,7 @@ class StatelessMcpProtocolHandlerTest {
     }
 
     private static McpProtocolRequest request(Map<String, String> headers, JsonObject body) {
-        var allHeaders = new java.util.LinkedHashMap<String, String>();
+        var allHeaders = new LinkedHashMap<String, String>();
         allHeaders.put("MCP-Protocol-Version", "2026-07-28");
         allHeaders.putAll(headers);
         return new McpProtocolRequest(allHeaders, body);
